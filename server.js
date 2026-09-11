@@ -20,20 +20,29 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json({ limit: '25mb' }));
 app.use(cors());
 
-// Data storage directories
-const DATA_DIR = path.join(__dirname, 'data');
+const IS_VERCEL = Boolean(process.env.VERCEL);
+const DATA_DIR = IS_VERCEL ? path.join('/tmp', 'data') : path.join(__dirname, 'data');
+const BUNDLE_DATA_DIR = path.join(__dirname, 'data');
 const AGREEMENTS_DIR = path.join(DATA_DIR, 'agreements');
 const VAULT_DIR = path.join(DATA_DIR, 'vault');
 const CONFIG_FILE = path.join(DATA_DIR, 'mail-config.json');
 
-fs.mkdirSync(AGREEMENTS_DIR, { recursive: true });
-fs.mkdirSync(VAULT_DIR, { recursive: true });
+try {
+  fs.mkdirSync(AGREEMENTS_DIR, { recursive: true });
+  fs.mkdirSync(VAULT_DIR, { recursive: true });
+} catch (e) {
+  console.warn('Directory init note:', e.message);
+}
 
 // Read or initialize mail config
 function getMailConfig() {
   try {
     if (fs.existsSync(CONFIG_FILE)) {
       return JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
+    }
+    const bundleConfigFile = path.join(BUNDLE_DATA_DIR, 'mail-config.json');
+    if (fs.existsSync(bundleConfigFile)) {
+      return JSON.parse(fs.readFileSync(bundleConfigFile, 'utf8'));
     }
   } catch (e) {
     console.error('Error reading mail config:', e);
@@ -45,7 +54,12 @@ function getMailConfig() {
 }
 
 function saveMailConfig(cfg) {
-  fs.writeFileSync(CONFIG_FILE, JSON.stringify(cfg, null, 2), 'utf8');
+  try {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+    fs.writeFileSync(CONFIG_FILE, JSON.stringify(cfg, null, 2), 'utf8');
+  } catch (e) {
+    console.error('Error saving mail config:', e);
+  }
 }
 
 // Nodemailer Transporter factory
@@ -89,10 +103,14 @@ app.post('/api/mail-config', (req, res) => {
 
 // 2. Save / Load Agreement by Ref ID (Checks active temporary links and vault archives)
 app.get('/api/agreements/:id', (req, res) => {
-  const tempFile = path.join(AGREEMENTS_DIR, `${req.params.id}.json`);
-  if (fs.existsSync(tempFile)) {
+  const id = req.params.id;
+  const tempFile = path.join(AGREEMENTS_DIR, `${id}.json`);
+  const bundleTempFile = path.join(BUNDLE_DATA_DIR, 'agreements', `${id}.json`);
+  const targetTemp = fs.existsSync(tempFile) ? tempFile : (fs.existsSync(bundleTempFile) ? bundleTempFile : null);
+
+  if (targetTemp) {
     try {
-      const data = JSON.parse(fs.readFileSync(tempFile, 'utf8'));
+      const data = JSON.parse(fs.readFileSync(targetTemp, 'utf8'));
       return res.json(data);
     } catch (e) {
       return res.status(500).json({ error: 'Failed to read contract data.' });
@@ -100,10 +118,13 @@ app.get('/api/agreements/:id', (req, res) => {
   }
 
   // Also check if already archived in Vault
-  const vaultFile = path.join(VAULT_DIR, `${req.params.id}.json`);
-  if (fs.existsSync(vaultFile)) {
+  const vaultFile = path.join(VAULT_DIR, `${id}.json`);
+  const bundleVaultFile = path.join(BUNDLE_DATA_DIR, 'vault', `${id}.json`);
+  const targetVault = fs.existsSync(vaultFile) ? vaultFile : (fs.existsSync(bundleVaultFile) ? bundleVaultFile : null);
+
+  if (targetVault) {
     try {
-      const data = JSON.parse(fs.readFileSync(vaultFile, 'utf8'));
+      const data = JSON.parse(fs.readFileSync(targetVault, 'utf8'));
       return res.json({ ...data, isArchivedInVault: true, isLockedForArtist: true });
     } catch (e) {
       return res.status(500).json({ error: 'Failed to read vault data.' });
@@ -118,6 +139,9 @@ app.post('/api/agreements', (req, res) => {
   if (!state || !state.id) {
     return res.status(400).json({ error: 'Invalid agreement data (missing id).' });
   }
+  try {
+    fs.mkdirSync(AGREEMENTS_DIR, { recursive: true });
+  } catch (e) {}
   const file = path.join(AGREEMENTS_DIR, `${state.id}.json`);
   fs.writeFileSync(file, JSON.stringify(state, null, 2), 'utf8');
   res.json({ success: true, id: state.id });
@@ -136,6 +160,10 @@ app.post('/api/finalize-to-vault', (req, res) => {
   state.isArchivedInVault = true;
   state.isLockedForArtist = true;
   state.status = 'fully_executed';
+
+  try {
+    fs.mkdirSync(VAULT_DIR, { recursive: true });
+  } catch (e) {}
 
   // 1. Save to permanent vault
   const vaultFile = path.join(VAULT_DIR, `${state.id}.json`);
@@ -158,11 +186,24 @@ app.post('/api/finalize-to-vault', (req, res) => {
 // List all agreements in the Vault for search & management
 app.get('/api/vault', (req, res) => {
   try {
-    const files = fs.readdirSync(VAULT_DIR).filter(f => f.endsWith('.json'));
-    const records = [];
-    for (const f of files) {
+    const fileSet = new Set();
+    if (fs.existsSync(VAULT_DIR)) {
       try {
-        const c = JSON.parse(fs.readFileSync(path.join(VAULT_DIR, f), 'utf8'));
+        fs.readdirSync(VAULT_DIR).filter(f => f.endsWith('.json')).forEach(f => fileSet.add(f));
+      } catch (e) {}
+    }
+    const bundleVault = path.join(BUNDLE_DATA_DIR, 'vault');
+    if (fs.existsSync(bundleVault)) {
+      try {
+        fs.readdirSync(bundleVault).filter(f => f.endsWith('.json')).forEach(f => fileSet.add(f));
+      } catch (e) {}
+    }
+
+    const records = [];
+    for (const f of fileSet) {
+      try {
+        const filePath = fs.existsSync(path.join(VAULT_DIR, f)) ? path.join(VAULT_DIR, f) : path.join(bundleVault, f);
+        const c = JSON.parse(fs.readFileSync(filePath, 'utf8'));
         records.push({
           id: c.id,
           finalizedAt: c.finalizedAt || c.createdAt || new Date().toISOString(),
@@ -190,10 +231,14 @@ app.get('/api/vault', (req, res) => {
 
 // Get full agreement data from Vault by ID
 app.get('/api/vault/:id', (req, res) => {
-  const file = path.join(VAULT_DIR, `${req.params.id}.json`);
-  if (fs.existsSync(file)) {
+  const id = req.params.id;
+  const file = path.join(VAULT_DIR, `${id}.json`);
+  const bundleVaultFile = path.join(BUNDLE_DATA_DIR, 'vault', `${id}.json`);
+  const targetFile = fs.existsSync(file) ? file : (fs.existsSync(bundleVaultFile) ? bundleVaultFile : null);
+
+  if (targetFile) {
     try {
-      const data = JSON.parse(fs.readFileSync(file, 'utf8'));
+      const data = JSON.parse(fs.readFileSync(targetFile, 'utf8'));
       return res.json(data);
     } catch (e) {
       return res.status(500).json({ error: 'Failed to read vault file.' });
@@ -234,6 +279,9 @@ app.post('/api/send-artist-email', async (req, res) => {
   cleanState.status = 'awaiting_artist_signature';
 
   // Persist clean agreement on server
+  try {
+    fs.mkdirSync(AGREEMENTS_DIR, { recursive: true });
+  } catch (e) {}
   const file = path.join(AGREEMENTS_DIR, `${cleanState.id}.json`);
   fs.writeFileSync(file, JSON.stringify(cleanState, null, 2), 'utf8');
 
@@ -475,11 +523,15 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Start listening
-app.listen(PORT, () => {
-  console.log(`\n======================================================`);
-  console.log(`  OBSCURA REC LLC - AGREEMENT CREATOR & SIGNING SERVER`);
-  console.log(`  Running at: http://localhost:${PORT}`);
-  console.log(`  Official Label Email: ocr.agreements@gmail.com`);
-  console.log(`======================================================\n`);
-});
+// Start listening locally (when not running as a Vercel serverless function)
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`\n======================================================`);
+    console.log(`  OBSCURA REC LLC - AGREEMENT CREATOR & SIGNING SERVER`);
+    console.log(`  Running at: http://localhost:${PORT}`);
+    console.log(`  Official Label Email: ocr.agreements@gmail.com`);
+    console.log(`======================================================\n`);
+  });
+}
+
+export default app;
