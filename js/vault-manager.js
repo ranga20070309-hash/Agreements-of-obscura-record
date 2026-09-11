@@ -29,7 +29,9 @@ export class VaultManager {
 
   init() {
     this.bindEvents();
-    this.refreshCount();
+    if (this.store.getMode() !== 'artist-sign') {
+      setTimeout(() => this.refreshCount(), 1200);
+    }
   }
 
   bindEvents() {
@@ -58,15 +60,18 @@ export class VaultManager {
 
     // Refresh button
     document.getElementById('btn-refresh-vault')?.addEventListener('click', () => {
-      this.loadRecords();
+      this.loadRecords(true);
     });
   }
 
   async refreshCount() {
+    if (this.store.getMode() === 'artist-sign') return;
+
     try {
       // 1. Try Firebase Realtime Database
       const fbRecords = await getVaultFromFirebase();
       if (fbRecords && fbRecords.length > 0) {
+        this.records = fbRecords;
         if (this.countBadge) {
           this.countBadge.textContent = fbRecords.length;
         }
@@ -92,14 +97,21 @@ export class VaultManager {
     if (this.searchInput) {
       this.searchInput.value = '';
     }
-    this.loadRecords();
+    this.loadRecords(false);
   }
 
   close() {
     this.modal?.classList.remove('active');
   }
 
-  async loadRecords() {
+  async loadRecords(force = false) {
+    if (!force && this.records && this.records.length > 0) {
+      this.filteredRecords = [...this.records];
+      this.render();
+      this.updateStats();
+      return;
+    }
+
     if (this.container) {
       this.container.innerHTML = `
         <div style="text-align:center; padding:30px; color:#9ca3af; font-size:13px;">

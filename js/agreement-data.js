@@ -205,18 +205,6 @@ class AgreementStore {
         this.linkStatus = 'active';
         this.state = { ...getDefaultAgreementState(), ...serverState };
         this.notify();
-
-        // 3. Attach Firebase Realtime Database live listener
-        if (this.firebaseUnsubscribe) {
-          this.firebaseUnsubscribe();
-        }
-        this.firebaseUnsubscribe = listenToAgreement(id, (liveState) => {
-          if (liveState && liveState.id === this.state.id) {
-            console.log('⚡ [Firebase RTDB] Live sync update:', liveState.status);
-            this.state = { ...this.state, ...liveState };
-            this.notify();
-          }
-        });
       } catch (e) {
         console.warn('Could not fetch agreement:', e);
         this.linkStatus = 'error';
@@ -319,11 +307,6 @@ class AgreementStore {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
       } catch (e) {
         console.error('Failed to save to localStorage:', e);
-      }
-
-      // Auto-sync active agreement state to Firebase Realtime Database
-      if (this.state && this.state.id) {
-        saveAgreementToFirebase(this.state);
       }
     }
     this.notify();
