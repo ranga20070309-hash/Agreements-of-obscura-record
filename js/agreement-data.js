@@ -2,6 +2,12 @@
  * Agreement State Management & Data Presets for Obscura Rec LLC
  */
 
+import {
+  saveAgreementToFirebase,
+  getAgreementFromFirebase,
+  listenToAgreement
+} from './firebase-config.js';
+
 const STORAGE_KEY = 'obscura_rec_agreement_data';
 const TEMPLATES_KEY = 'obscura_rec_saved_templates';
 
@@ -155,25 +161,24 @@ class AgreementStore {
       this.invalidRefId = id;
       this.linkStatus = 'loading';
       try {
-        const res = await fetch(`/api/agreements/${encodeURIComponent(id)}`);
-        if (res.status === 404) {
-          this.linkStatus = 'not_found';
-          this.invalidReason = `This agreement link (Ref ID: ${id}) does not exist or has been permanently purged from the server to optimize storage.`;
-          this.notify();
-          return;
+        // 1. First attempt to load from Firebase Realtime Database
+        let serverState = await getAgreementFromFirebase(id);
+
+        // 2. Fallback to server API if needed
+        if (!serverState) {
+          try {
+            const res = await fetch(`/api/agreements/${encodeURIComponent(id)}`);
+            if (res.ok) {
+              serverState = await res.json();
+            }
+          } catch (fetchErr) {
+            console.warn('Fallback server fetch error:', fetchErr);
+          }
         }
 
-        if (!res.ok) {
-          this.linkStatus = 'error';
-          this.invalidReason = `Could not verify signing session (Server response ${res.status}).`;
-          this.notify();
-          return;
-        }
-
-        const serverState = await res.json();
         if (!serverState || !serverState.id) {
           this.linkStatus = 'not_found';
-          this.invalidReason = `Agreement data for Ref ID ${id} could not be verified.`;
+          this.invalidReason = `This agreement link (Ref ID: ${id}) does not exist or has been permanently purged from the server to optimize storage.`;
           this.notify();
           return;
         }
@@ -200,8 +205,20 @@ class AgreementStore {
         this.linkStatus = 'active';
         this.state = { ...getDefaultAgreementState(), ...serverState };
         this.notify();
+
+        // 3. Attach Firebase Realtime Database live listener
+        if (this.firebaseUnsubscribe) {
+          this.firebaseUnsubscribe();
+        }
+        this.firebaseUnsubscribe = listenToAgreement(id, (liveState) => {
+          if (liveState && liveState.id === this.state.id) {
+            console.log('⚡ [Firebase RTDB] Live sync update:', liveState.status);
+            this.state = { ...this.state, ...liveState };
+            this.notify();
+          }
+        });
       } catch (e) {
-        console.warn('Could not fetch agreement from server:', e);
+        console.warn('Could not fetch agreement:', e);
         this.linkStatus = 'error';
         this.invalidReason = e.message;
         this.notify();
@@ -302,6 +319,11 @@ class AgreementStore {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
       } catch (e) {
         console.error('Failed to save to localStorage:', e);
+      }
+
+      // Auto-sync active agreement state to Firebase Realtime Database
+      if (this.state && this.state.id) {
+        saveAgreementToFirebase(this.state);
       }
     }
     this.notify();

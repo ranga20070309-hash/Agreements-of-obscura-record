@@ -3,6 +3,8 @@
  * Directly sends emails from ocr.agreements@gmail.com without opening desktop mail apps.
  */
 
+import { saveAgreementToFirebase } from './firebase-config.js';
+
 export class EmailSender {
   constructor(agreementStore) {
     this.store = agreementStore;
@@ -207,6 +209,9 @@ export class EmailSender {
     }
 
     try {
+      // 1. Immediately persist clean agreement state to Firebase Realtime Database
+      await saveAgreementToFirebase(cleanPayload);
+
       const res = await fetch('/api/send-artist-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -306,6 +311,14 @@ export class EmailSender {
     }
 
     try {
+      // 1. Immediately sync signed state to Firebase Realtime Database
+      const signedPayload = {
+        ...state,
+        isLockedForArtist: true,
+        status: 'artist_signed'
+      };
+      await saveAgreementToFirebase(signedPayload);
+
       const res = await fetch('/api/submit-signed-agreement', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

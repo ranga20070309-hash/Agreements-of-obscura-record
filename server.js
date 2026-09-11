@@ -27,6 +27,46 @@ const AGREEMENTS_DIR = path.join(DATA_DIR, 'agreements');
 const VAULT_DIR = path.join(DATA_DIR, 'vault');
 const CONFIG_FILE = path.join(DATA_DIR, 'mail-config.json');
 
+const FIREBASE_RTDB_URL = 'https://ocr-llc-song-agreements-default-rtdb.asia-southeast1.firebasedatabase.app';
+
+async function firebaseGet(resourcePath) {
+  try {
+    const res = await fetch(`${FIREBASE_RTDB_URL}/${resourcePath}.json`);
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (e) {
+    console.warn(`[Firebase REST] GET ${resourcePath} note:`, e.message);
+  }
+  return null;
+}
+
+async function firebaseSet(resourcePath, data) {
+  try {
+    const res = await fetch(`${FIREBASE_RTDB_URL}/${resourcePath}.json`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    return res.ok;
+  } catch (e) {
+    console.warn(`[Firebase REST] PUT ${resourcePath} note:`, e.message);
+    return false;
+  }
+}
+
+async function firebaseDelete(resourcePath) {
+  try {
+    const res = await fetch(`${FIREBASE_RTDB_URL}/${resourcePath}.json`, {
+      method: 'DELETE'
+    });
+    return res.ok;
+  } catch (e) {
+    console.warn(`[Firebase REST] DELETE ${resourcePath} note:`, e.message);
+    return false;
+  }
+}
+
 try {
   fs.mkdirSync(AGREEMENTS_DIR, { recursive: true });
   fs.mkdirSync(VAULT_DIR, { recursive: true });
@@ -102,8 +142,22 @@ app.post('/api/mail-config', (req, res) => {
 });
 
 // 2. Save / Load Agreement by Ref ID (Checks active temporary links and vault archives)
-app.get('/api/agreements/:id', (req, res) => {
+app.get('/api/agreements/:id', async (req, res) => {
   const id = req.params.id;
+
+  // 1. Try Firebase Realtime Database first
+  try {
+    const fbAgreement = await firebaseGet(`agreements/${id}`);
+    if (fbAgreement && fbAgreement.id) {
+      return res.json(fbAgreement);
+    }
+    const fbVault = await firebaseGet(`vault/${id}`);
+    if (fbVault && fbVault.id) {
+      return res.json({ ...fbVault, isArchivedInVault: true, isLockedForArtist: true });
+    }
+  } catch (e) {}
+
+  // 2. Fallback to local filesystem
   const tempFile = path.join(AGREEMENTS_DIR, `${id}.json`);
   const bundleTempFile = path.join(BUNDLE_DATA_DIR, 'agreements', `${id}.json`);
   const targetTemp = fs.existsSync(tempFile) ? tempFile : (fs.existsSync(bundleTempFile) ? bundleTempFile : null);
@@ -134,11 +188,16 @@ app.get('/api/agreements/:id', (req, res) => {
   res.status(404).json({ error: 'Agreement not found.' });
 });
 
-app.post('/api/agreements', (req, res) => {
+app.post('/api/agreements', async (req, res) => {
   const state = req.body;
   if (!state || !state.id) {
     return res.status(400).json({ error: 'Invalid agreement data (missing id).' });
   }
+
+  // 1. Sync to Firebase Realtime Database
+  await firebaseSet(`agreements/${state.id}`, state);
+
+  // 2. Local fallback
   try {
     fs.mkdirSync(AGREEMENTS_DIR, { recursive: true });
   } catch (e) {}
@@ -150,7 +209,7 @@ app.post('/api/agreements', (req, res) => {
 // ----------------- AGREEMENT VAULT & LIFECYCLE -----------------
 
 // Finalize contract: Save into permanent Vault and PURGE temporary link file
-app.post('/api/finalize-to-vault', (req, res) => {
+app.post('/api/finalize-to-vault', async (req, res) => {
   const state = req.body;
   if (!state || !state.id) {
     return res.status(400).json({ error: 'Missing agreement state.' });
@@ -161,15 +220,19 @@ app.post('/api/finalize-to-vault', (req, res) => {
   state.isLockedForArtist = true;
   state.status = 'fully_executed';
 
+  // 1. Sync to Firebase Realtime Database Vault and purge from active queue
+  await firebaseSet(`vault/${state.id}`, state);
+  await firebaseDelete(`agreements/${state.id}`);
+
+  // 2. Local fallback
   try {
     fs.mkdirSync(VAULT_DIR, { recursive: true });
   } catch (e) {}
 
-  // 1. Save to permanent vault
   const vaultFile = path.join(VAULT_DIR, `${state.id}.json`);
   fs.writeFileSync(vaultFile, JSON.stringify(state, null, 2), 'utf8');
 
-  // 2. Permanently delete temporary signing link file to save hosting storage quota
+  // Permanently delete temporary signing link file to save hosting storage quota
   const tempFile = path.join(AGREEMENTS_DIR, `${state.id}.json`);
   if (fs.existsSync(tempFile)) {
     try {
@@ -184,7 +247,40 @@ app.post('/api/finalize-to-vault', (req, res) => {
 });
 
 // List all agreements in the Vault for search & management
-app.get('/api/vault', (req, res) => {
+app.get('/api/vault', async (req, res) => {
+  try {
+    // 1. Try Firebase Realtime Database first
+    const fbVault = await firebaseGet('vault');
+    if (fbVault && typeof fbVault === 'object') {
+      const records = [];
+      Object.keys(fbVault).forEach(key => {
+        const c = fbVault[key];
+        if (c && typeof c === 'object') {
+          records.push({
+            id: c.id || key,
+            finalizedAt: c.finalizedAt || c.createdAt || new Date().toISOString(),
+            artistLegalName: c.artist?.legalName || '',
+            artistStageName: c.artist?.stageName || '',
+            artistEmail: c.artist?.email || '',
+            labelRepresentative: c.label?.representative || '',
+            trackCount: Array.isArray(c.tracks) ? c.tracks.length : 0,
+            firstTrackTitle: c.tracks?.[0]?.title || '',
+            tracksList: Array.isArray(c.tracks) ? c.tracks.map(t => t.title).filter(Boolean) : [],
+            hasArtistSignature: Boolean(c.artist?.signature),
+            hasLabelSignature: Boolean(c.label?.signature),
+            artistSigHash: c.artist?.signature?.hash || 'Verified',
+            artistSigTimestamp: c.artist?.signature?.timestamp || '',
+            labelSigTimestamp: c.label?.signature?.timestamp || ''
+          });
+        }
+      });
+      records.sort((a, b) => new Date(b.finalizedAt || 0) - new Date(a.finalizedAt || 0));
+      return res.json({ success: true, records, count: records.length });
+    }
+  } catch (e) {
+    console.warn('Firebase vault fetch note:', e.message);
+  }
+
   try {
     const fileSet = new Set();
     if (fs.existsSync(VAULT_DIR)) {
@@ -230,8 +326,17 @@ app.get('/api/vault', (req, res) => {
 });
 
 // Get full agreement data from Vault by ID
-app.get('/api/vault/:id', (req, res) => {
+app.get('/api/vault/:id', async (req, res) => {
   const id = req.params.id;
+
+  // 1. Check Firebase Realtime Database
+  try {
+    const fbRecord = await firebaseGet(`vault/${id}`);
+    if (fbRecord && fbRecord.id) {
+      return res.json(fbRecord);
+    }
+  } catch (e) {}
+
   const file = path.join(VAULT_DIR, `${id}.json`);
   const bundleVaultFile = path.join(BUNDLE_DATA_DIR, 'vault', `${id}.json`);
   const targetFile = fs.existsSync(file) ? file : (fs.existsSync(bundleVaultFile) ? bundleVaultFile : null);
@@ -248,8 +353,13 @@ app.get('/api/vault/:id', (req, res) => {
 });
 
 // Delete agreement from Vault (Storage management)
-app.delete('/api/vault/:id', (req, res) => {
-  const file = path.join(VAULT_DIR, `${req.params.id}.json`);
+app.delete('/api/vault/:id', async (req, res) => {
+  const id = req.params.id;
+
+  // 1. Delete from Firebase Realtime Database
+  await firebaseDelete(`vault/${id}`);
+
+  const file = path.join(VAULT_DIR, `${id}.json`);
   if (fs.existsSync(file)) {
     try {
       fs.unlinkSync(file);
@@ -258,7 +368,7 @@ app.delete('/api/vault/:id', (req, res) => {
       return res.status(500).json({ error: 'Failed to delete file: ' + e.message });
     }
   }
-  res.status(404).json({ error: 'Record not found in vault.' });
+  res.json({ success: true, message: `Agreement ${id} permanently deleted from vault.` });
 });
 
 // 3. Send Branded Email to Artist from ocr.agreements@gmail.com
@@ -278,7 +388,8 @@ app.post('/api/send-artist-email', async (req, res) => {
   cleanState.isLockedForArtist = false;
   cleanState.status = 'awaiting_artist_signature';
 
-  // Persist clean agreement on server
+  // Persist clean agreement on server and Firebase
+  await firebaseSet(`agreements/${cleanState.id}`, cleanState);
   try {
     fs.mkdirSync(AGREEMENTS_DIR, { recursive: true });
   } catch (e) {}
@@ -465,7 +576,11 @@ app.post('/api/submit-signed-agreement', async (req, res) => {
   state.artistSignedAt = new Date().toISOString();
   state.status = 'artist_signed';
 
-  // Save locked contract on server
+  // Save locked contract on server and Firebase Realtime Database
+  await firebaseSet(`agreements/${state.id}`, state);
+  try {
+    fs.mkdirSync(AGREEMENTS_DIR, { recursive: true });
+  } catch (e) {}
   fs.writeFileSync(file, JSON.stringify(state, null, 2), 'utf8');
 
   const transporter = getTransporter();

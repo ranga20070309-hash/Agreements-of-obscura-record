@@ -5,6 +5,12 @@
  */
 
 import { generatePdfFileName, exportToPdf } from './pdf-export.js';
+import {
+  finalizeToFirebaseVault,
+  getVaultFromFirebase,
+  getAgreementFromFirebase,
+  deleteFromFirebaseVault
+} from './firebase-config.js';
 
 export class VaultManager {
   constructor(store, onExamineCallback) {
@@ -58,6 +64,16 @@ export class VaultManager {
 
   async refreshCount() {
     try {
+      // 1. Try Firebase Realtime Database
+      const fbRecords = await getVaultFromFirebase();
+      if (fbRecords && fbRecords.length > 0) {
+        if (this.countBadge) {
+          this.countBadge.textContent = fbRecords.length;
+        }
+        return;
+      }
+
+      // 2. Fallback to server API
       const res = await fetch('/api/vault');
       if (res.ok) {
         const data = await res.json();
@@ -87,16 +103,29 @@ export class VaultManager {
     if (this.container) {
       this.container.innerHTML = `
         <div style="text-align:center; padding:30px; color:#9ca3af; font-size:13px;">
-          ⏳ Loading Vault archives...
+          ⏳ Loading Vault archives from Firebase Cloud...
         </div>
       `;
     }
 
     try {
-      const res = await fetch('/api/vault');
-      if (!res.ok) throw new Error('Failed to fetch vault');
-      const data = await res.json();
-      this.records = data.records || [];
+      // 1. Fetch from Firebase Realtime Database
+      let records = await getVaultFromFirebase();
+
+      // 2. Fallback to server API if needed
+      if (!records || records.length === 0) {
+        try {
+          const res = await fetch('/api/vault');
+          if (res.ok) {
+            const data = await res.json();
+            records = data.records || [];
+          }
+        } catch (serverErr) {
+          console.warn('Vault server fetch fallback note:', serverErr);
+        }
+      }
+
+      this.records = records || [];
       this.filteredRecords = [...this.records];
       this.render();
       this.updateStats();
@@ -108,7 +137,7 @@ export class VaultManager {
       if (this.container) {
         this.container.innerHTML = `
           <div style="text-align:center; padding:30px; color:#ef4444; font-size:13px;">
-            ⚠️ Could not load agreements from server: ${err.message}
+            ⚠️ Could not load agreements: ${err.message}
           </div>
         `;
       }
@@ -235,9 +264,18 @@ export class VaultManager {
 
   async examine(id) {
     try {
-      const res = await fetch(`/api/vault/${encodeURIComponent(id)}`);
-      if (!res.ok) throw new Error('Could not find vault agreement.');
-      const data = await res.json();
+      // 1. Try Firebase Realtime Database
+      let data = await getAgreementFromFirebase(id);
+
+      // 2. Fallback to server API
+      if (!data) {
+        const res = await fetch(`/api/vault/${encodeURIComponent(id)}`);
+        if (res.ok) {
+          data = await res.json();
+        }
+      }
+
+      if (!data) throw new Error('Could not find vault agreement in Firebase or server.');
       
       if (this.onExamineCallback) {
         this.onExamineCallback(data);
@@ -251,9 +289,18 @@ export class VaultManager {
 
   async downloadPdf(id) {
     try {
-      const res = await fetch(`/api/vault/${encodeURIComponent(id)}`);
-      if (!res.ok) throw new Error('Could not fetch agreement data.');
-      const data = await res.json();
+      // 1. Try Firebase Realtime Database
+      let data = await getAgreementFromFirebase(id);
+
+      // 2. Fallback to server API
+      if (!data) {
+        const res = await fetch(`/api/vault/${encodeURIComponent(id)}`);
+        if (res.ok) {
+          data = await res.json();
+        }
+      }
+
+      if (!data) throw new Error('Could not fetch agreement data.');
 
       // Temporarily load into store or render target to export
       if (this.onExamineCallback) {
@@ -270,21 +317,23 @@ export class VaultManager {
   }
 
   async purge(id) {
-    if (!confirm(`Are you sure you want to permanently delete agreement ${id} from the Vault?\n\nThis permanently purges the file from the server to free up hosting storage.`)) {
+    if (!confirm(`Are you sure you want to permanently delete agreement ${id} from the Vault?\n\nThis permanently deletes the contract from Firebase Realtime Database and the server.`)) {
       return;
     }
 
     try {
-      const res = await fetch(`/api/vault/${encodeURIComponent(id)}`, {
-        method: 'DELETE'
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        window.showVaultToast(`Agreement ${id} permanently purged from vault.`);
-        this.loadRecords();
-      } else {
-        alert(data.error || 'Failed to delete agreement.');
-      }
+      // 1. Delete from Firebase Realtime Database
+      await deleteFromFirebaseVault(id);
+
+      // 2. Also delete from server API
+      try {
+        await fetch(`/api/vault/${encodeURIComponent(id)}`, {
+          method: 'DELETE'
+        });
+      } catch (e) {}
+
+      window.showVaultToast(`Agreement ${id} permanently purged from vault.`);
+      this.loadRecords();
     } catch (err) {
       alert('Error deleting agreement: ' + err.message);
     }
@@ -293,19 +342,22 @@ export class VaultManager {
   // Finalize an active agreement to the vault
   async finalizeAgreement(state) {
     try {
-      const res = await fetch('/api/finalize-to-vault', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(state)
-      });
+      // 1. Save directly to Firebase Realtime Database Vault
+      await finalizeToFirebaseVault(state);
 
-      const data = await res.json();
-      if (res.ok && data.success) {
-        this.refreshCount();
-        return { success: true, id: state.id };
-      } else {
-        throw new Error(data.error || 'Failed to finalize to vault.');
+      // 2. Also sync to server API
+      try {
+        await fetch('/api/finalize-to-vault', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(state)
+        });
+      } catch (serverErr) {
+        console.warn('Server finalize note:', serverErr);
       }
+
+      this.refreshCount();
+      return { success: true, id: state.id };
     } catch (err) {
       console.error('Finalize error:', err);
       throw err;
