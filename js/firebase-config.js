@@ -66,10 +66,19 @@ export function onAdminAuthStateChanged(callback) {
   const authInstance = getAuthInstance();
   if (!authInstance) {
     if (typeof window !== 'undefined') {
-      window.addEventListener('load', () => {
+      const trySubscribe = () => {
         const a = getAuthInstance();
-        if (a) a.onAuthStateChanged(callback);
-      });
+        if (a) {
+          a.onAuthStateChanged(callback);
+        } else {
+          callback(null);
+        }
+      };
+      if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        setTimeout(trySubscribe, 50);
+      } else {
+        window.addEventListener('load', trySubscribe);
+      }
     }
     return () => {};
   }

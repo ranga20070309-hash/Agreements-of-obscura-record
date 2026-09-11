@@ -18,7 +18,11 @@ class AgreementApp {
     this.pagesWrapper = null;
     
     // Components
-    this.authManager = new AuthManager(this.store);
+    try {
+      this.authManager = new AuthManager(this.store);
+    } catch (authErr) {
+      console.warn('AuthManager initialization error:', authErr);
+    }
     this.sigEngine = new SignatureEngine(this.store, (party) => this.onSignatureUpdated(party));
     this.emailSender = new EmailSender(this.store);
     this.vaultManager = new VaultManager(this.store, (archived) => this.loadArchivedContract(archived));

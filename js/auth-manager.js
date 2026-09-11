@@ -45,8 +45,16 @@ export class AuthManager {
     // Bind event listeners
     this.bindEvents();
 
+    const safetyTimer = setTimeout(() => {
+      document.body.classList.remove('auth-checking');
+      if (!this.currentUser) {
+        this.onUserLoggedOut();
+      }
+    }, 1000);
+
     // Listen to Firebase Auth state
     onAdminAuthStateChanged((user) => {
+      clearTimeout(safetyTimer);
       document.body.classList.remove('auth-checking');
       if (user) {
         this.onUserLoggedIn(user);
