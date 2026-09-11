@@ -51,6 +51,11 @@ class AgreementApp {
   }
 
   showInvalidLinkScreen(status, refId, reason) {
+    const loader = document.getElementById('artist-initial-loader');
+    if (loader) {
+      loader.classList.add('fade-out');
+    }
+
     document.body.classList.add('state-invalid-link');
     const screen = document.getElementById('invalid-link-screen');
     if (!screen) return;
@@ -683,6 +688,13 @@ class AgreementApp {
 
     this.pagesWrapper = document.getElementById('printable-document');
     this.applyZoom();
+
+    const loader = document.getElementById('artist-initial-loader');
+    if (loader && !loader.classList.contains('fade-out')) {
+      setTimeout(() => {
+        loader.classList.add('fade-out');
+      }, 150);
+    }
   }
 
   // Status Badge Updater

@@ -6,25 +6,96 @@
   <title>Obscura Rec LLC | Agreement Creator & Digital Signer</title>
   <meta name="description" content="Official Act of Acceptance and Transfer of Objects agreement generator and digital signing platform for Obscura Rec LLC artists and producers.">
   
-  <!-- Favicon -->
-  <link rel="icon" type="image/jpeg" href="./assets/ocr-logo.jpeg">
+  <script>
+    (function() {
+      try {
+        var p = new URLSearchParams(window.location.search);
+        var m = p.get('mode');
+        if (m === 'artist-sign') {
+          document.documentElement.classList.add('mode-artist-sign');
+        } else if (m === 'counter-sign') {
+          document.documentElement.classList.add('mode-counter-sign');
+        }
+      } catch(e) {}
+    })();
+  </script>
 
-  <!-- Stylesheets -->
+  <style>
+    html.mode-artist-sign .sidebar-configurator,
+    html.mode-counter-sign .sidebar-configurator,
+    html.mode-artist-sign .sidebar-resizer,
+    html.mode-counter-sign .sidebar-resizer,
+    html.mode-artist-sign #btn-open-vault,
+    html.mode-artist-sign #btn-open-templates,
+    html.mode-artist-sign #btn-reset-agreement,
+    html.mode-artist-sign #btn-send-to-artist,
+    html.mode-artist-sign #btn-print-doc,
+    html.mode-artist-sign #btn-export-pdf,
+    html.mode-artist-sign #btn-artist-download-pdf,
+    html.mode-artist-sign #header-status-badge {
+      display: none !important;
+    }
+    html.mode-artist-sign .app-container,
+    html.mode-counter-sign .app-container {
+      grid-template-columns: 1fr !important;
+    }
+    html.mode-artist-sign .document-viewport {
+      width: 100% !important;
+    }
+    .artist-initial-loader {
+      position: fixed;
+      inset: 0;
+      background: #0c0e14;
+      z-index: 99999;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.35s ease, visibility 0.35s ease;
+    }
+    html.mode-artist-sign .artist-initial-loader {
+      display: flex !important;
+    }
+    .artist-initial-loader.fade-out {
+      opacity: 0 !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+    .artist-loader-spinner {
+      width: 34px;
+      height: 34px;
+      border: 3px solid rgba(201, 160, 80, 0.2);
+      border-top-color: #c9a050;
+      border-radius: 50%;
+      animation: spin-loader 0.8s linear infinite;
+      margin: 18px 0 12px;
+    }
+    @keyframes spin-loader {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+
+  <link rel="icon" type="image/jpeg" href="./assets/ocr-logo.jpeg">
   <link rel="stylesheet" href="./css/index.css">
   <link rel="stylesheet" href="./css/document.css">
   <link rel="stylesheet" href="./css/print.css" media="print">
 
-  <!-- Client-side PDF Engines: Local High-Precision html2canvas & jsPDF -->
   <script src="./js/libs/html2canvas.min.js"></script>
   <script src="./js/libs/jspdf.umd.min.js"></script>
 
-  <!-- Firebase Realtime Database SDK (Official Google CDN) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 </head>
 <body>
 
-  <!-- Top Application Navigation Bar -->
+  <div id="artist-initial-loader" class="artist-initial-loader">
+    <img src="./assets/ocr-logo.jpeg" alt="Obscura Rec LLC" style="width:54px; height:54px; border-radius:12px; border:1px solid rgba(201,160,80,0.35);" />
+    <div style="font-size:16px; font-weight:800; color:#c9a050; letter-spacing:1.2px; margin-top:12px;">OBSCURA REC LLC</div>
+    <div style="font-size:12px; color:#9ca3af; margin-top:3px;">Official Digital Signing Portal</div>
+    <div class="artist-loader-spinner"></div>
+    <div style="font-size:11.5px; color:#6b7280; letter-spacing:0.5px;">Securing Agreement Session...</div>
+  </div>
+
   <header class="app-header">
     <div class="brand-section">
       <div class="brand-logo-wrap">
@@ -41,7 +112,6 @@
       </div>
     </div>
 
-    <!-- Right Header Actions -->
     <div class="header-actions">
       <button class="btn btn-secondary" id="btn-open-vault" title="Search and examine archived agreements in Vault">
         🏛️ Agreement Vault <span class="badge" id="vault-count-badge">0</span>
@@ -59,29 +129,24 @@
         ⬇️ Download PDF
       </button>
 
-      <!-- Label Primary CTA: Send to Artist -->
       <button class="btn btn-emerald" id="btn-send-to-artist" title="Send agreement to artist for digital signature">
         ✉️ Send to Artist to Sign
       </button>
 
-      <!-- Artist Primary CTA: Submit Signed Agreement (shown only in artist-sign mode) -->
       <button class="btn btn-emerald" id="btn-submit-artist-agreement" style="display:none;" title="Submit executed agreement to Obscura Rec LLC">
         ✓ Submit Signed Agreement
       </button>
 
-      <!-- Artist Sealed/Locked CTA -->
       <button class="btn btn-secondary" id="btn-artist-sealed-status" style="display:none;" disabled title="This agreement has already been executed and sealed.">
         🔒 Signed & Sealed (Link Expired)
       </button>
 
-      <!-- Counter-Sign CTA: Finalize (shown only in counter-sign mode) -->
       <button class="btn btn-gold" id="btn-finalize-countersign" style="display:none;" title="Counter-sign and finalize agreement">
         ✓ Finalize Agreement
       </button>
     </div>
   </header>
 
-  <!-- Specialized Role Guidance Banners -->
   <div class="role-banner banner-artist-sign" id="banner-artist-mode" style="display:none;">
     <div class="role-banner-content">
       <span class="role-banner-icon">✍️</span>
@@ -92,7 +157,6 @@
     </div>
   </div>
 
-  <!-- Artist Locked/Expired Link Banner -->
   <div class="role-banner banner-artist-locked" id="banner-artist-locked" style="display:none;">
     <div class="role-banner-content">
       <span class="role-banner-icon">🔒</span>
@@ -113,7 +177,6 @@
     </div>
   </div>
 
-  <!-- ================= FULL-PAGE SCREEN: LINK EXPIRED / URL INVALID ================= -->
   <div id="invalid-link-screen" class="invalid-link-screen" style="display:none;">
     <div class="invalid-card">
       <div class="invalid-icon-wrap" id="invalid-icon-wrap">
@@ -147,15 +210,12 @@
       </div>
 
       <div class="invalid-actions">
-        <!-- Executed PDF Download (Optional for Label/Admin) -->
         <button class="btn btn-outline-gold" id="btn-invalid-download-pdf" style="display:none; align-items:center; gap:8px; padding:12px 24px; font-weight:700;">
           <span>⬇️ Download Executed PDF</span>
         </button>
-        <!-- Return to Creator (Shown for Label only, NEVER for Artist) -->
         <a href="/" class="btn btn-gold" id="btn-invalid-return-home" style="text-decoration:none; display:inline-flex; align-items:center; gap:8px; padding:12px 24px; font-weight:700;">
           <span>🏛️ Return to Agreement Creator</span>
         </a>
-        <!-- Safe Close Notice for Artist (Artist never sees link to Creator) -->
         <div id="artist-safe-close-notice" style="display:none; text-align:center; color:#94a3b8; font-size:14px; padding:14px 24px; background:rgba(255,255,255,0.04); border-radius:8px; border:1px solid rgba(255,255,255,0.08); width:100%;">
           🔒 <strong>You may safely close this browser window or tab now.</strong>
         </div>
@@ -167,10 +227,8 @@
     </div>
   </div>
 
-  <!-- Main Work Area (Split View: Configurator + Live Document Preview) -->
   <main class="app-container">
     
-    <!-- Left Sidebar: Agreement Configurator -->
     <aside class="sidebar-configurator">
       <div class="sidebar-header">
         <div class="sidebar-title">
@@ -183,7 +241,6 @@
 
       <div class="accordion-group">
 
-        <!-- Accordion 1: Parties & General Details -->
         <div class="accordion-item" id="accordion-parties">
           <div class="accordion-header">
             <div class="accordion-header-title">
@@ -193,7 +250,6 @@
             <span class="accordion-toggle-icon">▼</span>
           </div>
           <div class="accordion-body">
-            <!-- Label Info -->
             <div style="font-size: 11px; font-weight: 700; color: #c9a050; text-transform: uppercase; letter-spacing: 0.5px;">
               Label Details (Obscura Rec LLC)
             </div>
@@ -212,7 +268,6 @@
               <input type="date" id="input-label-date" class="form-control" />
             </div>
 
-            <!-- Artist Info -->
             <div style="font-size: 11px; font-weight: 700; color: #c9a050; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 6px;">
               Artist Details
             </div>
@@ -239,7 +294,6 @@
           </div>
         </div>
 
-        <!-- Accordion 2: Section 2 - Dynamic Objects & Tracks -->
         <div class="accordion-item" id="accordion-tracks">
           <div class="accordion-header">
             <div class="accordion-header-title">
@@ -256,7 +310,6 @@
               </button>
             </div>
 
-            <!-- Quick Version Presets -->
             <div class="track-quick-bar">
               <span style="font-size:11px; color:#6b7280; width:100%;">Quick Version Presets:</span>
               <button class="btn-preset-mini" id="btn-preset-slowed-spedup">
@@ -267,14 +320,10 @@
               </button>
             </div>
 
-            <!-- Dynamic Track Cards Container -->
-            <div class="tracks-container" id="tracks-container">
-              <!-- Dynamically rendered by app.js -->
-            </div>
+            <div class="tracks-container" id="tracks-container"></div>
           </div>
         </div>
 
-        <!-- Accordion 3: Section 3 & 4 - Terms & Delivery -->
         <div class="accordion-item" id="accordion-terms">
           <div class="accordion-header">
             <div class="accordion-header-title">
@@ -305,7 +354,6 @@
           </div>
         </div>
 
-        <!-- Accordion 4: Digital Signing Station -->
         <div class="accordion-item" id="accordion-signatures">
           <div class="accordion-header">
             <div class="accordion-header-title">
@@ -315,7 +363,6 @@
             <span class="accordion-toggle-icon">▼</span>
           </div>
           <div class="accordion-body">
-            <!-- Label Signature Card -->
             <div class="signing-party-card">
               <div class="signing-party-header">
                 <div class="signing-party-name">Label: Obscura Rec LLC</div>
@@ -332,7 +379,6 @@
               </div>
             </div>
 
-            <!-- Artist Signature Card -->
             <div class="signing-party-card">
               <div class="signing-party-header">
                 <div class="signing-party-name">Artist Signature</div>
@@ -354,15 +400,11 @@
       </div>
     </aside>
 
-    <!-- Draggable Sidebar Resizer Handle -->
     <div class="sidebar-resizer" id="sidebar-resizer" title="Drag left/right to resize configurator panel (Double-click to reset)">
       <div class="resizer-handle-line"></div>
     </div>
 
-    <!-- Right Pane: Realistic A4 Paginated Document Preview -->
     <section class="document-viewport" id="document-viewport">
-      
-      <!-- Floating Document Toolbar -->
       <div class="doc-toolbar" id="doc-toolbar">
         <button class="btn btn-icon-only btn-secondary" id="btn-zoom-out" title="Zoom Out">🔍−</button>
         <span class="zoom-level-text" id="zoom-display-val">100%</span>
@@ -371,15 +413,11 @@
         <button class="btn btn-secondary" id="btn-zoom-reset" title="Reset Zoom to 100%">1:1</button>
       </div>
 
-      <!-- Live A4 Pages Target -->
-      <div id="document-render-target">
-        <!-- Rendered dynamically by document-renderer.js -->
-      </div>
+      <div id="document-render-target"></div>
     </section>
 
   </main>
 
-  <!-- ================= MODAL 1: DIGITAL SIGNATURE PAD ================= -->
   <div class="modal-backdrop" id="signature-modal">
     <div class="modal-dialog">
       <div class="modal-header">
@@ -390,15 +428,12 @@
         <button class="modal-close-btn" id="close-sig-modal-btn">✕</button>
       </div>
       <div class="modal-body">
-        
-        <!-- Tab Navigation (Draw / Type / Upload) -->
         <div class="sig-tabs-nav">
           <button class="sig-tab-btn active" data-tab="draw">✏️ Draw Signature</button>
           <button class="sig-tab-btn" data-tab="type">⌨️ Type Signature</button>
           <button class="sig-tab-btn" data-tab="upload">📁 Upload Image</button>
         </div>
 
-        <!-- TAB 1: DRAW CANVAS -->
         <div id="sig-tab-draw">
           <div class="sig-canvas-box">
             <canvas id="signature-canvas"></canvas>
@@ -417,7 +452,6 @@
           </div>
         </div>
 
-        <!-- TAB 2: TYPE SIGNATURE -->
         <div id="sig-tab-type" style="display:none;">
           <div class="type-sig-container">
             <div class="form-group">
@@ -425,13 +459,10 @@
               <input type="text" id="type-sig-name-input" class="form-control" placeholder="Full Name or Alias" />
             </div>
             <div style="font-size:11.5px; color:#9ca3af; margin-top:2px;">Select handwriting calligraphy style:</div>
-            <div class="cursive-fonts-list" id="cursive-fonts-list">
-              <!-- Dynamically rendered -->
-            </div>
+            <div class="cursive-fonts-list" id="cursive-fonts-list"></div>
           </div>
         </div>
 
-        <!-- TAB 3: UPLOAD SIGNATURE -->
         <div id="sig-tab-upload" style="display:none;">
           <div class="form-group">
             <label class="form-label">Upload transparent PNG / JPEG signature image:</label>
@@ -442,7 +473,6 @@
           </div>
         </div>
 
-        <!-- Legal Consent Agreement Checkbox -->
         <div style="display:flex; align-items:flex-start; gap:10px; background:#11141e; padding:12px; border-radius:8px; border:1px solid #24293c; margin-top:6px;">
           <input type="checkbox" id="sig-consent-checkbox" style="margin-top:3px; accent-color:#c9a050;" />
           <label for="sig-consent-checkbox" style="font-size:11.5px; color:#d1d5db; line-height:1.4; cursor:pointer;">
@@ -450,7 +480,6 @@
             <strong>Act of Acceptance and Transfer of Objects</strong> with Obscura Rec LLC.
           </label>
         </div>
-
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" id="cancel-sig-btn">Cancel</button>
@@ -461,8 +490,6 @@
     </div>
   </div>
 
-  <!-- ================= MODAL 2: FINISH & FORWARD VIA EMAIL ================= -->
-  <!-- ================= MODAL 2: SEND AGREEMENT TO ARTIST FOR SIGNATURE ================= -->
   <div class="modal-backdrop" id="send-artist-modal">
     <div class="modal-dialog" style="max-width: 680px;">
       <div class="modal-header">
@@ -473,8 +500,6 @@
         <button class="modal-close-btn" id="close-send-modal-btn">✕</button>
       </div>
       <div class="modal-body">
-        
-        <!-- Mail Server Status Bar -->
         <div style="display:flex; justify-content:space-between; align-items:center; background:#0c0f17; border:1px solid #252b3d; padding:8px 14px; border-radius:8px; margin-bottom:14px;">
           <div style="font-size:12px; font-weight:700;" id="gmail-status-indicator">
             <span style="color:#10b981;">🟢 Ready: ocr.agreements@gmail.com</span>
@@ -484,14 +509,12 @@
           </button>
         </div>
 
-        <!-- Collapsible Gmail App Password Configuration Box -->
         <div id="gmail-config-box" style="display:none; background:#141824; border:1px solid #c9a050; padding:14px; border-radius:8px; margin-bottom:14px;">
           <div style="font-size:12.5px; font-weight:700; color:#c9a050; margin-bottom:6px;">
             🔑 Connect ocr.agreements@gmail.com (Google App Password)
           </div>
           <p style="font-size:11.5px; color:#d1d5db; margin:0 0 10px 0; line-height:1.4;">
-            To send automated emails directly from <strong>ocr.agreements@gmail.com</strong> without any desktop app pop-ups, enter a 16-character Google App Password 
-            (Generated from: <em>Google Account &gt; Security &gt; 2-Step Verification &gt; App Passwords</em>):
+            To send automated emails directly from <strong>ocr.agreements@gmail.com</strong> without any desktop app pop-ups, enter a 16-character Google App Password:
           </p>
           <div style="display:flex; gap:8px;">
             <input type="password" id="input-gmail-app-password" class="form-control" placeholder="abcd efgh ijkl mnop" style="font-family:monospace; letter-spacing:1px;" />
@@ -501,7 +524,6 @@
           </div>
         </div>
 
-        <!-- Recipient & Link Box -->
         <div style="background:#11141e; padding:14px; border-radius:8px; border:1px solid #24293c; margin-bottom:16px;">
           <div class="form-row">
             <div class="form-group" style="flex:1;">
@@ -524,21 +546,16 @@
           </div>
         </div>
 
-        <!-- Branded Email Preview Section -->
         <div style="margin-bottom:16px;">
           <div style="font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:0.8px; color:#c9a050; margin-bottom:8px;">
             Live Invitation Email Preview (Delivered to Artist's Inbox):
           </div>
-          <div id="email-template-preview-box">
-            <!-- Rendered dynamically by email-sender.js -->
-          </div>
+          <div id="email-template-preview-box"></div>
         </div>
 
-        <!-- Primary Action: Direct In-Site Dispatch -->
         <button class="btn btn-emerald" id="btn-send-direct-email" style="width:100%; font-size:14.5px; padding:13px; font-weight:800; box-shadow: 0 4px 15px rgba(16,185,129,0.3);">
           🚀 Send Agreement to Artist (via ocr.agreements@gmail.com)
         </button>
-
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="document.getElementById('send-artist-modal').classList.remove('active')">
@@ -548,7 +565,6 @@
     </div>
   </div>
 
-  <!-- ================= MODAL 3: ARTIST SUBMISSION MODAL ================= -->
   <div class="modal-backdrop" id="submit-artist-modal">
     <div class="modal-dialog" style="max-width: 580px;">
       <div class="modal-header">
@@ -559,10 +575,7 @@
         <button class="modal-close-btn" id="close-submit-modal-btn">✕</button>
       </div>
       <div class="modal-body">
-        
-        <div id="submit-artist-summary-box" style="margin-bottom:16px;">
-          <!-- Dynamically filled -->
-        </div>
+        <div id="submit-artist-summary-box" style="margin-bottom:16px;"></div>
 
         <p style="font-size:13px; color:#d1d5db; margin:0 0 18px 0; line-height:1.55; text-align:center;">
           Your digital signature has been recorded. Click below to securely deliver your executed agreement directly to 
@@ -574,7 +587,6 @@
             🚀 Submit Executed Agreement
           </button>
         </div>
-
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="document.getElementById('submit-artist-modal').classList.remove('active')">
@@ -584,7 +596,6 @@
     </div>
   </div>
 
-  <!-- ================= MODAL 3: TEMPLATES & BACKUP ================= -->
   <div class="modal-backdrop" id="template-modal">
     <div class="modal-dialog">
       <div class="modal-header">
@@ -595,8 +606,6 @@
         <button class="modal-close-btn" id="close-template-modal-btn">✕</button>
       </div>
       <div class="modal-body">
-        
-        <!-- Save Current Form as Template -->
         <div style="background:#11141e; padding:14px; border-radius:8px; border:1px solid #24293c;">
           <div style="font-size:13px; font-weight:700; color:#c9a050; margin-bottom:8px;">
             Save Current Agreement as Template
@@ -611,15 +620,11 @@
           </div>
         </div>
 
-        <!-- Saved Templates List -->
         <div style="font-size:12px; font-weight:700; color:#ffffff; margin-top:4px;">
           Saved Templates in Browser:
         </div>
-        <div id="saved-templates-list" style="display:flex; flex-direction:column; gap:8px; max-height:180px; overflow-y:auto;">
-          <!-- Dynamically populated -->
-        </div>
+        <div id="saved-templates-list" style="display:flex; flex-direction:column; gap:8px; max-height:180px; overflow-y:auto;"></div>
 
-        <!-- JSON File Import & Export -->
         <div style="background:#11141e; padding:14px; border-radius:8px; border:1px solid #24293c; margin-top:6px;">
           <div style="font-size:13px; font-weight:700; color:#9ca3af; margin-bottom:8px;">
             Backup & Data Portability
@@ -634,7 +639,6 @@
             </label>
           </div>
         </div>
-
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="document.getElementById('template-modal').classList.remove('active')">
@@ -644,7 +648,6 @@
     </div>
   </div>
 
-  <!-- ================= MODAL 4: AGREEMENT VAULT & SEARCH ================= -->
   <div class="modal-backdrop" id="vault-modal">
     <div class="modal-dialog vault-dialog">
       <div class="modal-header">
@@ -655,8 +658,6 @@
         <button class="modal-close-btn" id="close-vault-modal-btn">✕</button>
       </div>
       <div class="modal-body">
-        
-        <!-- Search bar & Controls -->
         <div class="vault-header-row">
           <div style="font-size:12px; color:#9ca3af;" id="vault-stats-label">
             Loading archived agreements...
@@ -672,11 +673,7 @@
           <button class="btn-ghost-icon" id="btn-clear-vault-search" title="Clear search" style="background:transparent; border:none; color:#9ca3af; cursor:pointer; font-size:14px;">✕</button>
         </div>
 
-        <!-- Records List Container -->
-        <div id="vault-records-container">
-          <!-- Dynamically populated -->
-        </div>
-
+        <div id="vault-records-container"></div>
       </div>
       <div class="modal-footer" style="justify-content:space-between;">
         <div style="font-size:11px; color:#6b7280;">
@@ -689,10 +686,8 @@
     </div>
   </div>
 
-  <!-- Toast Notification Container -->
   <div class="toast-container" id="toast-container"></div>
 
-  <!-- Main Application Script -->
   <script type="module" src="./js/app.js"></script>
 </body>
 </html>

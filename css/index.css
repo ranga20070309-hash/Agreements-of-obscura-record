@@ -1,7 +1,4 @@
-/* ==========================================================================
-   OBSCURA REC LLC - AGREEMENT CREATOR & DIGITAL SIGNING PLATFORM
-   Design System & Modern Luxury Dark Theme
-   ========================================================================== */
+
 
 @import url('https://fonts.googleapis.com/css2?family=Alex+Brush&family=Caveat:wght@600;700&family=Dancing+Script:wght@600;700&family=Great+Vibes&family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
@@ -54,7 +51,6 @@ body {
   flex-direction: column;
 }
 
-/* Highly visible custom scrollbars for smooth scrolling */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -74,7 +70,6 @@ body {
   background: #dfb868;
 }
 
-/* App Header */
 .app-header {
   height: 68px;
   background-color: #07090e;
@@ -175,7 +170,6 @@ body {
   box-shadow: 0 0 14px rgba(16, 185, 129, 0.3);
 }
 
-/* Header Actions */
 .header-actions {
   display: flex;
   align-items: center;
@@ -259,7 +253,6 @@ body {
   color: #ef4444;
 }
 
-/* App Main Container */
 .app-container {
   display: flex;
   flex: 1;
@@ -268,7 +261,6 @@ body {
   position: relative;
 }
 
-/* Sidebar Configurator */
 .sidebar-configurator {
   width: 480px;
   min-width: 320px;
@@ -282,7 +274,6 @@ body {
   overflow-y: auto;
 }
 
-/* Draggable Splitter Divider */
 .sidebar-resizer {
   width: 9px;
   background-color: #0d1017;
@@ -329,6 +320,7 @@ body.is-resizing-sidebar * {
   user-select: none !important;
 }
 
+html.mode-artist-sign .sidebar-resizer,
 body.mode-artist-sign .sidebar-resizer,
 body.mode-counter-sign .sidebar-resizer {
   display: none !important;
@@ -377,7 +369,6 @@ body.mode-counter-sign .sidebar-resizer {
   background: var(--gold-dim);
 }
 
-/* Form Accordion */
 .accordion-group {
   padding: 16px 20px;
   display: flex;
@@ -449,7 +440,6 @@ body.mode-counter-sign .sidebar-resizer {
   display: flex;
 }
 
-/* Form Elements */
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -496,7 +486,6 @@ body.mode-counter-sign .sidebar-resizer {
   color: #4b5563;
 }
 
-/* Track Cards in Accordion */
 .tracks-container {
   display: flex;
   flex-direction: column;
@@ -592,7 +581,6 @@ body.mode-counter-sign .sidebar-resizer {
   gap: 10px;
 }
 
-/* Track Quick Presets Bar */
 .track-quick-bar {
   display: flex;
   flex-wrap: wrap;
@@ -616,7 +604,6 @@ body.mode-counter-sign .sidebar-resizer {
   color: var(--gold-primary);
 }
 
-/* Signature Cards in Sidebar */
 .signing-party-card {
   background: #11141e;
   border: 1px solid var(--border-subtle);
@@ -666,7 +653,6 @@ body.mode-counter-sign .sidebar-resizer {
   padding: 4px 10px;
 }
 
-/* Document Viewport & Zoom Toolbar */
 .doc-toolbar {
   position: absolute;
   top: 16px;
@@ -691,7 +677,6 @@ body.mode-counter-sign .sidebar-resizer {
   text-align: center;
 }
 
-/* Modal Dialogs */
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -775,7 +760,6 @@ body.mode-counter-sign .sidebar-resizer {
   gap: 10px;
 }
 
-/* Signature Pad Tabs */
 .sig-tabs-nav {
   display: flex;
   background: #0f121a;
@@ -804,7 +788,6 @@ body.mode-counter-sign .sidebar-resizer {
   border: 1px solid var(--gold-border);
 }
 
-/* Canvas Area */
 .sig-canvas-box {
   background: #ffffff;
   border-radius: 8px;
@@ -829,7 +812,6 @@ body.mode-counter-sign .sidebar-resizer {
   color: var(--text-muted);
 }
 
-/* Type Signature area */
 .type-sig-container {
   display: flex;
   flex-direction: column;
@@ -865,7 +847,6 @@ body.mode-counter-sign .sidebar-resizer {
   font-size: 26px;
 }
 
-/* Toasts */
 .toast-container {
   position: fixed;
   bottom: 24px;
@@ -900,7 +881,6 @@ body.mode-counter-sign .sidebar-resizer {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Mobile Responsive */
 .mobile-view-toggle {
   display: none;
 }
@@ -926,7 +906,6 @@ body.mode-counter-sign .sidebar-resizer {
   }
 }
 
-/* ================= ROLE GUIDANCE BANNERS ================= */
 .role-banner {
   padding: 12px 24px;
   display: flex;
@@ -989,17 +968,19 @@ body.mode-counter-sign .sidebar-resizer {
   color: #a78bfa;
 }
 
-/* ================= ARTIST RESTRICTED MODE ================= */
+html.mode-artist-sign .sidebar-configurator,
 body.mode-artist-sign .sidebar-configurator,
 body.mode-counter-sign .sidebar-configurator {
   display: none !important;
 }
 
+html.mode-artist-sign .app-container,
 body.mode-artist-sign .app-container,
 body.mode-counter-sign .app-container {
   grid-template-columns: 1fr;
 }
 
+html.mode-artist-sign #btn-open-templates,
 body.mode-artist-sign #btn-open-templates,
 body.mode-artist-sign #btn-reset-agreement,
 body.mode-artist-sign #btn-send-to-artist,
@@ -1042,7 +1023,6 @@ body.mode-counter-sign #btn-finalize-countersign {
   50% { box-shadow: 0 0 0 8px rgba(201, 160, 80, 0); }
 }
 
-/* Signature Box State Highlighting */
 .artist-required-pulse {
   background: rgba(201, 160, 80, 0.08) !important;
   border-bottom: 2px solid #c9a050 !important;
@@ -1070,7 +1050,6 @@ body.mode-counter-sign #btn-finalize-countersign {
   opacity: 0.7;
 }
 
-/* ================= AGREEMENT VAULT MODAL STYLES ================= */
 .vault-dialog {
   max-width: 860px !important;
   width: 95% !important;
@@ -1227,7 +1206,6 @@ body.mode-counter-sign #btn-finalize-countersign {
   margin-left: 4px;
 }
 
-/* ================= INVALID / EXPIRED LINK SCREEN ================= */
 .invalid-link-screen {
   display: flex;
   justify-content: center;
