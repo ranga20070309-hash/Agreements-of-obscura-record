@@ -33,29 +33,25 @@ export class AuthManager {
   init() {
     // If the URL is explicitly an artist-signing link, bypass authentication completely!
     if (this.isArtistMode) {
+      document.documentElement.classList.remove('auth-pending', 'auth-required');
+      document.body.classList.remove('auth-pending', 'auth-required', 'auth-checking');
       if (this.modal) this.modal.style.display = 'none';
       if (this.panel) this.panel.style.display = 'none';
-      document.body.classList.remove('auth-required');
       return;
     }
-
-    // Set initial loading state to prevent flash before Firebase Auth determines login state
-    document.body.classList.add('auth-checking');
 
     // Bind event listeners
     this.bindEvents();
 
     const safetyTimer = setTimeout(() => {
-      document.body.classList.remove('auth-checking');
       if (!this.currentUser) {
         this.onUserLoggedOut();
       }
-    }, 1000);
+    }, 1200);
 
     // Listen to Firebase Auth state
     onAdminAuthStateChanged((user) => {
       clearTimeout(safetyTimer);
-      document.body.classList.remove('auth-checking');
       if (user) {
         this.onUserLoggedIn(user);
       } else {
@@ -76,7 +72,8 @@ export class AuthManager {
 
   onUserLoggedIn(user) {
     this.currentUser = user;
-    document.body.classList.remove('auth-required');
+    document.documentElement.classList.remove('auth-pending', 'auth-required');
+    document.body.classList.remove('auth-pending', 'auth-required', 'auth-checking');
 
     if (this.modal) {
       this.modal.classList.remove('active');
@@ -101,6 +98,9 @@ export class AuthManager {
       return;
     }
 
+    document.documentElement.classList.remove('auth-pending');
+    document.documentElement.classList.add('auth-required');
+    document.body.classList.remove('auth-pending', 'auth-checking');
     document.body.classList.add('auth-required');
 
     if (this.modal) {

@@ -1412,24 +1412,29 @@ body.state-invalid-link .invalid-link-screen {
   border-color: #ef4444 !important;
 }
 
-/* When checking authentication state on initial page load */
-body.auth-checking .app-container {
-  opacity: 0.15 !important;
-  filter: blur(4px);
-  pointer-events: none;
-}
-
-/* When authentication is required (not logged in) */
-body.auth-required .app-container {
-  opacity: 0.1 !important;
-  filter: blur(10px) !important;
+/* When checking authentication or when authentication is required */
+html.auth-pending .app-container,
+html.auth-pending .app-header,
+html.auth-required .app-container,
+html.auth-required .app-header,
+body.auth-pending .app-container,
+body.auth-pending .app-header,
+body.auth-required .app-container,
+body.auth-required .app-header {
+  opacity: 0 !important;
+  visibility: hidden !important;
   pointer-events: none !important;
   user-select: none !important;
 }
 
+.app-container,
+.app-header {
+  transition: opacity 0.25s ease;
+}
+
 body.auth-required .header-actions button:not(#btn-admin-logout) {
   pointer-events: none !important;
-  opacity: 0.4 !important;
+  opacity: 0 !important;
 }
 
 .auth-gate-backdrop {

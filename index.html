@@ -16,6 +16,9 @@
           document.documentElement.classList.add('mode-artist-sign');
         } else if (m === 'counter-sign') {
           document.documentElement.classList.add('mode-counter-sign');
+        } else {
+          // Label main creator site: immediately set auth-pending before any HTML is painted to eliminate flash!
+          document.documentElement.classList.add('auth-pending');
         }
         if (id) {
           document.documentElement.classList.add('has-signing-id');
@@ -25,6 +28,19 @@
   </script>
 
   <style>
+    /* Strictly eliminate dashboard flash on load / refresh */
+    html.auth-pending .app-container,
+    html.auth-pending .app-header,
+    html.auth-required .app-container,
+    html.auth-required .app-header,
+    body.auth-pending .app-container,
+    body.auth-pending .app-header,
+    body.auth-required .app-container,
+    body.auth-required .app-header {
+      opacity: 0 !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
     html.mode-artist-sign .sidebar-configurator,
     html.mode-counter-sign .sidebar-configurator,
     html.mode-artist-sign .sidebar-resizer,
