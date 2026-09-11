@@ -331,6 +331,11 @@ export class EmailSender {
       const data = await res.json();
       if (res.ok && data.success) {
         showToast('Delivered to Obscura Rec LLC!', 'success');
+        const topSubmitBtn = document.getElementById('btn-submit-artist-agreement');
+        if (topSubmitBtn) topSubmitBtn.style.display = 'none';
+        const sealedBtn = document.getElementById('btn-artist-sealed-status');
+        if (sealedBtn) sealedBtn.style.display = 'none';
+
         if (submitBtn) {
           submitBtn.innerHTML = '✓ Executed & Delivered to Label!';
           submitBtn.style.background = '#10b981';

@@ -15,6 +15,7 @@ export const firebaseConfig = {
 };
 
 let db = null;
+let auth = null;
 
 export function getDatabaseInstance() {
   if (db) return db;
@@ -33,12 +34,58 @@ export function getDatabaseInstance() {
   return null;
 }
 
+export function getAuthInstance() {
+  if (auth) return auth;
+  try {
+    if (typeof window !== 'undefined' && window.firebase) {
+      if (!window.firebase.apps.length) {
+        window.firebase.initializeApp(firebaseConfig);
+      }
+      auth = window.firebase.auth();
+      return auth;
+    }
+  } catch (err) {
+    console.warn('Firebase Auth init warning:', err);
+  }
+  return null;
+}
+
+export async function loginAdmin(email, password) {
+  const authInstance = getAuthInstance();
+  if (!authInstance) throw new Error('Firebase Authentication is not available.');
+  return await authInstance.signInWithEmailAndPassword(email, password);
+}
+
+export async function logoutAdmin() {
+  const authInstance = getAuthInstance();
+  if (!authInstance) return;
+  return await authInstance.signOut();
+}
+
+export function onAdminAuthStateChanged(callback) {
+  const authInstance = getAuthInstance();
+  if (!authInstance) {
+    if (typeof window !== 'undefined') {
+      window.addEventListener('load', () => {
+        const a = getAuthInstance();
+        if (a) a.onAuthStateChanged(callback);
+      });
+    }
+    return () => {};
+  }
+  return authInstance.onAuthStateChanged(callback);
+}
+
 // Initialize on script load
 if (typeof window !== 'undefined') {
   if (window.firebase) {
     getDatabaseInstance();
+    getAuthInstance();
   } else {
-    window.addEventListener('load', () => getDatabaseInstance());
+    window.addEventListener('load', () => {
+      getDatabaseInstance();
+      getAuthInstance();
+    });
   }
 }
 

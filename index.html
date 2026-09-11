@@ -11,10 +11,14 @@
       try {
         var p = new URLSearchParams(window.location.search);
         var m = p.get('mode');
+        var id = p.get('id');
         if (m === 'artist-sign') {
           document.documentElement.classList.add('mode-artist-sign');
         } else if (m === 'counter-sign') {
           document.documentElement.classList.add('mode-counter-sign');
+        }
+        if (id) {
+          document.documentElement.classList.add('has-signing-id');
         }
       } catch(e) {}
     })();
@@ -32,7 +36,16 @@
     html.mode-artist-sign #btn-print-doc,
     html.mode-artist-sign #btn-export-pdf,
     html.mode-artist-sign #btn-artist-download-pdf,
-    html.mode-artist-sign #header-status-badge {
+    html.mode-artist-sign #header-status-badge,
+    html.mode-artist-sign #admin-auth-modal,
+    html.mode-artist-sign #admin-auth-panel,
+    body.state-invalid-link #btn-submit-artist-agreement,
+    body.state-invalid-link #btn-artist-sealed-status,
+    body.state-invalid-link #btn-finalize-countersign,
+    body.state-invalid-link #btn-send-to-artist,
+    body.state-invalid-link .header-actions,
+    body.is-artist-screen.state-invalid-link #btn-submit-artist-agreement,
+    body.is-artist-screen.state-invalid-link .header-actions {
       display: none !important;
     }
     html.mode-artist-sign .app-container,
@@ -53,7 +66,9 @@
       justify-content: center;
       transition: opacity 0.35s ease, visibility 0.35s ease;
     }
-    html.mode-artist-sign .artist-initial-loader {
+    html.mode-artist-sign .artist-initial-loader,
+    html.mode-counter-sign .artist-initial-loader,
+    html.has-signing-id .artist-initial-loader {
       display: flex !important;
     }
     .artist-initial-loader.fade-out {
@@ -84,6 +99,7 @@
   <script src="./js/libs/jspdf.umd.min.js"></script>
 
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 </head>
 <body>
@@ -144,6 +160,15 @@
       <button class="btn btn-gold" id="btn-finalize-countersign" style="display:none;" title="Counter-sign and finalize agreement">
         ✓ Finalize Agreement
       </button>
+
+      <div class="admin-auth-panel" id="admin-auth-panel" style="display:none;">
+        <span class="admin-user-pill" id="admin-user-pill" title="Signed in as Authorized Obscura Rec LLC Admin">
+          👤 <span id="admin-user-email">Admin</span>
+        </span>
+        <button class="btn btn-secondary btn-signout" id="btn-admin-logout" title="Sign out of Obscura Rec LLC portal">
+          🚪 Sign Out
+        </button>
+      </div>
     </div>
   </header>
 
@@ -682,6 +707,61 @@
         <button class="btn btn-secondary" onclick="document.getElementById('vault-modal').classList.remove('active')">
           Close
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Obscura Rec LLC Admin Authentication Gate -->
+  <div class="auth-gate-backdrop" id="admin-auth-modal" style="display:none;">
+    <div class="auth-gate-card">
+      <div class="auth-brand-badge">
+        <img src="./assets/ocr-logo.jpeg" alt="Obscura Rec LLC" class="auth-logo" />
+        <div class="auth-title">OBSCURA REC LLC</div>
+        <div class="auth-subtitle">Legal Agreement Creator & Rights Management</div>
+      </div>
+      
+      <div class="auth-security-chip">
+        <span class="lock-icon">🔒</span> AUTHORIZED LABEL ACCESS ONLY
+      </div>
+
+      <p class="auth-description">
+        Please sign in with your Obscura Rec LLC administrator credentials to access the contract creator, artist agreements, and legal vault.
+      </p>
+
+      <form id="admin-login-form" class="auth-form" autocomplete="on">
+        <div class="form-group" style="text-align:left; margin-bottom:14px;">
+          <label class="form-label" for="auth-email">Administrator Email</label>
+          <input 
+            type="email" 
+            id="auth-email" 
+            class="form-input auth-input" 
+            placeholder="admin@obscurarecord.com" 
+            required 
+            autocomplete="username" 
+          />
+        </div>
+
+        <div class="form-group" style="text-align:left; margin-bottom:16px;">
+          <label class="form-label" for="auth-password">Password</label>
+          <input 
+            type="password" 
+            id="auth-password" 
+            class="form-input auth-input" 
+            placeholder="••••••••••••" 
+            required 
+            autocomplete="current-password" 
+          />
+        </div>
+
+        <div id="auth-error-msg" class="auth-error-banner" style="display:none;"></div>
+
+        <button type="submit" id="btn-auth-submit" class="btn btn-gold w-100 auth-submit-btn">
+          <span>🔐 Sign In to Creator Portal</span>
+        </button>
+      </form>
+
+      <div class="auth-card-footer">
+        Protected by Firebase Cloud Authentication • Obscura Rec LLC
       </div>
     </div>
   </div>

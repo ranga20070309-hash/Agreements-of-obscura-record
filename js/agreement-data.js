@@ -122,6 +122,19 @@ class AgreementStore {
     this.linkStatus = 'active'; // 'active' | 'loading' | 'not_found' | 'artist_already_signed' | 'already_finalized' | 'just_submitted' | 'error'
     this.invalidRefId = '';
     this.invalidReason = '';
+
+    if (typeof window !== 'undefined' && window.location?.search) {
+      const p = new URLSearchParams(window.location.search);
+      const urlId = p.get('id');
+      const urlMode = p.get('mode');
+      if (urlId) {
+        this.linkStatus = 'loading';
+        this.invalidRefId = urlId;
+      } else if (urlMode === 'artist-sign' || urlMode === 'counter-sign') {
+        this.linkStatus = 'loading';
+      }
+    }
+
     this.state = this.loadInitial();
     this.subscribers = [];
     this.checkServerAgreementLoad();

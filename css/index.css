@@ -995,16 +995,22 @@ body.is-artist-screen #btn-invalid-return-home {
   display: none !important;
 }
 
-body.mode-artist-sign:not(.artist-locked) #btn-submit-artist-agreement {
+body.mode-artist-sign:not(.artist-locked):not(.state-invalid-link) #btn-submit-artist-agreement {
   display: inline-flex !important;
   animation: pulse-emerald 2s infinite;
 }
 
-body.mode-artist-sign.artist-locked #btn-submit-artist-agreement {
+body.mode-artist-sign.artist-locked #btn-submit-artist-agreement,
+body.state-invalid-link #btn-submit-artist-agreement,
+body.is-artist-screen.state-invalid-link #btn-submit-artist-agreement,
+body.state-invalid-link #btn-artist-sealed-status,
+body.is-artist-screen.state-invalid-link #btn-artist-sealed-status,
+body.state-invalid-link #btn-finalize-countersign,
+body.is-artist-screen.state-invalid-link .header-actions {
   display: none !important;
 }
 
-body.mode-artist-sign.artist-locked #btn-artist-sealed-status {
+body.mode-artist-sign.artist-locked:not(.state-invalid-link) #btn-artist-sealed-status {
   display: inline-flex !important;
 }
 
@@ -1365,4 +1371,204 @@ body.state-invalid-link .nav-actions-group {
 body.state-invalid-link .invalid-link-screen {
   display: flex !important;
 }
+
+/* ==========================================================================
+   Admin Authentication Gate & Profile Panel
+   ========================================================================== */
+.admin-auth-panel {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(18, 24, 38, 0.7);
+  border: 1px solid rgba(201, 160, 80, 0.25);
+  border-radius: 8px;
+  padding: 3px 8px 3px 10px;
+}
+
+.admin-user-pill {
+  font-size: 11.5px;
+  color: #c9a050;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  max-width: 170px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.btn-signout {
+  font-size: 11px !important;
+  padding: 3px 8px !important;
+  border-radius: 5px !important;
+  background: rgba(239, 68, 68, 0.15) !important;
+  border: 1px solid rgba(239, 68, 68, 0.35) !important;
+  color: #fca5a5 !important;
+  transition: all 0.2s !important;
+}
+
+.btn-signout:hover {
+  background: rgba(239, 68, 68, 0.3) !important;
+  color: #ffffff !important;
+  border-color: #ef4444 !important;
+}
+
+/* When checking authentication state on initial page load */
+body.auth-checking .app-container {
+  opacity: 0.15 !important;
+  filter: blur(4px);
+  pointer-events: none;
+}
+
+/* When authentication is required (not logged in) */
+body.auth-required .app-container {
+  opacity: 0.1 !important;
+  filter: blur(10px) !important;
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+body.auth-required .header-actions button:not(#btn-admin-logout) {
+  pointer-events: none !important;
+  opacity: 0.4 !important;
+}
+
+.auth-gate-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 10, 15, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  z-index: 99990;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.auth-gate-backdrop.active {
+  opacity: 1;
+}
+
+.auth-gate-card {
+  background: #0f131d;
+  border: 1px solid rgba(201, 160, 80, 0.35);
+  border-radius: 16px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.85), 0 0 35px rgba(201, 160, 80, 0.12);
+  max-width: 440px;
+  width: 100%;
+  padding: 32px 28px 24px;
+  text-align: center;
+  position: relative;
+  transform: translateY(10px);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.auth-gate-backdrop.active .auth-gate-card {
+  transform: translateY(0);
+}
+
+.auth-brand-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.auth-logo {
+  width: 58px;
+  height: 58px;
+  border-radius: 14px;
+  border: 1.5px solid rgba(201, 160, 80, 0.45);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+  margin-bottom: 12px;
+}
+
+.auth-title {
+  font-size: 17px;
+  font-weight: 800;
+  color: #c9a050;
+  letter-spacing: 1.4px;
+}
+
+.auth-subtitle {
+  font-size: 11.5px;
+  color: #9ca3af;
+  margin-top: 3px;
+}
+
+.auth-security-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(201, 160, 80, 0.12);
+  border: 1px solid rgba(201, 160, 80, 0.3);
+  color: #e5c178;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  margin: 10px 0 12px;
+}
+
+.auth-description {
+  font-size: 12.5px;
+  color: #94a3b8;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.auth-input {
+  width: 100%;
+  background: #090c13 !important;
+  border: 1px solid #28334a !important;
+  color: #ffffff !important;
+  padding: 10px 14px !important;
+  font-size: 13.5px !important;
+  border-radius: 8px !important;
+  transition: all 0.2s !important;
+}
+
+.auth-input:focus {
+  border-color: #c9a050 !important;
+  box-shadow: 0 0 0 3px rgba(201, 160, 80, 0.22) !important;
+  outline: none !important;
+}
+
+.auth-error-banner {
+  background: rgba(239, 68, 68, 0.14);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+  font-size: 12px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-bottom: 14px;
+  text-align: left;
+  line-height: 1.4;
+}
+
+.auth-submit-btn {
+  padding: 11px !important;
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 16px rgba(201, 160, 80, 0.25) !important;
+  transition: all 0.2s !important;
+}
+
+.auth-submit-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(201, 160, 80, 0.35) !important;
+}
+
+.auth-card-footer {
+  font-size: 10.5px;
+  color: #475569;
+  border-top: 1px solid #1a2336;
+  padding-top: 16px;
+  margin-top: 18px;
+}
+
 

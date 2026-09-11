@@ -8,6 +8,7 @@ import { SignatureEngine } from './signature-pad.js';
 import { exportToPdf, triggerPrint } from './pdf-export.js';
 import { EmailSender } from './email-sender.js';
 import { VaultManager } from './vault-manager.js';
+import { AuthManager } from './auth-manager.js';
 
 class AgreementApp {
   constructor() {
@@ -17,6 +18,7 @@ class AgreementApp {
     this.pagesWrapper = null;
     
     // Components
+    this.authManager = new AuthManager(this.store);
     this.sigEngine = new SignatureEngine(this.store, (party) => this.onSignatureUpdated(party));
     this.emailSender = new EmailSender(this.store);
     this.vaultManager = new VaultManager(this.store, (archived) => this.loadArchivedContract(archived));
@@ -33,18 +35,25 @@ class AgreementApp {
     this.bindZoomControls();
     this.bindTemplateModal();
 
-    // Initial render from loaded store state
-    const initialState = this.store.getState();
-    this.syncInputsFromState(initialState);
-    this.renderTracksList(initialState, true);
-    this.renderDocumentView(initialState);
-    this.updateStatusBadge();
+    // Initial render from loaded store state only when link is active
+    const linkStatus = this.store.getLinkStatus();
+    if (linkStatus === 'loading') {
+      this.showInvalidLinkScreen('loading', this.store.getInvalidRefId());
+    } else if (linkStatus && linkStatus !== 'active') {
+      this.showInvalidLinkScreen(linkStatus, this.store.getInvalidRefId(), this.store.getInvalidReason());
+    } else {
+      const initialState = this.store.getState();
+      this.syncInputsFromState(initialState);
+      this.renderTracksList(initialState, true);
+      this.renderDocumentView(initialState);
+      this.updateStatusBadge();
+    }
 
     // Subscribe to state updates
     this.store.subscribe((state, options = {}) => {
-      const linkStatus = this.store.getLinkStatus();
-      if (linkStatus && linkStatus !== 'active') {
-        this.showInvalidLinkScreen(linkStatus, this.store.getInvalidRefId(), this.store.getInvalidReason());
+      const currentLinkStatus = this.store.getLinkStatus();
+      if (currentLinkStatus && currentLinkStatus !== 'active') {
+        this.showInvalidLinkScreen(currentLinkStatus, this.store.getInvalidRefId(), this.store.getInvalidReason());
         return;
       }
       this.hideInvalidLinkScreen();
@@ -66,7 +75,7 @@ class AgreementApp {
 
   showInvalidLinkScreen(status, refId, reason) {
     const loader = document.getElementById('artist-initial-loader');
-    if (loader) {
+    if (loader && status !== 'loading') {
       loader.classList.add('fade-out');
     }
 
@@ -74,6 +83,16 @@ class AgreementApp {
     const screen = document.getElementById('invalid-link-screen');
     if (!screen) return;
     screen.style.display = 'flex';
+
+    // Strictly ensure all header action buttons are hidden on expired/executed/invalid links
+    const submitBtn = document.getElementById('btn-submit-artist-agreement');
+    const sealedBtn = document.getElementById('btn-artist-sealed-status');
+    const finalizeBtn = document.getElementById('btn-finalize-countersign');
+    const sendBtn = document.getElementById('btn-send-to-artist');
+    if (submitBtn) submitBtn.style.display = 'none';
+    if (sealedBtn) sealedBtn.style.display = 'none';
+    if (finalizeBtn) finalizeBtn.style.display = 'none';
+    if (sendBtn) sendBtn.style.display = 'none';
 
     const iconWrap = document.getElementById('invalid-icon-wrap');
     const iconEl = document.getElementById('invalid-screen-icon');
@@ -172,12 +191,25 @@ class AgreementApp {
 
   applyRoleMode() {
     const mode = this.store.getMode();
+    const linkStatus = this.store.getLinkStatus();
     const isLocked = this.store.isArtistLocked();
     const artistBanner = document.getElementById('banner-artist-mode');
     const lockedBanner = document.getElementById('banner-artist-locked');
     const counterBanner = document.getElementById('banner-counter-mode');
     const btnSubmitArtist = document.getElementById('btn-submit-artist-agreement');
     const btnArtistSealed = document.getElementById('btn-artist-sealed-status');
+    const btnFinalize = document.getElementById('btn-finalize-countersign');
+
+    // If link is loading or not active, strictly hide all signing action buttons and banners
+    if (linkStatus !== 'active') {
+      if (artistBanner) artistBanner.style.display = 'none';
+      if (lockedBanner) lockedBanner.style.display = 'none';
+      if (counterBanner) counterBanner.style.display = 'none';
+      if (btnSubmitArtist) btnSubmitArtist.style.display = 'none';
+      if (btnArtistSealed) btnArtistSealed.style.display = 'none';
+      if (btnFinalize) btnFinalize.style.display = 'none';
+      return;
+    }
 
     if (mode === 'artist-sign') {
       document.body.classList.add('mode-artist-sign');
@@ -204,7 +236,6 @@ class AgreementApp {
       if (counterBanner) counterBanner.style.display = 'flex';
       if (btnSubmitArtist) btnSubmitArtist.style.display = 'none';
       if (btnArtistSealed) btnArtistSealed.style.display = 'none';
-      const btnFinalize = document.getElementById('btn-finalize-countersign');
       if (btnFinalize) btnFinalize.style.display = 'inline-flex';
     } else {
       document.body.classList.remove('mode-artist-sign', 'mode-counter-sign');
@@ -719,7 +750,7 @@ class AgreementApp {
     this.applyZoom();
 
     const loader = document.getElementById('artist-initial-loader');
-    if (loader && !loader.classList.contains('fade-out')) {
+    if (loader && this.store.getLinkStatus() === 'active' && !loader.classList.contains('fade-out')) {
       setTimeout(() => {
         loader.classList.add('fade-out');
       }, 150);
