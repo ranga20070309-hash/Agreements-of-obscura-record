@@ -204,7 +204,7 @@ class AgreementStore {
         // Valid, active session
         this.linkStatus = 'active';
         this.state = { ...getDefaultAgreementState(), ...serverState };
-        this.notify();
+        this.notify({ syncInputs: true, rebuildTracks: true, forceRebuildTracks: true });
       } catch (e) {
         console.warn('Could not fetch agreement:', e);
         this.linkStatus = 'error';
@@ -300,7 +300,7 @@ class AgreementStore {
     return `${baseUrl}?mode=counter-sign&doc=${token}`;
   }
 
-  save() {
+  save(options = {}) {
     // Only persist to localStorage in label mode to avoid leaking signatures/locks between roles on same browser
     if (this.mode === 'label') {
       try {
@@ -309,16 +309,15 @@ class AgreementStore {
         console.error('Failed to save to localStorage:', e);
       }
     }
-    this.notify();
+    this.notify(options);
   }
 
-  notify() {
-    this.subscribers.forEach(fn => fn(this.state));
+  notify(options = {}) {
+    this.subscribers.forEach(fn => fn(this.state, options));
   }
 
   subscribe(fn) {
     this.subscribers.push(fn);
-    fn(this.state);
     return () => {
       this.subscribers = this.subscribers.filter(s => s !== fn);
     };
@@ -336,7 +335,7 @@ class AgreementStore {
       current = current[keys[i]];
     }
     current[keys[keys.length - 1]] = value;
-    this.save();
+    this.save({ syncInputs: false, rebuildTracks: false });
   }
 
   addTrack(track = null) {
@@ -354,7 +353,7 @@ class AgreementStore {
       transferDate: today
     };
     this.state.tracks.push(newTrack);
-    this.save();
+    this.save({ rebuildTracks: true, forceRebuildTracks: true });
   }
 
   duplicateTrack(index) {
@@ -363,7 +362,7 @@ class AgreementStore {
       copy.id = 'trk-' + Math.random().toString(36).substring(2, 7);
       copy.versionTag = copy.versionTag ? `${copy.versionTag} (Copy)` : '(Alternative Version)';
       this.state.tracks.splice(index + 1, 0, copy);
-      this.save();
+      this.save({ rebuildTracks: true, forceRebuildTracks: true });
     }
   }
 
@@ -373,7 +372,7 @@ class AgreementStore {
       return;
     }
     this.state.tracks.splice(index, 1);
-    this.save();
+    this.save({ rebuildTracks: true, forceRebuildTracks: true });
   }
 
   addStandardBundle(baseTitle = 'Untitled Track') {
@@ -402,12 +401,12 @@ class AgreementStore {
         transferDate: today
       });
     });
-    this.save();
+    this.save({ rebuildTracks: true, forceRebuildTracks: true });
   }
 
   resetAll() {
     this.state = getDefaultAgreementState();
-    this.save();
+    this.save({ syncInputs: true, rebuildTracks: true, forceRebuildTracks: true });
   }
 
   getStatus() {
@@ -457,7 +456,7 @@ class AgreementStore {
     const found = templates.find(t => t.id === templateId);
     if (found && found.data) {
       this.state = { ...getDefaultAgreementState(), ...found.data };
-      this.save();
+      this.save({ syncInputs: true, rebuildTracks: true, forceRebuildTracks: true });
       return true;
     }
     return false;
