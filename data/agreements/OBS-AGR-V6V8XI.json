@@ -1,0 +1,79 @@
+{
+  "id": "OBS-AGR-V6V8XI",
+  "createdAt": "2026-09-11",
+  "label": {
+    "companyName": "Obscura Rec LLC",
+    "representative": "sayuru sithijaya",
+    "representativeTitle": "Director / Founder, Obscura Rec LLC",
+    "signature": null,
+    "date": "2026-09-11"
+  },
+  "artist": {
+    "legalName": "sayuru sithijaya",
+    "stageName": "sayuruxt",
+    "email": "sayuruxt@gmail.com",
+    "signature": null,
+    "date": "2026-09-11"
+  },
+  "terms": {
+    "termYears": 10,
+    "renewalYears": 10,
+    "noticeDays": 30
+  },
+  "delivery": {
+    "masterDelivered": true,
+    "technicalSatisfied": true
+  },
+  "tracks": [
+    {
+      "id": "trk-29fg1",
+      "title": "FUNK NOMA",
+      "versionTag": "",
+      "year": "2026",
+      "musicAuthors": "sayuruxt",
+      "lyricsAuthors": "sayuru sithijaya",
+      "phonogramProducers": "Obscura Rec LLC",
+      "royaltyShare": 50,
+      "royaltyDetails": "[Artist Alias] - 50% of Label Net Income",
+      "transferDate": "2026-09-11"
+    },
+    {
+      "id": "trk-9o0b7",
+      "title": "FUNK NOMA",
+      "versionTag": "(Slowed)",
+      "year": "2026",
+      "musicAuthors": "sayuruxt",
+      "lyricsAuthors": "sayuru sithijaya",
+      "phonogramProducers": "Obscura Rec LLC",
+      "royaltyShare": 50,
+      "royaltyDetails": "[Artist Alias] - 50% of Label Net Income",
+      "transferDate": "2026-09-11"
+    },
+    {
+      "id": "trk-c257h",
+      "title": "FUNK NOMA",
+      "versionTag": "(Sped Up)",
+      "year": "2026",
+      "musicAuthors": "sayuruxt",
+      "lyricsAuthors": "sayuru sithijaya",
+      "phonogramProducers": "Obscura Rec LLC",
+      "royaltyShare": 50,
+      "royaltyDetails": "[Artist Alias] - 50% of Label Net Income",
+      "transferDate": "2026-09-11"
+    },
+    {
+      "id": "trk-gkzsz",
+      "title": "FUNK NOMA",
+      "versionTag": "(Instrumental)",
+      "year": "2026",
+      "musicAuthors": "sayuruxt",
+      "lyricsAuthors": "sayuru sithijaya",
+      "phonogramProducers": "Obscura Rec LLC",
+      "royaltyShare": 50,
+      "royaltyDetails": "[Artist Alias] - 50% of Label Net Income",
+      "transferDate": "2026-09-11"
+    }
+  ],
+  "isLockedForArtist": false,
+  "status": "awaiting_artist_signature"
+}

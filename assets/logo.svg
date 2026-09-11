@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <circle cx="50" cy="50" r="46" stroke="#FFFFFF" stroke-width="4.5"/>
+  <circle cx="50" cy="50" r="38" stroke="#FFFFFF" stroke-width="2" stroke-dasharray="4 3" opacity="0.6"/>
+  <!-- Stylized O and R monogram -->
+  <path d="M 36 32 C 26 32 20 40 20 50 C 20 60 26 68 36 68 C 43 68 49 63 51 56" stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round"/>
+  <path d="M 52 32 L 52 68" stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round"/>
+  <path d="M 52 32 C 64 32 72 36 72 45 C 72 53 64 57 52 57" stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round"/>
+  <path d="M 60 55 L 74 68" stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round"/>
+  <circle cx="50" cy="50" r="3" fill="#FFFFFF"/>
+</svg>

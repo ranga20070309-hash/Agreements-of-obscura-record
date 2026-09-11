@@ -1,0 +1,582 @@
+/* ==========================================================================
+   A4 Legal Document Stylesheet - Executive Legal Typography & Luxury Branding
+   ========================================================================== */
+
+.document-viewport {
+  flex: 1;
+  background: radial-gradient(circle at 50% 20%, #151822 0%, #080a0f 100%);
+  overflow-y: auto;
+  overflow-x: auto;
+  padding: 24px 24px 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  height: 100%;
+}
+
+#document-render-target {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.document-pages-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+  transform-origin: top center;
+  transition: transform 0.2s ease-out;
+  margin-top: 48px;
+}
+
+/* Pristine Standard A4 Sheet: 210mm x 297mm */
+.a4-page {
+  width: 210mm;
+  height: 297mm;
+  min-height: 297mm;
+  max-height: 297mm;
+  background-color: #ffffff;
+  color: #000000;
+  box-shadow: 
+    0 25px 60px -15px rgba(0, 0, 0, 0.75), 
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    0 2px 4px rgba(0, 0, 0, 0.2);
+  border-radius: 2px;
+  box-sizing: border-box;
+  position: relative;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-size: 13px;
+  line-height: 1.55;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: geometricPrecision;
+  page-break-after: always;
+  break-after: page;
+}
+
+.a4-page:last-child {
+  page-break-after: auto;
+  break-after: auto;
+}
+
+/* ================= PAGE 1 HEADER BANNER ================= */
+.doc-header-banner {
+  background: #000000;
+  color: #ffffff;
+  padding: 26px 48px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+  border-bottom: 2px solid #c9a050;
+  position: relative;
+}
+
+.doc-header-banner::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.doc-header-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.doc-header-title {
+  font-size: 19.5px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin: 0;
+  line-height: 1.15;
+  color: #ffffff;
+}
+
+.doc-header-subtitle {
+  font-size: 16.5px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin: 0;
+  line-height: 1.15;
+  color: #ffffff;
+}
+
+.doc-header-label-name {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  margin: 4px 0 0 0;
+  color: #e5e7eb;
+}
+
+.doc-header-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.doc-logo-img {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  border: 1.5px solid #c9a050;
+  box-shadow: 0 0 12px rgba(201, 160, 80, 0.3);
+}
+
+.doc-brand-text {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  white-space: nowrap;
+  color: #ffffff;
+}
+
+/* ================= CONTINUATION PAGE HEADER ================= */
+.doc-continuation-header {
+  padding: 16px 48px;
+  border-bottom: 1.5px solid #000000;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #111827;
+  background: #fafafa;
+}
+
+.doc-continuation-header-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.doc-continuation-header-brand img {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+}
+
+/* ================= DOCUMENT BODY CONTENT ================= */
+.doc-content {
+  padding: 26px 48px 16px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.doc-preamble {
+  margin-bottom: 18px;
+  text-align: justify;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #000000;
+  border-left: 2px solid #000000;
+  padding-left: 14px;
+}
+
+.doc-section {
+  margin-bottom: 16px;
+}
+
+.doc-section-title {
+  font-size: 13.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin: 0 0 8px 0;
+  color: #000000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.doc-section-subtitle {
+  font-size: 13px;
+  font-weight: 700;
+  margin: 0 0 10px 0;
+  color: #000000;
+}
+
+.doc-section-body {
+  font-size: 13px;
+  line-height: 1.55;
+  color: #000000;
+  text-align: justify;
+  margin: 0;
+}
+
+/* ================= SECTION 2: TRACK LIST ================= */
+.doc-track-list {
+  list-style: none;
+  padding-left: 0;
+  margin: 8px 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.doc-track-item {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #000000;
+  break-inside: avoid;
+  page-break-inside: avoid;
+  position: relative;
+  padding-left: 18px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed rgba(0, 0, 0, 0.12);
+}
+
+.doc-track-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.doc-track-item::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-size: 15px;
+  font-weight: 900;
+  color: #000000;
+}
+
+.doc-track-header {
+  font-weight: 700;
+  margin-bottom: 3px;
+  color: #000000;
+  font-size: 12.8px;
+}
+
+.doc-track-sublist {
+  list-style: none;
+  padding-left: 14px;
+  margin: 2px 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5px;
+  font-size: 12.2px;
+  color: #000000;
+}
+
+.doc-track-subitem {
+  line-height: 1.45;
+  color: #000000;
+  position: relative;
+  padding-left: 12px;
+}
+
+.doc-track-subitem::before {
+  content: '◦';
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #000000;
+}
+
+.doc-track-subitem strong {
+  color: #000000;
+  font-weight: 600;
+}
+
+/* ================= PAGE 2 & SIGNATURES CONTENT ================= */
+.page-2-content {
+  padding: 38px 48px 18px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.doc-bullets {
+  list-style: none;
+  padding-left: 0;
+  margin: 6px 0 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.doc-bullets li {
+  line-height: 1.55;
+  color: #000000;
+  text-align: justify;
+  font-size: 13px;
+  position: relative;
+  padding-left: 18px;
+}
+
+.doc-bullets li::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-size: 15px;
+  font-weight: 900;
+  color: #000000;
+}
+
+/* ================= SIGNATURES SECTION ================= */
+.doc-signatures-section {
+  margin-top: 36px;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.doc-signatures-title-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.doc-signatures-line {
+  flex: 1;
+  height: 1px;
+  background: #000000;
+}
+
+.doc-signatures-title {
+  text-align: center;
+  font-size: 15px;
+  font-weight: 800;
+  font-style: italic;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #000000;
+}
+
+.doc-signatures-grid {
+  display: grid;
+  grid-template-columns: 1fr 1px 1fr;
+  align-items: stretch;
+  gap: 0;
+  margin-top: 14px;
+}
+
+.doc-sig-divider {
+  background-color: #d1d5db;
+  width: 1px;
+  height: 100%;
+}
+
+.doc-sig-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.doc-sig-col.label-col {
+  padding-right: 28px;
+}
+
+.doc-sig-col.artist-col {
+  padding-left: 28px;
+}
+
+.doc-party-header {
+  margin-bottom: 12px;
+  border-bottom: 1.5px solid #111827;
+  padding-bottom: 5px;
+}
+
+.party-role-tag {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #4b5563;
+  margin-bottom: 2px;
+}
+
+.party-entity-name {
+  font-size: 13.5px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: #111827;
+}
+
+.doc-sig-line-container {
+  display: flex;
+  flex-direction: column;
+  margin-top: 4px;
+}
+
+.doc-signature-box {
+  min-height: 65px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1.5px solid #111827;
+  cursor: pointer;
+  position: relative;
+  transition: background-color 0.2s;
+  padding: 4px 0;
+}
+
+.doc-signature-box.locked-view,
+body.artist-locked .doc-signature-box {
+  cursor: default !important;
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+.doc-signature-box.signed:not(.locked-view) {
+  cursor: pointer;
+}
+
+.doc-signature-box.signed:hover:not(.locked-view) {
+  background-color: rgba(201, 160, 80, 0.12);
+  border-radius: 4px;
+}
+
+.doc-sig-caption {
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+.sig-meta-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 14px;
+}
+
+.sig-meta-row {
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  align-items: baseline;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.sig-meta-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #4b5563;
+}
+
+.sig-meta-val {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #111827;
+  word-break: break-word;
+}
+
+.sign-underline-placeholder {
+  width: 100%;
+  height: 48px;
+}
+
+.sign-btn-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #090b10;
+  color: #c9a050;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px dashed #c9a050;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: pulse-sign 2s infinite;
+}
+
+@keyframes pulse-sign {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  50% { transform: translate(-50%, -50%) scale(1.05); }
+}
+
+/* Clean vector formatting during PDF export */
+.exporting-pdf .sign-btn-tag {
+  display: none !important;
+}
+
+.exporting-pdf .clickable-sign-prompt,
+.exporting-pdf .counter-sign-pulse,
+.exporting-pdf .artist-required-pulse {
+  animation: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  border-color: #111827 !important;
+}
+
+@media print {
+  .sign-btn-tag {
+    display: none !important;
+  }
+}
+
+.exporting-pdf .document-pages-wrapper {
+  gap: 0 !important;
+  margin: 0 !important;
+}
+
+.exporting-pdf .a4-page {
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  transform: none !important;
+  margin: 0 !important;
+}
+
+.rendered-sig-img {
+  max-height: 62px;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.rendered-typed-sig {
+  font-size: 30px;
+  color: #000000;
+  user-select: none;
+}
+
+/* ================= PAGE NUMBER FOOTER ================= */
+.page-number-footer {
+  margin-top: auto;
+  padding: 16px 48px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 500;
+  color: #4b5563;
+  border-top: 1px solid #000000;
+  flex-shrink: 0;
+  letter-spacing: 0.3px;
+}

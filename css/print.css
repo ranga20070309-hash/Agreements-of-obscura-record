@@ -1,0 +1,118 @@
+/* ==========================================================================
+   Print & PDF Export Stylesheet - Zero Overflows, Exact A4 Page Separation
+   ========================================================================== */
+
+@media print {
+  *, *::before, *::after {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    font-size: 13px !important;
+  }
+
+  /* Hide app chrome, toolbars, buttons, modals */
+  .app-header,
+  .sidebar-configurator,
+  .doc-toolbar,
+  .modal-backdrop,
+  .modal-dialog,
+  .toast-container,
+  .sign-btn-tag {
+    display: none !important;
+  }
+
+  .app-container {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .document-viewport {
+    background: #ffffff !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    height: auto !important;
+    display: block !important;
+  }
+
+  .document-pages-wrapper {
+    gap: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    transform: none !important;
+    display: block !important;
+  }
+
+  .a4-page {
+    width: 210mm !important;
+    height: 297mm !important;
+    min-height: 297mm !important;
+    max-height: 297mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    page-break-after: always !important;
+    break-after: page !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    box-sizing: border-box !important;
+    position: relative !important;
+    overflow: hidden !important;
+  }
+
+  .a4-page:last-child {
+    page-break-after: auto !important;
+    break-after: auto !important;
+  }
+
+  .doc-header-banner {
+    background-color: #000000 !important;
+    color: #ffffff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .doc-header-title,
+  .doc-header-subtitle,
+  .doc-header-label-name,
+  .doc-brand-text {
+    color: #ffffff !important;
+  }
+
+  .doc-sig-divider {
+    background-color: #000000 !important;
+    width: 2px !important;
+  }
+
+  .doc-signature-box {
+    border-bottom: 1.5px solid #000000 !important;
+    background: transparent !important;
+  }
+
+  .doc-track-item {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .page-number-footer {
+    border-top: 1px solid #d1d5db !important;
+    color: #4b5563 !important;
+  }
+}
+
+@page {
+  size: A4 portrait;
+  margin: 0;
+}

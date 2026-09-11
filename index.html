@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Obscura Rec LLC | Agreement Creator & Digital Signer</title>
+  <meta name="description" content="Official Act of Acceptance and Transfer of Objects agreement generator and digital signing platform for Obscura Rec LLC artists and producers.">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/jpeg" href="./assets/ocr-logo.jpeg">
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="./css/index.css">
+  <link rel="stylesheet" href="./css/document.css">
+  <link rel="stylesheet" href="./css/print.css" media="print">
+
+  <!-- Client-side PDF Engines: Local High-Precision html2canvas & jsPDF -->
+  <script src="./js/libs/html2canvas.min.js"></script>
+  <script src="./js/libs/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+  <!-- Top Application Navigation Bar -->
+  <header class="app-header">
+    <div class="brand-section">
+      <div class="brand-logo-wrap">
+        <img src="./assets/ocr-logo.jpeg" alt="Obscura Rec LLC Logo" />
+      </div>
+      <div class="brand-title-wrap">
+        <div class="brand-name">
+          OBSCURA REC LLC
+          <span class="doc-status-badge status-draft" id="header-status-badge">
+            <span class="status-dot"></span> Draft Mode
+          </span>
+        </div>
+        <div class="brand-subtext">Act of Acceptance and Transfer of Objects • Legal Agreement Creator</div>
+      </div>
+    </div>
+
+    <!-- Right Header Actions -->
+    <div class="header-actions">
+      <button class="btn btn-secondary" id="btn-open-vault" title="Search and examine archived agreements in Vault">
+        🏛️ Agreement Vault <span class="badge" id="vault-count-badge">0</span>
+      </button>
+      <button class="btn btn-secondary" id="btn-open-templates" title="Manage Saved Templates & JSON">
+        📁 Templates
+      </button>
+      <button class="btn btn-secondary" id="btn-reset-agreement" title="Reset to Sample Agreement">
+        🔄 Reset
+      </button>
+      <button class="btn btn-secondary" id="btn-print-doc" title="Print document to printer or PDF">
+        🖨️ Print
+      </button>
+      <button class="btn btn-outline-gold" id="btn-export-pdf" title="Download High-Resolution A4 PDF">
+        ⬇️ Download PDF
+      </button>
+
+      <!-- Label Primary CTA: Send to Artist -->
+      <button class="btn btn-emerald" id="btn-send-to-artist" title="Send agreement to artist for digital signature">
+        ✉️ Send to Artist to Sign
+      </button>
+
+      <!-- Artist Primary CTA: Submit Signed Agreement (shown only in artist-sign mode) -->
+      <button class="btn btn-emerald" id="btn-submit-artist-agreement" style="display:none;" title="Submit executed agreement to Obscura Rec LLC">
+        ✓ Submit Signed Agreement
+      </button>
+
+      <!-- Artist Sealed/Locked CTA -->
+      <button class="btn btn-secondary" id="btn-artist-sealed-status" style="display:none;" disabled title="This agreement has already been executed and sealed.">
+        🔒 Signed & Sealed (Link Expired)
+      </button>
+
+      <!-- Counter-Sign CTA: Finalize (shown only in counter-sign mode) -->
+      <button class="btn btn-gold" id="btn-finalize-countersign" style="display:none;" title="Counter-sign and finalize agreement">
+        ✓ Finalize Agreement
+      </button>
+    </div>
+  </header>
+
+  <!-- Specialized Role Guidance Banners -->
+  <div class="role-banner banner-artist-sign" id="banner-artist-mode" style="display:none;">
+    <div class="role-banner-content">
+      <span class="role-banner-icon">✍️</span>
+      <div class="role-banner-text">
+        <strong>ARTIST SIGNING PORTAL:</strong>
+        Obscura Rec LLC has prepared this agreement for your digital execution. All contract terms & track allocations are locked for review. Please review Page 1 and Page 2, click <strong>"✍️ Click to Sign as Artist"</strong> to add your signature, and then click <strong>"✓ Submit Signed Agreement"</strong> above.
+      </div>
+    </div>
+  </div>
+
+  <!-- Artist Locked/Expired Link Banner -->
+  <div class="role-banner banner-artist-locked" id="banner-artist-locked" style="display:none;">
+    <div class="role-banner-content">
+      <span class="role-banner-icon">🔒</span>
+      <div class="role-banner-text">
+        <strong>AGREEMENT DIGITALLY EXECUTED & SEALED:</strong>
+        This agreement has already been digitally signed and submitted to Obscura Rec LLC. This signing link is now <strong>sealed & expired</strong> to prevent tampering or modification. Your signature and agreement have been safely recorded.
+      </div>
+    </div>
+  </div>
+
+  <div class="role-banner banner-counter-sign" id="banner-counter-mode" style="display:none;">
+    <div class="role-banner-content">
+      <span class="role-banner-icon">⚖️</span>
+      <div class="role-banner-text">
+        <strong>LABEL COUNTER-SIGNATURE REQUIRED:</strong>
+        The Artist has digitally executed this agreement! Please review the signed contract, apply your Obscura Rec LLC signature on Page 2, and click <strong>"✓ Finalize Agreement"</strong> to archive the executed PDF.
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= FULL-PAGE SCREEN: LINK EXPIRED / URL INVALID ================= -->
+  <div id="invalid-link-screen" class="invalid-link-screen" style="display:none;">
+    <div class="invalid-card">
+      <div class="invalid-icon-wrap" id="invalid-icon-wrap">
+        <span id="invalid-screen-icon">🚫</span>
+      </div>
+      <div class="invalid-pill" id="invalid-screen-pill">SESSION EXPIRED</div>
+      <h2 class="invalid-title" id="invalid-screen-title">Signing Link Expired or Invalid</h2>
+      
+      <div class="invalid-ref-box">
+        <span class="invalid-ref-label">Reference ID:</span>
+        <span class="invalid-ref-code" id="invalid-screen-ref">OBS-AGR-UNKNOWN</span>
+      </div>
+      
+      <p class="invalid-desc" id="invalid-screen-desc">
+        This temporary agreement link does not exist, has already been executed, or was permanently purged from the server to protect privacy and optimize storage quotas.
+      </p>
+
+      <div class="invalid-details-list">
+        <div class="invalid-detail-item">
+          <span class="detail-dot"></span>
+          <span id="invalid-detail-text">The agreement session is no longer active.</span>
+        </div>
+        <div class="invalid-detail-item">
+          <span class="detail-dot"></span>
+          <span>If you are the artist and already submitted your signature, Obscura Rec LLC has safely received your agreement for counter-signature.</span>
+        </div>
+        <div class="invalid-detail-item">
+          <span class="detail-dot"></span>
+          <span>For support or assistance, please contact Obscura Rec LLC Management.</span>
+        </div>
+      </div>
+
+      <div class="invalid-actions">
+        <!-- Executed PDF Download (Optional for Label/Admin) -->
+        <button class="btn btn-outline-gold" id="btn-invalid-download-pdf" style="display:none; align-items:center; gap:8px; padding:12px 24px; font-weight:700;">
+          <span>⬇️ Download Executed PDF</span>
+        </button>
+        <!-- Return to Creator (Shown for Label only, NEVER for Artist) -->
+        <a href="/" class="btn btn-gold" id="btn-invalid-return-home" style="text-decoration:none; display:inline-flex; align-items:center; gap:8px; padding:12px 24px; font-weight:700;">
+          <span>🏛️ Return to Agreement Creator</span>
+        </a>
+        <!-- Safe Close Notice for Artist (Artist never sees link to Creator) -->
+        <div id="artist-safe-close-notice" style="display:none; text-align:center; color:#94a3b8; font-size:14px; padding:14px 24px; background:rgba(255,255,255,0.04); border-radius:8px; border:1px solid rgba(255,255,255,0.08); width:100%;">
+          🔒 <strong>You may safely close this browser window or tab now.</strong>
+        </div>
+      </div>
+
+      <div class="invalid-footer">
+        Obscura Rec LLC • Official Legal & Music Rights Management System
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Work Area (Split View: Configurator + Live Document Preview) -->
+  <main class="app-container">
+    
+    <!-- Left Sidebar: Agreement Configurator -->
+    <aside class="sidebar-configurator">
+      <div class="sidebar-header">
+        <div class="sidebar-title">
+          <span>⚙️ Agreement Configurator</span>
+        </div>
+        <div class="preset-chip-group">
+          <span style="font-size: 11px; color: #9ca3af; align-self: center;">Live Syncing</span>
+        </div>
+      </div>
+
+      <div class="accordion-group">
+
+        <!-- Accordion 1: Parties & General Details -->
+        <div class="accordion-item" id="accordion-parties">
+          <div class="accordion-header">
+            <div class="accordion-header-title">
+              <span class="icon">👥</span>
+              <span>1. Parties & General Details</span>
+            </div>
+            <span class="accordion-toggle-icon">▼</span>
+          </div>
+          <div class="accordion-body">
+            <!-- Label Info -->
+            <div style="font-size: 11px; font-weight: 700; color: #c9a050; text-transform: uppercase; letter-spacing: 0.5px;">
+              Label Details (Obscura Rec LLC)
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="input-label-rep">Representative Name</label>
+                <input type="text" id="input-label-rep" class="form-control" placeholder="[Your Legal Name]" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="input-label-title">Director / Founder Title</label>
+                <input type="text" id="input-label-title" class="form-control" value="Director / Founder, Obscura Rec LLC" placeholder="Director / Founder, Obscura Rec LLC" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="input-label-date">Agreement Date</label>
+              <input type="date" id="input-label-date" class="form-control" />
+            </div>
+
+            <!-- Artist Info -->
+            <div style="font-size: 11px; font-weight: 700; color: #c9a050; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 6px;">
+              Artist Details
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="input-artist-legal">Artist Legal Name</label>
+                <input type="text" id="input-artist-legal" class="form-control" placeholder="[Artist Legal Name]" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="input-artist-stage">Artist / Stage Alias</label>
+                <input type="text" id="input-artist-stage" class="form-control" placeholder="[Artist Alias]" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="input-artist-email">Artist Email Address</label>
+                <input type="email" id="input-artist-email" class="form-control" placeholder="artist@example.com" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="input-artist-date">Artist Sign Date</label>
+                <input type="date" id="input-artist-date" class="form-control" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Accordion 2: Section 2 - Dynamic Objects & Tracks -->
+        <div class="accordion-item" id="accordion-tracks">
+          <div class="accordion-header">
+            <div class="accordion-header-title">
+              <span class="icon">🎵</span>
+              <span>2. Objects & Royalty Allocation</span>
+            </div>
+            <span class="accordion-toggle-icon">▼</span>
+          </div>
+          <div class="accordion-body">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:12px; color:#9ca3af;">Delivered Sound Recordings:</span>
+              <button class="btn btn-outline-gold" id="btn-add-track" style="padding: 4px 10px; font-size:11px;">
+                + Add Track
+              </button>
+            </div>
+
+            <!-- Quick Version Presets -->
+            <div class="track-quick-bar">
+              <span style="font-size:11px; color:#6b7280; width:100%;">Quick Version Presets:</span>
+              <button class="btn-preset-mini" id="btn-preset-slowed-spedup">
+                ⚡ Add Slowed & Sped Up Bundle
+              </button>
+              <button class="btn-preset-mini" id="btn-preset-instrumental">
+                🎹 Add Instrumental
+              </button>
+            </div>
+
+            <!-- Dynamic Track Cards Container -->
+            <div class="tracks-container" id="tracks-container">
+              <!-- Dynamically rendered by app.js -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Accordion 3: Section 3 & 4 - Terms & Delivery -->
+        <div class="accordion-item" id="accordion-terms">
+          <div class="accordion-header">
+            <div class="accordion-header-title">
+              <span class="icon">📜</span>
+              <span>3. Term, Renewal & Delivery</span>
+            </div>
+            <span class="accordion-toggle-icon">▼</span>
+          </div>
+          <div class="accordion-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="input-term-years">Exclusive License Term (Years)</label>
+                <input type="number" id="input-term-years" class="form-control" min="1" max="50" value="10" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="input-renewal-years">Auto-Renewal Term (Years)</label>
+                <input type="number" id="input-renewal-years" class="form-control" min="1" max="50" value="10" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="input-notice-days">Non-Renewal Notice Period (Days)</label>
+              <input type="number" id="input-notice-days" class="form-control" min="1" max="365" value="30" />
+            </div>
+            <div style="font-size:12px; color:#9ca3af; background:#11141e; padding:10px; border-radius:6px; border:1px solid #24293c; line-height:1.5;">
+              ✓ Master audio files, stems & metadata confirmed delivered via electronic transfer.<br>
+              ✓ Technical quality satisfies all Obscura Rec LLC requirements.
+            </div>
+          </div>
+        </div>
+
+        <!-- Accordion 4: Digital Signing Station -->
+        <div class="accordion-item" id="accordion-signatures">
+          <div class="accordion-header">
+            <div class="accordion-header-title">
+              <span class="icon">✍️</span>
+              <span>4. Digital Signatures Station</span>
+            </div>
+            <span class="accordion-toggle-icon">▼</span>
+          </div>
+          <div class="accordion-body">
+            <!-- Label Signature Card -->
+            <div class="signing-party-card">
+              <div class="signing-party-header">
+                <div class="signing-party-name">Label: Obscura Rec LLC</div>
+                <span class="sig-status-pill pending" id="sidebar-label-sig-pill">Pending</span>
+              </div>
+              <div class="sig-preview-thumb" id="sidebar-label-sig-thumb" style="display:none;"></div>
+              <div style="display:flex; gap:8px;">
+                <button class="btn btn-outline-gold" id="btn-sidebar-sign-label" style="flex:1;">
+                  ✍️ Sign as Label
+                </button>
+                <button class="btn btn-danger-ghost" id="btn-clear-label-sig" style="display:none;">
+                  Clear
+                </button>
+              </div>
+            </div>
+
+            <!-- Artist Signature Card -->
+            <div class="signing-party-card">
+              <div class="signing-party-header">
+                <div class="signing-party-name">Artist Signature</div>
+                <span class="sig-status-pill pending" id="sidebar-artist-sig-pill">Pending</span>
+              </div>
+              <div class="sig-preview-thumb" id="sidebar-artist-sig-thumb" style="display:none;"></div>
+              <div style="display:flex; gap:8px;">
+                <button class="btn btn-emerald" id="btn-sidebar-sign-artist" style="flex:1;">
+                  ✍️ Sign as Artist
+                </button>
+                <button class="btn btn-danger-ghost" id="btn-clear-artist-sig" style="display:none;">
+                  Clear
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </aside>
+
+    <!-- Draggable Sidebar Resizer Handle -->
+    <div class="sidebar-resizer" id="sidebar-resizer" title="Drag left/right to resize configurator panel (Double-click to reset)">
+      <div class="resizer-handle-line"></div>
+    </div>
+
+    <!-- Right Pane: Realistic A4 Paginated Document Preview -->
+    <section class="document-viewport" id="document-viewport">
+      
+      <!-- Floating Document Toolbar -->
+      <div class="doc-toolbar" id="doc-toolbar">
+        <button class="btn btn-icon-only btn-secondary" id="btn-zoom-out" title="Zoom Out">🔍−</button>
+        <span class="zoom-level-text" id="zoom-display-val">100%</span>
+        <button class="btn btn-icon-only btn-secondary" id="btn-zoom-in" title="Zoom In">🔍+</button>
+        <button class="btn btn-secondary" id="btn-zoom-fit" title="Fit to screen width">📐 Fit Width</button>
+        <button class="btn btn-secondary" id="btn-zoom-reset" title="Reset Zoom to 100%">1:1</button>
+      </div>
+
+      <!-- Live A4 Pages Target -->
+      <div id="document-render-target">
+        <!-- Rendered dynamically by document-renderer.js -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= MODAL 1: DIGITAL SIGNATURE PAD ================= -->
+  <div class="modal-backdrop" id="signature-modal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>✍️</span>
+          <span id="sig-modal-party-title">Digital Signature</span>
+        </div>
+        <button class="modal-close-btn" id="close-sig-modal-btn">✕</button>
+      </div>
+      <div class="modal-body">
+        
+        <!-- Tab Navigation (Draw / Type / Upload) -->
+        <div class="sig-tabs-nav">
+          <button class="sig-tab-btn active" data-tab="draw">✏️ Draw Signature</button>
+          <button class="sig-tab-btn" data-tab="type">⌨️ Type Signature</button>
+          <button class="sig-tab-btn" data-tab="upload">📁 Upload Image</button>
+        </div>
+
+        <!-- TAB 1: DRAW CANVAS -->
+        <div id="sig-tab-draw">
+          <div class="sig-canvas-box">
+            <canvas id="signature-canvas"></canvas>
+          </div>
+          <div class="sig-canvas-tools" style="margin-top: 10px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span>Color:</span>
+              <div class="sig-color-swatch active" data-color="#0b1a3d" style="width:18px; height:18px; background:#0b1a3d; border-radius:50%; cursor:pointer; border:2px solid #c9a050;"></div>
+              <div class="sig-color-swatch" data-color="#000000" style="width:18px; height:18px; background:#000000; border-radius:50%; cursor:pointer; border:1px solid #6b7280;"></div>
+              <div class="sig-color-swatch" data-color="#1f2937" style="width:18px; height:18px; background:#1f2937; border-radius:50%; cursor:pointer; border:1px solid #6b7280;"></div>
+            </div>
+            <div style="display:flex; gap:8px;">
+              <button class="btn btn-secondary" id="undo-canvas-btn" style="padding:4px 8px; font-size:11px;">↩ Undo</button>
+              <button class="btn btn-secondary" id="clear-canvas-btn" style="padding:4px 8px; font-size:11px;">🗑️ Clear</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: TYPE SIGNATURE -->
+        <div id="sig-tab-type" style="display:none;">
+          <div class="type-sig-container">
+            <div class="form-group">
+              <label class="form-label">Type your name or initials:</label>
+              <input type="text" id="type-sig-name-input" class="form-control" placeholder="Full Name or Alias" />
+            </div>
+            <div style="font-size:11.5px; color:#9ca3af; margin-top:2px;">Select handwriting calligraphy style:</div>
+            <div class="cursive-fonts-list" id="cursive-fonts-list">
+              <!-- Dynamically rendered -->
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: UPLOAD SIGNATURE -->
+        <div id="sig-tab-upload" style="display:none;">
+          <div class="form-group">
+            <label class="form-label">Upload transparent PNG / JPEG signature image:</label>
+            <input type="file" id="sig-file-input" class="form-control" accept="image/png, image/jpeg, image/svg+xml" />
+          </div>
+          <div id="sig-upload-preview" style="margin-top:12px; height:90px; background:#ffffff; border-radius:8px; display:flex; align-items:center; justify-content:center; border:1px dashed #9ca3af;">
+            <span style="color:#6b7280; font-size:12px;">Drag & drop image or click to browse</span>
+          </div>
+        </div>
+
+        <!-- Legal Consent Agreement Checkbox -->
+        <div style="display:flex; align-items:flex-start; gap:10px; background:#11141e; padding:12px; border-radius:8px; border:1px solid #24293c; margin-top:6px;">
+          <input type="checkbox" id="sig-consent-checkbox" style="margin-top:3px; accent-color:#c9a050;" />
+          <label for="sig-consent-checkbox" style="font-size:11.5px; color:#d1d5db; line-height:1.4; cursor:pointer;">
+            I confirm that this digital signature is legally binding and authentic for the 
+            <strong>Act of Acceptance and Transfer of Objects</strong> with Obscura Rec LLC.
+          </label>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="cancel-sig-btn">Cancel</button>
+        <button class="btn btn-gold" id="apply-sig-btn" disabled>
+          ✓ Apply Digital Signature
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL 2: FINISH & FORWARD VIA EMAIL ================= -->
+  <!-- ================= MODAL 2: SEND AGREEMENT TO ARTIST FOR SIGNATURE ================= -->
+  <div class="modal-backdrop" id="send-artist-modal">
+    <div class="modal-dialog" style="max-width: 680px;">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>✉️</span>
+          <span>Send Agreement to Artist for Signature</span>
+        </div>
+        <button class="modal-close-btn" id="close-send-modal-btn">✕</button>
+      </div>
+      <div class="modal-body">
+        
+        <!-- Mail Server Status Bar -->
+        <div style="display:flex; justify-content:space-between; align-items:center; background:#0c0f17; border:1px solid #252b3d; padding:8px 14px; border-radius:8px; margin-bottom:14px;">
+          <div style="font-size:12px; font-weight:700;" id="gmail-status-indicator">
+            <span style="color:#10b981;">🟢 Ready: ocr.agreements@gmail.com</span>
+          </div>
+          <button type="button" class="btn btn-secondary" id="btn-toggle-mail-settings" style="font-size:11px; padding:4px 10px;">
+            ⚙️ Gmail Password Settings
+          </button>
+        </div>
+
+        <!-- Collapsible Gmail App Password Configuration Box -->
+        <div id="gmail-config-box" style="display:none; background:#141824; border:1px solid #c9a050; padding:14px; border-radius:8px; margin-bottom:14px;">
+          <div style="font-size:12.5px; font-weight:700; color:#c9a050; margin-bottom:6px;">
+            🔑 Connect ocr.agreements@gmail.com (Google App Password)
+          </div>
+          <p style="font-size:11.5px; color:#d1d5db; margin:0 0 10px 0; line-height:1.4;">
+            To send automated emails directly from <strong>ocr.agreements@gmail.com</strong> without any desktop app pop-ups, enter a 16-character Google App Password 
+            (Generated from: <em>Google Account &gt; Security &gt; 2-Step Verification &gt; App Passwords</em>):
+          </p>
+          <div style="display:flex; gap:8px;">
+            <input type="password" id="input-gmail-app-password" class="form-control" placeholder="abcd efgh ijkl mnop" style="font-family:monospace; letter-spacing:1px;" />
+            <button class="btn btn-gold" id="btn-save-gmail-password" style="white-space:nowrap;">
+              💾 Save Password
+            </button>
+          </div>
+        </div>
+
+        <!-- Recipient & Link Box -->
+        <div style="background:#11141e; padding:14px; border-radius:8px; border:1px solid #24293c; margin-bottom:16px;">
+          <div class="form-row">
+            <div class="form-group" style="flex:1;">
+              <label class="form-label" for="send-artist-email-input">Artist Email Address (Recipient):</label>
+              <input type="email" id="send-artist-email-input" class="form-control" placeholder="artist@example.com" />
+            </div>
+          </div>
+          
+          <div class="form-group" style="margin-top:10px;">
+            <label class="form-label" for="send-artist-url-display">Unique Artist Signing Link:</label>
+            <div style="display:flex; gap:8px;">
+              <input type="text" id="send-artist-url-display" class="form-control" readonly style="background:#090b10; color:#c9a050; font-family:monospace; font-size:11.5px;" />
+              <button class="btn btn-secondary" id="btn-copy-artist-link" style="white-space:nowrap;">
+                📋 Copy Link
+              </button>
+            </div>
+            <p style="font-size:11px; color:#9ca3af; margin:6px 0 0 0;">
+              💡 You can also copy and send this direct link to the artist via WhatsApp, Telegram, or Instagram DM!
+            </p>
+          </div>
+        </div>
+
+        <!-- Branded Email Preview Section -->
+        <div style="margin-bottom:16px;">
+          <div style="font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:0.8px; color:#c9a050; margin-bottom:8px;">
+            Live Invitation Email Preview (Delivered to Artist's Inbox):
+          </div>
+          <div id="email-template-preview-box">
+            <!-- Rendered dynamically by email-sender.js -->
+          </div>
+        </div>
+
+        <!-- Primary Action: Direct In-Site Dispatch -->
+        <button class="btn btn-emerald" id="btn-send-direct-email" style="width:100%; font-size:14.5px; padding:13px; font-weight:800; box-shadow: 0 4px 15px rgba(16,185,129,0.3);">
+          🚀 Send Agreement to Artist (via ocr.agreements@gmail.com)
+        </button>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="document.getElementById('send-artist-modal').classList.remove('active')">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL 3: ARTIST SUBMISSION MODAL ================= -->
+  <div class="modal-backdrop" id="submit-artist-modal">
+    <div class="modal-dialog" style="max-width: 580px;">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>✓</span>
+          <span>Submit Signed Agreement to Obscura Rec LLC</span>
+        </div>
+        <button class="modal-close-btn" id="close-submit-modal-btn">✕</button>
+      </div>
+      <div class="modal-body">
+        
+        <div id="submit-artist-summary-box" style="margin-bottom:16px;">
+          <!-- Dynamically filled -->
+        </div>
+
+        <p style="font-size:13px; color:#d1d5db; margin:0 0 18px 0; line-height:1.55; text-align:center;">
+          Your digital signature has been recorded. Click below to securely deliver your executed agreement directly to 
+          <strong>Obscura Rec LLC</strong> for official counter-signature.
+        </p>
+
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <button class="btn btn-emerald" id="btn-submit-direct-to-label" style="width:100%; font-size:15px; padding:14px; font-weight:800; box-shadow: 0 4px 15px rgba(16,185,129,0.3);">
+            🚀 Submit Executed Agreement
+          </button>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="document.getElementById('submit-artist-modal').classList.remove('active')">
+          Review Agreement First
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL 3: TEMPLATES & BACKUP ================= -->
+  <div class="modal-backdrop" id="template-modal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>📁</span>
+          <span>Templates & Document Presets</span>
+        </div>
+        <button class="modal-close-btn" id="close-template-modal-btn">✕</button>
+      </div>
+      <div class="modal-body">
+        
+        <!-- Save Current Form as Template -->
+        <div style="background:#11141e; padding:14px; border-radius:8px; border:1px solid #24293c;">
+          <div style="font-size:13px; font-weight:700; color:#c9a050; margin-bottom:8px;">
+            Save Current Agreement as Template
+          </div>
+          <div class="form-row">
+            <div class="form-group" style="flex:1;">
+              <input type="text" id="input-new-template-name" class="form-control" placeholder="Template Name (e.g., Standard 50% Single)" />
+            </div>
+            <button class="btn btn-gold" id="btn-save-current-template" style="white-space:nowrap;">
+              Save Template
+            </button>
+          </div>
+        </div>
+
+        <!-- Saved Templates List -->
+        <div style="font-size:12px; font-weight:700; color:#ffffff; margin-top:4px;">
+          Saved Templates in Browser:
+        </div>
+        <div id="saved-templates-list" style="display:flex; flex-direction:column; gap:8px; max-height:180px; overflow-y:auto;">
+          <!-- Dynamically populated -->
+        </div>
+
+        <!-- JSON File Import & Export -->
+        <div style="background:#11141e; padding:14px; border-radius:8px; border:1px solid #24293c; margin-top:6px;">
+          <div style="font-size:13px; font-weight:700; color:#9ca3af; margin-bottom:8px;">
+            Backup & Data Portability
+          </div>
+          <div style="display:flex; gap:10px;">
+            <button class="btn btn-secondary" id="btn-export-json" style="flex:1;">
+              💾 Export JSON
+            </button>
+            <label class="btn btn-secondary" style="flex:1; cursor:pointer; text-align:center;">
+              📥 Import JSON
+              <input type="file" id="input-import-json-file" accept=".json" style="display:none;" />
+            </label>
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="document.getElementById('template-modal').classList.remove('active')">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL 4: AGREEMENT VAULT & SEARCH ================= -->
+  <div class="modal-backdrop" id="vault-modal">
+    <div class="modal-dialog vault-dialog">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>🏛️</span>
+          <span>Agreement Vault & Archive Search</span>
+        </div>
+        <button class="modal-close-btn" id="close-vault-modal-btn">✕</button>
+      </div>
+      <div class="modal-body">
+        
+        <!-- Search bar & Controls -->
+        <div class="vault-header-row">
+          <div style="font-size:12px; color:#9ca3af;" id="vault-stats-label">
+            Loading archived agreements...
+          </div>
+          <button class="btn btn-secondary btn-sm" id="btn-refresh-vault" title="Refresh vault records">
+            🔄 Refresh
+          </button>
+        </div>
+
+        <div class="vault-search-bar">
+          <span style="font-size:16px;">🔍</span>
+          <input type="text" id="vault-search-input" class="vault-search-input" placeholder="Search by Reference ID (e.g. OBS-AGR-...), Artist name, Track title..." />
+          <button class="btn-ghost-icon" id="btn-clear-vault-search" title="Clear search" style="background:transparent; border:none; color:#9ca3af; cursor:pointer; font-size:14px;">✕</button>
+        </div>
+
+        <!-- Records List Container -->
+        <div id="vault-records-container">
+          <!-- Dynamically populated -->
+        </div>
+
+      </div>
+      <div class="modal-footer" style="justify-content:space-between;">
+        <div style="font-size:11px; color:#6b7280;">
+          💡 Tip: Click on any Reference ID to copy it. Temporary signing links are automatically pruned upon archiving to keep hosting storage optimized.
+        </div>
+        <button class="btn btn-secondary" onclick="document.getElementById('vault-modal').classList.remove('active')">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Main Application Script -->
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>

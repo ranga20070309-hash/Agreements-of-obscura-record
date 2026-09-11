@@ -1,0 +1,11 @@
+{
+  "id": "OBS-TEST-001",
+  "tracks": [
+    {
+      "id": "trk-1",
+      "title": "Test Track",
+      "year": "2026",
+      "royaltyShare": 50
+    }
+  ]
+}
