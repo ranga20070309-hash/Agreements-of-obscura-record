@@ -33,9 +33,15 @@ class AgreementApp {
     this.bindZoomControls();
     this.bindTemplateModal();
 
+    // Initial render from loaded store state
+    const initialState = this.store.getState();
+    this.syncInputsFromState(initialState);
+    this.renderTracksList(initialState, true);
+    this.renderDocumentView(initialState);
+    this.updateStatusBadge();
+
     // Subscribe to state updates
-    // Subscribe to state updates
-    this.store.subscribe((state) => {
+    this.store.subscribe((state, options = {}) => {
       const linkStatus = this.store.getLinkStatus();
       if (linkStatus && linkStatus !== 'active') {
         this.showInvalidLinkScreen(linkStatus, this.store.getInvalidRefId(), this.store.getInvalidReason());
@@ -43,8 +49,16 @@ class AgreementApp {
       }
       this.hideInvalidLinkScreen();
       this.applyRoleMode();
-      this.syncInputsFromState(state);
-      this.renderTracksList(state);
+
+      // Only sync inputs & tracks when explicitly requested (load, reset, template, external sync)
+      // NEVER overwrite inputs while the user is actively typing in the form!
+      if (options.syncInputs) {
+        this.syncInputsFromState(state);
+      }
+      if (options.rebuildTracks || options.syncInputs) {
+        this.renderTracksList(state, options.forceRebuildTracks || false);
+      }
+
       this.renderDocumentView(state);
       this.updateStatusBadge();
     });
@@ -555,8 +569,23 @@ class AgreementApp {
       input.addEventListener('input', () => {
         const index = parseInt(input.dataset.index, 10);
         const prop = input.dataset.prop;
-        state.tracks[index][prop] = input.value;
-        this.store.save();
+        const curState = this.store.getState();
+        if (curState.tracks && curState.tracks[index]) {
+          curState.tracks[index][prop] = input.value;
+        }
+
+        // Live update card title if editing title or versionTag
+        const card = input.closest('.track-card');
+        if (card && (prop === 'title' || prop === 'versionTag')) {
+          const titleBadge = card.querySelector('.track-card-header-title');
+          if (titleBadge && curState.tracks[index]) {
+            const trk = curState.tracks[index];
+            const rawTitle = trk.title || '[Track Name]';
+            titleBadge.textContent = trk.versionTag ? `${rawTitle} ${trk.versionTag}` : rawTitle;
+          }
+        }
+
+        this.store.save({ syncInputs: false, rebuildTracks: false });
       });
     });
 
@@ -786,7 +815,7 @@ class AgreementApp {
     this.store.setLinkStatus('active');
     this.store.isLocked = false;
     this.store.state = JSON.parse(JSON.stringify(contract));
-    this.store.save();
+    this.store.save({ syncInputs: true, rebuildTracks: true, forceRebuildTracks: true });
 
     // Clear any signing query params from the browser address bar
     if (window.history && window.history.replaceState) {
@@ -969,7 +998,7 @@ class AgreementApp {
         try {
           const parsed = JSON.parse(evt.target.result);
           this.store.state = { ...getDefaultAgreementState(), ...parsed };
-          this.store.save();
+          this.store.save({ syncInputs: true, rebuildTracks: true, forceRebuildTracks: true });
           modal.classList.remove('active');
           alert('Agreement data imported successfully!');
         } catch (err) {
