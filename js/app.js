@@ -372,8 +372,28 @@ class AgreementApp {
     bindField('input-artist-date', 'artist.date');
 
     // Terms
-    bindField('input-term-years', 'terms.termYears');
-    bindField('input-renewal-years', 'terms.renewalYears');
+    const termInput = document.getElementById('input-term-years');
+    if (termInput) {
+      const onTermChange = () => {
+        if (!this.store.state.terms) this.store.state.terms = {};
+        this.store.state.terms.termYearsEdited = true;
+        this.store.update('terms.termYears', termInput.value);
+      };
+      termInput.addEventListener('input', onTermChange);
+      termInput.addEventListener('change', onTermChange);
+    }
+
+    const renewalInput = document.getElementById('input-renewal-years');
+    if (renewalInput) {
+      const onRenewalChange = () => {
+        if (!this.store.state.terms) this.store.state.terms = {};
+        this.store.state.terms.renewalYearsEdited = true;
+        this.store.update('terms.renewalYears', renewalInput.value);
+      };
+      renewalInput.addEventListener('input', onRenewalChange);
+      renewalInput.addEventListener('change', onRenewalChange);
+    }
+
     bindField('input-notice-days', 'terms.noticeDays');
 
     // Signature Trigger Buttons in Sidebar

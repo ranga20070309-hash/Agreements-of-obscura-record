@@ -34,7 +34,9 @@ export function getDefaultAgreementState() {
     terms: {
       termYears: 10,
       renewalYears: 10,
-      noticeDays: 30
+      noticeDays: 30,
+      termYearsEdited: false,
+      renewalYearsEdited: false
     },
     delivery: {
       masterDelivered: true,

@@ -9,6 +9,7 @@
   <script>
     (function() {
       try {
+        var isFileProtocol = window.location.protocol === 'file:';
         var p = new URLSearchParams(window.location.search);
         var m = p.get('mode');
         var id = p.get('id');
@@ -16,12 +17,35 @@
           document.documentElement.classList.add('mode-artist-sign');
         } else if (m === 'counter-sign') {
           document.documentElement.classList.add('mode-counter-sign');
-        } else {
+        } else if (!isFileProtocol) {
           // Label main creator site: immediately set auth-pending before any HTML is painted to eliminate flash!
           document.documentElement.classList.add('auth-pending');
         }
         if (id) {
           document.documentElement.classList.add('has-signing-id');
+        }
+
+        if (isFileProtocol) {
+          window.addEventListener('DOMContentLoaded', function() {
+            var warningDiv = document.createElement('div');
+            warningDiv.id = 'file-protocol-warning';
+            warningDiv.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:#0d0e12;z-index:999999;display:flex;align-items:center;justify-content:center;color:#fff;font-family:system-ui,-apple-system,sans-serif;padding:20px;text-align:center;box-sizing:border-box;';
+            warningDiv.innerHTML = '<div style="max-width:560px;background:#151821;border:1px solid #c5a059;padding:36px;border-radius:16px;box-shadow:0 20px 50px rgba(0,0,0,0.8);">' +
+              '<div style="font-size:48px;margin-bottom:12px;">⚠️</div>' +
+              '<h2 style="color:#d4af37;margin:0 0 12px 0;font-size:22px;">Local Server Required (file:/// Detected)</h2>' +
+              '<p style="color:#a0aec0;font-size:14px;line-height:1.6;margin-bottom:24px;">' +
+                'Browser (Chrome/Edge) එකෙන් <code>file:///</code> හරහා JavaScript modules run වීම ආරක්ෂක හේතූන් මත (CORS policy) block කර ඇත.<br><br>' +
+                'Site එක හරියටම ක්‍රියාත්මක වීමට පහත <strong>Local Server</strong> බටන් එක ඔබන්න:' +
+              '</p>' +
+              '<a href="http://localhost:3000" style="display:inline-block;background:linear-gradient(135deg,#d4af37,#aa8024);color:#000;font-weight:700;padding:14px 28px;border-radius:8px;text-decoration:none;font-size:16px;box-shadow:0 4px 15px rgba(212,175,55,0.4);">' +
+                '👉 Open http://localhost:3000' +
+              '</a>' +
+              '<p style="color:#718096;font-size:12px;margin-top:22px;margin-bottom:0;">' +
+                '(Server එක දැනටමත් පසුබිමින් run කර ඇත • Port: 3000)' +
+              '</p>' +
+            '</div>';
+            document.body.appendChild(warningDiv);
+          });
         }
       } catch(e) {}
     })();

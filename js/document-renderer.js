@@ -35,7 +35,7 @@ export function renderDocument(state, container, onSignClick, mode = 'label') {
     return `
       <li class="doc-track-item">
         <div class="doc-track-header">
-          Composition / Performance / Phonogram: <strong>${escapeHtml(fullTitle)}</strong>
+          Composition / Performance: <strong>${escapeHtml(fullTitle)}</strong>
         </div>
         <ul class="doc-track-sublist">
           <li class="doc-track-subitem">Year: <strong>${escapeHtml(track.year || '2026')}</strong></li>
@@ -129,9 +129,19 @@ export function renderDocument(state, container, onSignClick, mode = 'label') {
     `;
   }
 
-  const termYears = state.terms.termYears || 10;
-  const renewalYears = state.terms.renewalYears || 10;
-  const noticeDays = state.terms.noticeDays || 30;
+  const termYearsRaw = state.terms && state.terms.termYears;
+  const termYearsEdited = Boolean(state.terms && state.terms.termYearsEdited);
+  const termYearsDisplay = termYearsEdited
+    ? ((termYearsRaw !== '' && termYearsRaw !== null && termYearsRaw !== undefined) ? escapeHtml(String(termYearsRaw).trim()) : '10')
+    : `[${escapeHtml(String(termYearsRaw !== '' && termYearsRaw !== null && termYearsRaw !== undefined ? termYearsRaw : 10).trim())}]`;
+
+  const renewalYearsRaw = state.terms && state.terms.renewalYears;
+  const renewalYearsEdited = Boolean(state.terms && state.terms.renewalYearsEdited);
+  const renewalYearsDisplay = renewalYearsEdited
+    ? ((renewalYearsRaw !== '' && renewalYearsRaw !== null && renewalYearsRaw !== undefined) ? escapeHtml(String(renewalYearsRaw).trim()) : '10')
+    : `[${escapeHtml(String(renewalYearsRaw !== '' && renewalYearsRaw !== null && renewalYearsRaw !== undefined ? renewalYearsRaw : 10).trim())}]`;
+
+  const noticeDays = (state.terms && state.terms.noticeDays) || 30;
 
   // Render Page 1 HTML
   let pagesHtml = `
@@ -226,11 +236,11 @@ export function renderDocument(state, container, onSignClick, mode = 'label') {
           <ul class="doc-bullets">
             <li>
               The term of the exclusive license for the Objects transferred under this Act shall be 
-              <strong>[${termYears}] years</strong> from the date of execution of this Act.
+              <strong>${termYearsDisplay} years</strong> from the date of execution of this Act.
             </li>
             <li>
               The term shall automatically extend for successive periods of 
-              <strong>[${renewalYears}] years</strong>, unless either Party provides written notice 
+              <strong>${renewalYearsDisplay} years</strong>, unless either Party provides written notice 
               of non-renewal at least <strong>${noticeDays} days</strong> prior to the expiration 
               of the initial or any extended term.
             </li>
