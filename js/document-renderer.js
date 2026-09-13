@@ -41,7 +41,7 @@ export function renderDocument(state, container, onSignClick, mode = 'label') {
           <li class="doc-track-subitem">Year: <strong>${escapeHtml(track.year || '2026')}</strong></li>
           <li class="doc-track-subitem">Author(s) of Music: <strong>${escapeHtml(musicAuthor)}</strong></li>
           <li class="doc-track-subitem">Author(s) of Lyrics: <strong>${escapeHtml(lyricsAuthor)}</strong></li>
-          <li class="doc-track-subitem">Phonogram Producer(s): <strong>${escapeHtml(phonogramProducer)}</strong></li>
+          <li class="doc-track-subitem">Producer(s): <strong>${escapeHtml(phonogramProducer)}</strong></li>
           <li class="doc-track-subitem">Performer(s) & Royalty Share: <strong>${escapeHtml(royaltyText)}</strong></li>
           <li class="doc-track-subitem">Date of Transfer: <strong>${escapeHtml(transferDate)}</strong></li>
         </ul>

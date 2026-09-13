@@ -582,8 +582,8 @@ class AgreementApp {
 
           <div class="form-group full-width">
             <div class="form-label-row">
-              <label class="form-label">Phonogram Producer(s)</label>
-              ${state.tracks.length > 1 ? `<button type="button" class="btn-field-apply-all" data-index="${idx}" data-prop="phonogramProducers" title="Apply these phonogram producers to all tracks">Apply to all</button>` : ''}
+              <label class="form-label">Producer(s)</label>
+              ${state.tracks.length > 1 ? `<button type="button" class="btn-field-apply-all" data-index="${idx}" data-prop="phonogramProducers" title="Apply these producers to all tracks">Apply to all</button>` : ''}
             </div>
             <input type="text" class="form-control track-input" data-index="${idx}" data-prop="phonogramProducers" value="${escapeHtml(track.phonogramProducers || '')}" placeholder="[Producer Names]" />
           </div>
