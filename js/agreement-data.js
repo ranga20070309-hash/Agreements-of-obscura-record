@@ -40,7 +40,7 @@ export function getDefaultAgreementState() {
       sealSize: 135,
       sealOpacity: 100,
       sealRotation: -2,
-      sealX: 430,
+      sealX: 460,
       sealY: 560
     },
     artist: {

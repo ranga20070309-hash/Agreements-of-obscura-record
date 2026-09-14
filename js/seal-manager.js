@@ -295,8 +295,8 @@ export class SealManager {
     if (isFirstTime || !current.sealSize) this.store.state.label.sealSize = 135;
     if (isFirstTime || current.sealOpacity === undefined) this.store.state.label.sealOpacity = 100;
     if (isFirstTime || current.sealRotation === undefined) this.store.state.label.sealRotation = -2;
-    if (isFirstTime || current.sealX === undefined) this.store.state.label.sealX = 430; // approx px from left on A4 page
-    if (isFirstTime || current.sealY === undefined) this.store.state.label.sealY = 560; // approx px from top on A4 page
+    if (isFirstTime || current.sealX === undefined) this.store.state.label.sealX = 460; // approx px from left on A4 page
+    if (isFirstTime || current.sealY === undefined) this.store.state.label.sealY = 290; // approx px from top on A4 page
 
     this.store.save({ syncInputs: true });
     this.closeVault();
@@ -312,8 +312,8 @@ export class SealManager {
 
   resetPositionToSignature() {
     if (!this.store.state.label || !this.store.state.label.sealApplied) return;
-    this.store.state.label.sealX = 430;
-    this.store.state.label.sealY = 560;
+    this.store.state.label.sealX = 460;
+    this.store.state.label.sealY = 290;
     this.store.state.label.sealSize = 135;
     this.store.state.label.sealRotation = -2;
     this.store.state.label.sealOpacity = 100;
@@ -335,8 +335,8 @@ export class SealManager {
       const sz = this.store.state.label.sealSize || 135;
       const op = (this.store.state.label.sealOpacity !== undefined ? this.store.state.label.sealOpacity : 100) / 100;
       const rot = this.store.state.label.sealRotation || 0;
-      const x = this.store.state.label.sealX !== undefined ? this.store.state.label.sealX : 430;
-      const y = this.store.state.label.sealY !== undefined ? this.store.state.label.sealY : 560;
+      const x = this.store.state.label.sealX !== undefined ? this.store.state.label.sealX : 460;
+      const y = this.store.state.label.sealY !== undefined ? this.store.state.label.sealY : 290;
 
       sealEl.style.width = `${sz}px`;
       sealEl.style.height = `${sz}px`;
