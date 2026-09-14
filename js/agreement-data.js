@@ -712,6 +712,21 @@ class AgreementStore {
     return true;
   }
 
+  removeAllExtraArtists() {
+    if (!Array.isArray(this.state.artists) || this.state.artists.length <= 1) return;
+    this.state.artists = [this.state.artists[0]];
+    if (this.state.artists[0]) {
+      this.state.artist = {
+        legalName: this.state.artists[0].legalName || '',
+        stageName: this.state.artists[0].stageName || '',
+        email: this.state.artists[0].email || '',
+        signature: this.state.artists[0].signature || null,
+        date: this.state.artists[0].date || this.state.createdAt
+      };
+    }
+    this.save({ syncInputs: true });
+  }
+
   applyArtistSignature(artistId, signatureObj) {
     const targetId = artistId || this.getCurrentSignerId();
     if (!Array.isArray(this.state.artists)) {

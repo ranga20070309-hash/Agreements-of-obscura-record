@@ -80,6 +80,9 @@ class AgreementApp {
       // NEVER overwrite inputs while the user is actively typing in the form!
       if (options.syncInputs) {
         this.syncInputsFromState(state);
+      } else {
+        // Keep additional artists cards and badges in sync without wiping input text focus
+        this.renderAdditionalArtists(state);
       }
       if (options.rebuildTracks || options.syncInputs) {
         this.renderTracksList(state, options.forceRebuildTracks || false);
@@ -458,20 +461,54 @@ class AgreementApp {
     document.getElementById('btn-add-artist')?.addEventListener('click', () => {
       this.store.addArtist();
     });
+
+    // Remove all extra collaborators button (keeps only 1 primary artist)
+    document.getElementById('btn-remove-all-extra')?.addEventListener('click', () => {
+      if (confirm('Remove all additional signing collaborators and keep only 1 Primary Artist?')) {
+        this.store.removeAllExtraArtists();
+        showToast('All additional collaborators removed. 1 Primary Artist retained.', 'info');
+      }
+    });
   }
 
   // Render Additional Artists in Section 1
   renderAdditionalArtists(state) {
     const container = document.getElementById('additional-artists-container');
+    const badge = document.getElementById('artists-count-badge');
+    const removeAllBtn = document.getElementById('btn-remove-all-extra');
     if (!container) return;
 
-    const artists = Array.isArray(state.artists) ? state.artists.slice(1) : [];
-    if (artists.length === 0) {
+    const totalArtists = Array.isArray(state.artists) ? state.artists.length : 1;
+    const additionalArtists = Array.isArray(state.artists) ? state.artists.slice(1) : [];
+
+    if (badge) {
+      if (totalArtists > 1) {
+        badge.textContent = `1 Primary + ${additionalArtists.length} Collaborator(s) (${totalArtists} Total)`;
+        badge.style.background = 'rgba(201,160,80,0.25)';
+        badge.style.color = '#f3ba4f';
+      } else {
+        badge.textContent = 'Main Signer (1 Artist Only)';
+        badge.style.background = 'rgba(201,160,80,0.15)';
+        badge.style.color = '#c9a050';
+      }
+    }
+
+    if (removeAllBtn) {
+      removeAllBtn.style.display = totalArtists > 1 ? 'inline-flex' : 'none';
+    }
+
+    // Never wipe focus while user is actively typing inside an additional artist input
+    const active = document.activeElement;
+    if (active && container.contains(active)) {
+      return;
+    }
+
+    if (additionalArtists.length === 0) {
       container.innerHTML = '';
       return;
     }
 
-    container.innerHTML = artists.map((a, idx) => {
+    container.innerHTML = additionalArtists.map((a, idx) => {
       const artNum = idx + 2; // Artist 2, Artist 3, etc.
       return `
         <div class="additional-artist-card" data-artist-id="${a.id}" style="background:#11141e; border:1px solid #24293c; border-radius:8px; padding:10px;">
