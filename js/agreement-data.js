@@ -323,13 +323,18 @@ class AgreementStore {
           localArt.status = 'signed';
           localArt.submitted = true;
           changed = true;
-        } else if (!remoteHasSig && localHasSig && remoteArt.status === 'pending') {
-          // Remotely removed signature
-          localArt.signature = null;
-          localArt.status = 'pending';
-          localArt.submitted = false;
-          delete localArt.signedAt;
-          changed = true;
+        } else if (!remoteHasSig && localHasSig) {
+          // Only clear if the signature was previously officially finalized/submitted,
+          // AND remote explicitly shows that the label has now reset/unlocked it!
+          // NEVER wipe an active draft that the artist is currently placing on this device!
+          const isLocalActiveDraft = (this.mode === 'artist-sign' && localArt.id === this.getCurrentSignerId() && !localArt.submitted);
+          if (!isLocalActiveDraft && (localArt.submitted || localArt.status === 'signed') && remoteArt.status === 'pending' && !remoteArt.submitted) {
+            localArt.signature = null;
+            localArt.status = 'pending';
+            localArt.submitted = false;
+            delete localArt.signedAt;
+            changed = true;
+          }
         }
       } else if (remoteArt.id) {
         this.state.artists.push({ ...remoteArt });
@@ -438,6 +443,27 @@ class AgreementStore {
         // Case 2: In artist mode, keep linkStatus as active so the document renders normally!
         this.linkStatus = 'active';
         this.state = this.normalizeArtistsState({ ...getDefaultAgreementState(), ...serverState });
+
+        // Restore local draft signature from sessionStorage if page was refreshed before submit
+        if (mode === 'artist-sign') {
+          const signerId = params.get('signer') || this.state.artists?.[0]?.id || 'art-1';
+          try {
+            if (typeof sessionStorage !== 'undefined') {
+              const cachedSigStr = sessionStorage.getItem(`obscura_draft_sig_${id}_${signerId}`);
+              if (cachedSigStr) {
+                const cachedSig = JSON.parse(cachedSigStr);
+                const targetArt = this.state.artists?.find(a => a.id === signerId);
+                if (targetArt && !targetArt.signature && cachedSig) {
+                  targetArt.signature = cachedSig;
+                  if (this.state.artists[0]?.id === signerId && this.state.artist) {
+                    this.state.artist.signature = cachedSig;
+                  }
+                }
+              }
+            }
+          } catch (err) {}
+        }
+
         this.notify({ syncInputs: true, rebuildTracks: true, forceRebuildTracks: true });
       } catch (e) {
         console.warn('Could not fetch agreement:', e);
@@ -667,6 +693,31 @@ class AgreementStore {
 
     // Do NOT lock or mark all_artists_signed here! That happens only on final submission!
     this.save({ syncInputs: false });
+
+    // Cache locally in sessionStorage so refresh never loses the draft signature
+    try {
+      if (typeof sessionStorage !== 'undefined') {
+        if (signatureObj) {
+          sessionStorage.setItem(`obscura_draft_sig_${this.state.id}_${targetId}`, JSON.stringify(signatureObj));
+        } else {
+          sessionStorage.removeItem(`obscura_draft_sig_${this.state.id}_${targetId}`);
+        }
+      }
+    } catch (e) {}
+
+    // Instantly sync draft to Firebase RTDB & local server so remote always matches local signature state!
+    try {
+      saveAgreementToFirebase(this.state);
+    } catch (e) {}
+    if (typeof window !== 'undefined' && window.location) {
+      try {
+        fetch('/api/agreements', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(this.state)
+        }).catch(() => {});
+      } catch (e) {}
+    }
   }
 
   async removeArtistSignature(artistId) {
@@ -717,14 +768,16 @@ class AgreementStore {
     }
 
     // Sync to server
-    try {
-      await fetch('/api/agreements', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(this.state)
-      });
-    } catch (e) {
-      console.warn('Server sync error on removeArtistSignature:', e);
+    if (typeof window !== 'undefined' && window.location) {
+      try {
+        await fetch('/api/agreements', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(this.state)
+        });
+      } catch (e) {
+        console.warn('Server sync error on removeArtistSignature:', e);
+      }
     }
 
     // Sync to Vault if archived
@@ -768,13 +821,15 @@ class AgreementStore {
       await saveAgreementToFirebase(this.state);
     } catch (e) {}
 
-    try {
-      await fetch('/api/agreements', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(this.state)
-      });
-    } catch (e) {}
+    if (typeof window !== 'undefined' && window.location) {
+      try {
+        await fetch('/api/agreements', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(this.state)
+        });
+      } catch (e) {}
+    }
 
     try {
       await updateVaultIfArchived(this.state);

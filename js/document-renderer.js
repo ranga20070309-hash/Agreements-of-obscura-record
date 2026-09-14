@@ -229,7 +229,7 @@ export function renderDocument(state, container, onSignClick, mode = 'label') {
             <div class="doc-sig-caption">
               <span>${escapeHtml(artist.role || 'Artist')} Signature</span>
             </div>
-            ${allowReSign ? `
+            ${(hasSig && allowReSign) ? `
               <div class="sig-redraw-hint no-print" data-party="artist" data-artist-id="${escapeHtml(artist.id)}" title="Click to re-draw or change signature">
                 <span class="sig-redraw-hint-text">✏️ Click to re-draw / edit</span>
               </div>

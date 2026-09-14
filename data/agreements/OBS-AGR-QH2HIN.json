@@ -1,0 +1,152 @@
+{
+  "id": "OBS-AGR-QH2HIN",
+  "createdAt": "2026-09-14",
+  "label": {
+    "companyName": "Obscura Rec LLC",
+    "representative": "Rangana D Silva",
+    "representativeTitle": "Director / Founder, Obscura Rec LLC",
+    "signature": null,
+    "date": "2026-09-14"
+  },
+  "artist": {
+    "legalName": "sayuru sithijaya",
+    "stageName": "sayuruxt",
+    "email": "ranga2007.03.09@gmail.com",
+    "signature": null,
+    "date": "2026-09-14",
+    "status": "pending",
+    "submitted": false
+  },
+  "artists": [
+    {
+      "id": "art-1",
+      "role": "Recording Artist",
+      "legalName": "sayuru sithijaya",
+      "stageName": "sayuruxt",
+      "email": "ranga2007.03.09@gmail.com",
+      "signature": null,
+      "date": "2026-09-14",
+      "status": "pending",
+      "submitted": false
+    },
+    {
+      "id": "art-z8j2x",
+      "role": "Featured Artist / Collaborator",
+      "legalName": "",
+      "stageName": "",
+      "email": "",
+      "signature": null,
+      "date": "2026-09-14",
+      "status": "pending",
+      "submitted": false
+    },
+    {
+      "id": "art-l32sx",
+      "role": "Featured Artist / Collaborator",
+      "legalName": "",
+      "stageName": "",
+      "email": "",
+      "signature": null,
+      "date": "2026-09-14",
+      "status": "pending",
+      "submitted": false
+    },
+    {
+      "id": "art-1ia47",
+      "role": "Featured Artist / Collaborator",
+      "legalName": "",
+      "stageName": "",
+      "email": "",
+      "signature": null,
+      "date": "2026-09-14",
+      "status": "pending",
+      "submitted": false
+    },
+    {
+      "id": "art-jo6hk",
+      "role": "Featured Artist / Collaborator",
+      "legalName": "",
+      "stageName": "",
+      "email": "",
+      "signature": null,
+      "date": "2026-09-14",
+      "status": "pending",
+      "submitted": false
+    }
+  ],
+  "terms": {
+    "termYears": "10",
+    "renewalYears": "10",
+    "noticeDays": 30,
+    "termYearsEdited": true,
+    "renewalYearsEdited": true
+  },
+  "delivery": {
+    "masterDelivered": true,
+    "technicalSatisfied": true
+  },
+  "tracks": [
+    {
+      "id": "trk-1",
+      "title": "Funk BOBO",
+      "versionTag": "",
+      "year": "2026",
+      "musicAuthors": "sayuru sithijaya",
+      "lyricsAuthors": "sayuru sithijaya",
+      "phonogramProducers": "sayuruxt",
+      "royaltyShare": "70",
+      "royaltyDetails": "[50]% of Label Net Income",
+      "transferDate": "2026-09-13"
+    },
+    {
+      "id": "trk-2",
+      "title": "Funk BOBO",
+      "versionTag": "(Slowed)",
+      "year": "2026",
+      "musicAuthors": "sayuru sithijaya",
+      "lyricsAuthors": "sayuru sithijaya",
+      "phonogramProducers": "sayuruxt",
+      "royaltyShare": "70",
+      "royaltyDetails": "[50]% of Label Net Income",
+      "transferDate": "2026-09-13"
+    },
+    {
+      "id": "trk-3",
+      "title": "Funk BOBO",
+      "versionTag": "(Sped Up)",
+      "year": "2026",
+      "musicAuthors": "sayuru sithijaya",
+      "lyricsAuthors": "sayuru sithijaya",
+      "phonogramProducers": "sayuruxt",
+      "royaltyShare": "70",
+      "royaltyDetails": "[50]% of Label Net Income",
+      "transferDate": "2026-09-13"
+    },
+    {
+      "id": "trk-anxa8",
+      "title": "Funk BOBO",
+      "versionTag": "",
+      "year": "2026",
+      "musicAuthors": "sayuru sithijaya",
+      "lyricsAuthors": "sayuru sithijaya",
+      "phonogramProducers": "sayuruxt",
+      "royaltyShare": "70",
+      "royaltyDetails": "50% of Label Net Income",
+      "transferDate": "2026-09-13"
+    },
+    {
+      "id": "trk-liutw",
+      "title": "Funk BOBO",
+      "versionTag": "",
+      "year": "2026",
+      "musicAuthors": "sayuru sithijaya",
+      "lyricsAuthors": "sayuru sithijaya",
+      "phonogramProducers": "sayuruxt",
+      "royaltyShare": "70",
+      "royaltyDetails": "50% of Label Net Income",
+      "transferDate": "2026-09-13"
+    }
+  ],
+  "status": "draft",
+  "isLockedForArtist": false
+}
