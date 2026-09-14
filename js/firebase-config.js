@@ -267,6 +267,8 @@ export async function saveAgreementToVault(state) {
       artistSigTimestamp: state.artist?.signature?.timestamp || '',
       labelSigTimestamp: state.label?.signature?.timestamp || '',
       labelSigHash: state.label?.signature?.hash || 'OBS-LABEL-SEALED',
+      hasSeal: Boolean(state.label?.sealApplied),
+      sealFile: state.label?.sealFile || '',
       artists: Array.isArray(state.artists) ? state.artists.map(a => ({
         id: a.id,
         role: a.role || 'Recording Artist',
@@ -325,6 +327,26 @@ export async function updateVaultIfArchived(state) {
     console.warn('Check vault update error:', e);
   }
   return false;
+}
+
+/**
+ * Fetch specific agreement document directly from Firebase Vault
+ */
+export async function getAgreementFromVault(id) {
+  if (!id) return null;
+  const database = getDatabaseInstance();
+  if (!database) return null;
+
+  try {
+    const snap = await database.ref(`vault/${id}`).once('value');
+    if (snap.exists()) {
+      const data = snap.val();
+      return { ...data, isArchivedInVault: true };
+    }
+  } catch (err) {
+    console.warn('[Firebase RTDB] Vault single fetch error:', err);
+  }
+  return null;
 }
 
 /**

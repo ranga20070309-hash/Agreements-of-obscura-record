@@ -31,6 +31,37 @@ export function generatePdfFileName(state) {
   return `Agreement - ${refId} - ${songName} - ${labelName}.pdf`;
 }
 
+/**
+ * Preload seal SVG as an offscreen Image element for direct high-resolution 2D canvas stamping
+ */
+async function loadSealDrawable(sealFile) {
+  if (!sealFile) return null;
+  try {
+    const res = await fetch(`./assets/seals/${sealFile}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const svgText = await res.text();
+
+    const blob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
+    const blobUrl = URL.createObjectURL(blob);
+    const img = new Image();
+
+    await new Promise((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = (e) => reject(e);
+      img.src = blobUrl;
+    });
+
+    return img;
+  } catch (err) {
+    console.warn('Could not load seal SVG as blob image, checking DOM fallback:', err);
+    const domImg = document.querySelector('#draggable-corporate-seal img');
+    if (domImg && domImg.complete && domImg.naturalWidth > 0) {
+      return domImg;
+    }
+    return null;
+  }
+}
+
 export async function exportToPdf(state) {
   const container = document.getElementById('printable-document');
   if (!container) {
@@ -61,8 +92,14 @@ export async function exportToPdf(state) {
 
     showToast(`Generating ${pages.length}-page high-resolution PDF...`, 'info');
 
-    // Wait for all images inside container (signatures, logo, seal SVG) to be fully loaded & decoded
-    const allImgs = Array.from(container.querySelectorAll('img'));
+    // Preload seal drawable image if seal is applied so we can stamp it with vector precision
+    let sealDrawableImg = null;
+    if (state?.label?.sealApplied && state?.label?.sealFile) {
+      sealDrawableImg = await loadSealDrawable(state.label.sealFile);
+    }
+
+    // Wait for all non-seal images inside container (signatures, logos) to be fully loaded & decoded
+    const allImgs = Array.from(container.querySelectorAll('img:not(#draggable-corporate-seal img)'));
     await Promise.all(allImgs.map(img => {
       if (img.complete && img.naturalWidth > 0) {
         return img.decode ? img.decode().catch(() => {}) : Promise.resolve();
@@ -101,6 +138,33 @@ export async function exportToPdf(state) {
         scrollX: 0,
         imageTimeout: 15000
       });
+
+      // DIRECT CANVAS STAMP:
+      // If this is the signatures page and seal is applied, stamp the high-resolution vector seal directly onto the 2D canvas!
+      const isSignaturesPage = pageEl.classList.contains('page-signatures') || Boolean(pageEl.querySelector('.label-tier'));
+      if (isSignaturesPage && state?.label?.sealApplied && sealDrawableImg) {
+        try {
+          const ctx = canvas.getContext('2d');
+          const pageWidth = pageEl.clientWidth || 794;
+          const canvasScale = canvas.width / pageWidth;
+
+          const sealX = (state.label.sealX !== undefined ? state.label.sealX : 460) * canvasScale;
+          const sealY = (state.label.sealY !== undefined ? state.label.sealY : 290) * canvasScale;
+          const sealSize = (state.label.sealSize || 135) * canvasScale;
+          const rotationDeg = state.label.sealRotation !== undefined ? state.label.sealRotation : -2;
+          const opacity = (state.label.sealOpacity !== undefined ? state.label.sealOpacity : 100) / 100;
+
+          ctx.save();
+          ctx.globalAlpha = opacity;
+          ctx.translate(sealX + sealSize / 2, sealY + sealSize / 2);
+          ctx.rotate((rotationDeg * Math.PI) / 180);
+          ctx.drawImage(sealDrawableImg, -sealSize / 2, -sealSize / 2, sealSize, sealSize);
+          ctx.restore();
+          console.log(`✓ [PDF Canvas Engine] Corporate Seal directly stamped on page canvas (${sealX.toFixed(0)}, ${sealY.toFixed(0)}) size ${sealSize.toFixed(0)}px`);
+        } catch (stampErr) {
+          console.warn('[PDF Canvas Engine] Canvas direct seal stamp warning:', stampErr);
+        }
+      }
 
       // High-fidelity JPEG (0.98 quality)
       const imgData = canvas.toDataURL('image/jpeg', 0.98);

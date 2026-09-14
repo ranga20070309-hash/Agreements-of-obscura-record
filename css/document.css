@@ -926,23 +926,11 @@ body.artist-locked .doc-signature-box,
   margin: 0 !important;
 }
 
-/* Ensure Corporate Seal renders on PDF without CSS filters breaking canvas */
+/* Hide DOM seal during html2canvas capture; direct 2D canvas engine stamps it with vector fidelity */
 .exporting-pdf .draggable-corporate-seal {
-  position: absolute !important;
-  z-index: 999999 !important;
-  outline: none !important;
-  box-shadow: none !important;
-  display: block !important;
-  visibility: visible !important;
-}
-
-.exporting-pdf .draggable-corporate-seal img {
-  filter: none !important;
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  -webkit-print-color-adjust: exact !important;
-  print-color-adjust: exact !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  display: none !important;
 }
 
 .exporting-pdf .seal-drag-overlay,

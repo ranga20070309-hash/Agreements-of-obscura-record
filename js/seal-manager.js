@@ -3,6 +3,8 @@
  * Handles seal selection, positioning, and interactive drag-and-resize on the agreement document.
  */
 
+import { saveAgreementToFirebase, updateVaultIfArchived } from './firebase-config.js';
+
 export const SEAL_CATALOG = [
   {
     id: 'seal-1-bw-classic-stamp.svg',
@@ -299,6 +301,7 @@ export class SealManager {
     if (isFirstTime || current.sealY === undefined) this.store.state.label.sealY = 290; // approx px from top on A4 page
 
     this.store.save({ syncInputs: true });
+    this.syncSealToStorageAndVault();
     this.closeVault();
     this.updateSidebarControls(this.store.state);
   }
@@ -307,6 +310,7 @@ export class SealManager {
     if (!this.store.state.label) return;
     this.store.state.label.sealApplied = false;
     this.store.save({ syncInputs: true });
+    this.syncSealToStorageAndVault();
     this.updateSidebarControls(this.store.state);
   }
 
@@ -318,6 +322,7 @@ export class SealManager {
     this.store.state.label.sealRotation = -2;
     this.store.state.label.sealOpacity = 100;
     this.store.save({ syncInputs: true });
+    this.syncSealToStorageAndVault();
     this.updateSidebarControls(this.store.state);
   }
 
@@ -351,6 +356,41 @@ export class SealManager {
   persistSealState() {
     if (!this.store.state.label || !this.store.state.label.sealApplied) return;
     this.store.save({ syncInputs: false, rebuildTracks: false });
+    this.syncSealToStorageAndVault();
+  }
+
+  syncSealToStorageAndVault() {
+    const state = this.store.state;
+    if (!state || !state.id) return;
+
+    // 1. Firebase active agreement sync
+    try {
+      saveAgreementToFirebase(state);
+    } catch (e) {}
+
+    // 2. If agreement is in Vault or archived, keep Vault in 100% real-time sync
+    try {
+      updateVaultIfArchived(state);
+    } catch (e) {}
+
+    // 3. Sync to local backend server if active
+    if (typeof window !== 'undefined' && window.location) {
+      try {
+        fetch('/api/agreements', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(state)
+        }).catch(() => {});
+
+        if (state.isArchivedInVault) {
+          fetch('/api/vault/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(state)
+          }).catch(() => {});
+        }
+      } catch (e) {}
+    }
   }
 
   updateSidebarControls(state) {

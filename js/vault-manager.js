@@ -8,6 +8,7 @@ import { generatePdfFileName, exportToPdf } from './pdf-export.js';
 import {
   finalizeToFirebaseVault,
   getVaultFromFirebase,
+  getAgreementFromVault,
   getAgreementFromFirebase,
   saveAgreementToVault,
   deleteFromFirebaseVault,
@@ -554,10 +555,15 @@ export class VaultManager {
 
   async edit(id) {
     try {
-      // 1. Try Firebase Realtime Database
-      let data = await getAgreementFromFirebase(id);
+      // 1. Try Firebase Vault directly
+      let data = await getAgreementFromVault(id);
 
-      // 2. Fallback to server API
+      // 2. Fallback to general Firebase agreements
+      if (!data) {
+        data = await getAgreementFromFirebase(id);
+      }
+
+      // 3. Fallback to server API
       if (!data) {
         const res = await fetch(`/api/vault/${encodeURIComponent(id)}`);
         if (res.ok) {
@@ -580,10 +586,15 @@ export class VaultManager {
 
   async examine(id) {
     try {
-      // 1. Try Firebase Realtime Database
-      let data = await getAgreementFromFirebase(id);
+      // 1. Try Firebase Vault directly
+      let data = await getAgreementFromVault(id);
 
-      // 2. Fallback to server API
+      // 2. Fallback to general Firebase agreements
+      if (!data) {
+        data = await getAgreementFromFirebase(id);
+      }
+
+      // 3. Fallback to server API
       if (!data) {
         const res = await fetch(`/api/vault/${encodeURIComponent(id)}`);
         if (res.ok) {
@@ -605,10 +616,15 @@ export class VaultManager {
 
   async downloadPdf(id) {
     try {
-      // 1. Try Firebase Realtime Database
-      let data = await getAgreementFromFirebase(id);
+      // 1. Try Firebase Vault directly
+      let data = await getAgreementFromVault(id);
 
-      // 2. Fallback to server API
+      // 2. Fallback to general Firebase agreements
+      if (!data) {
+        data = await getAgreementFromFirebase(id);
+      }
+
+      // 3. Fallback to server API
       if (!data) {
         const res = await fetch(`/api/vault/${encodeURIComponent(id)}`);
         if (res.ok) {

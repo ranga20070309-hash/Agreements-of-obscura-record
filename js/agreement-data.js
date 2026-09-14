@@ -950,6 +950,14 @@ class AgreementStore {
         console.error('Failed to save to localStorage:', e);
       }
     }
+
+    // Keep Vault 100% in sync if this agreement has been archived in the Vault
+    if (this.state && this.state.id && this.state.isArchivedInVault) {
+      try {
+        updateVaultIfArchived(this.state);
+      } catch (e) {}
+    }
+
     this.notify(options);
   }
 

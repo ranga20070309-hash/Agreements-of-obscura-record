@@ -1152,8 +1152,8 @@ class AgreementApp {
     this.store.isLocked = false;
 
     const clone = JSON.parse(JSON.stringify(contract));
+    clone.isArchivedInVault = true;
     if (isEditMode) {
-      clone.isArchivedInVault = false;
       if (clone.status === 'fully_executed') {
         clone.status = 'counter_signed';
       }
