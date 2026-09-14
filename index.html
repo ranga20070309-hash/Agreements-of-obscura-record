@@ -360,7 +360,7 @@
               <div style="font-size: 11px; font-weight: 700; color: #c9a050; text-transform: uppercase; letter-spacing: 0.5px;">
                 Primary Artist (Artist 1)
               </div>
-              <span class="badge" style="font-size:9.5px; background:rgba(201,160,80,0.15); color:#c9a050; border:1px solid rgba(201,160,80,0.3); padding:2px 6px; border-radius:4px;">Main Signer</span>
+              <span id="artists-count-badge" class="badge" style="font-size:9.5px; background:rgba(201,160,80,0.15); color:#c9a050; border:1px solid rgba(201,160,80,0.3); padding:2px 6px; border-radius:4px;">Main Signer</span>
             </div>
             <div class="form-row">
               <div class="form-group">
@@ -386,8 +386,11 @@
             <!-- Dynamic Additional Artists Container -->
             <div id="additional-artists-container" style="display:flex; flex-direction:column; gap:10px; margin-top:8px;"></div>
 
-            <div style="margin-top: 12px; display:flex; justify-content:flex-end;">
-              <button type="button" class="btn btn-outline-gold btn-sm" id="btn-add-artist" style="font-size:11px; padding:6px 12px; font-weight:700;">
+            <div style="margin-top: 12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+              <button type="button" class="btn btn-sm" id="btn-remove-all-extra" style="display:none; font-size:10.5px; padding:5px 10px; background:rgba(239,68,68,0.12); color:#ef4444; border:1px solid rgba(239,68,68,0.3); border-radius:6px; cursor:pointer;" title="Remove all extra collaborators and keep only 1 Primary Artist">
+                ✕ Keep 1 Artist Only
+              </button>
+              <button type="button" class="btn btn-outline-gold btn-sm" id="btn-add-artist" style="font-size:11px; padding:6px 12px; font-weight:700; margin-left:auto;">
                 + Add Another Signing Artist / Collaborator
               </button>
             </div>
