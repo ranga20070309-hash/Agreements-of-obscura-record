@@ -87,7 +87,7 @@ export function renderDocument(state, container, onSignClick, mode = 'label') {
   let labelSigHtml = '';
   if (state.label.signature) {
     const sig = state.label.signature;
-    const canEditLabel = (mode === 'label' || mode === 'counter-sign') && !state.isArchivedInVault && state.status !== 'fully_executed';
+    const canEditLabel = (mode === 'label' || mode === 'counter-sign');
     labelSigHtml = `
       <div class="doc-signature-box signed ${canEditLabel ? '' : 'locked-view'}" ${canEditLabel ? 'data-party="label"' : ''} title="${canEditLabel ? 'Click to re-draw or change signature' : 'Verified Obscura Rec LLC Signature'}">
         ${sig.type === 'type' 
@@ -137,7 +137,7 @@ export function renderDocument(state, container, onSignClick, mode = 'label') {
 
     let boxHtml = '';
     const isThisSubmitted = Boolean(artist.submitted === true || (artist.status === 'signed' && artist.signedAt));
-    const allowReSign = (mode === 'label' && !isGlobalLocked) ||
+    const allowReSign = (mode === 'label') ||
                         (mode === 'artist-sign' && isThisSigner && !isGlobalLocked && !isThisSubmitted);
 
     const signerDisplayName = (artist.stageName && artist.stageName.trim())

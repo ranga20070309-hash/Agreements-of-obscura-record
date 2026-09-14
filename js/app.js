@@ -28,7 +28,7 @@ class AgreementApp {
     }
     this.sigEngine = new SignatureEngine(this.store, (party) => this.onSignatureUpdated(party));
     this.emailSender = new EmailSender(this.store);
-    this.vaultManager = new VaultManager(this.store, (archived) => this.loadArchivedContract(archived));
+    this.vaultManager = new VaultManager(this.store, (archived) => this.loadArchivedContract(archived, false), (archived) => this.loadArchivedContract(archived, true));
     this.sealManager = new SealManager(this.store);
 
     this.init();
@@ -1145,12 +1145,21 @@ class AgreementApp {
     exportToPdf(this.store.getState());
   }
 
-  loadArchivedContract(contract) {
+  loadArchivedContract(contract, isEditMode = false) {
     if (!contract) return;
     this.store.mode = 'label';
     this.store.setLinkStatus('active');
     this.store.isLocked = false;
-    this.store.state = JSON.parse(JSON.stringify(contract));
+
+    const clone = JSON.parse(JSON.stringify(contract));
+    if (isEditMode) {
+      clone.isArchivedInVault = false;
+      if (clone.status === 'fully_executed') {
+        clone.status = 'counter_signed';
+      }
+    }
+
+    this.store.state = clone;
     this.store.save({ syncInputs: true, rebuildTracks: true, forceRebuildTracks: true });
 
     // Clear any signing query params from the browser address bar
@@ -1161,7 +1170,21 @@ class AgreementApp {
     this.hideInvalidLinkScreen();
     this.applyRoleMode();
     this.store.notify();
-    alert(`Loaded Archived Agreement #${contract.id} (${contract.artist?.legalName || 'Artist'} - ${contract.tracks?.[0]?.title || 'Track'}). You can examine the contract and download the official PDF.`);
+
+    // Ensure seal manager controls and events are fully active
+    if (this.sealManager) {
+      this.sealManager.updateSidebarControls(this.store.state);
+      this.sealManager.attachDraggableEvents();
+    }
+
+    const artistName = contract.artist?.stageName || contract.artist?.legalName || 'Artist';
+    const trackName = contract.tracks?.[0]?.title || 'Track';
+
+    if (isEditMode) {
+      showToast(`✏️ Agreement #${contract.id} (${artistName} - ${trackName}) opened in Edit Mode! Texts, seals & signatures are fully editable.`, 'success');
+    } else {
+      showToast(`👁️ Loaded Agreement #${contract.id} (${artistName} - ${trackName}). Click '✏️ Edit' to modify texts, seals or signs.`, 'info');
+    }
   }
 
   // Top Nav Actions (Export, Print, Send to Artist, Submit, Reset)

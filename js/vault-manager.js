@@ -15,9 +15,10 @@ import {
 } from './firebase-config.js';
 
 export class VaultManager {
-  constructor(store, onExamineCallback) {
+  constructor(store, onExamineCallback, onEditCallback) {
     this.store = store;
     this.onExamineCallback = onExamineCallback;
+    this.onEditCallback = onEditCallback || onExamineCallback;
     this.records = [];
     this.filteredRecords = [];
     this.modal = document.getElementById('vault-modal');
@@ -265,11 +266,14 @@ export class VaultManager {
           </div>
 
           <div class="vault-card-actions">
-            <button class="btn btn-gold btn-sm btn-vault-profile" data-id="${r.id}" title="View detailed agreement execution profile and signer stats">
-              📊 Profile & Stats
+            <button class="btn btn-gold btn-sm btn-vault-edit" data-id="${r.id}" title="Unlock and edit all texts, seals, and signatures">
+              ✏️ Edit
             </button>
             <button class="btn btn-secondary btn-sm btn-vault-examine" data-id="${r.id}" title="Examine and preview full agreement on screen">
               👁️ Examine
+            </button>
+            <button class="btn btn-secondary btn-sm btn-vault-profile" data-id="${r.id}" title="View detailed agreement execution profile and signer stats">
+              📊 Stats
             </button>
             <button class="btn btn-emerald btn-sm btn-vault-download" data-id="${r.id}" title="Download standard named PDF">
               ⬇️ PDF
@@ -291,6 +295,10 @@ export class VaultManager {
     // Bind action buttons
     this.container.querySelectorAll('.btn-vault-profile').forEach(btn => {
       btn.onclick = () => this.showProfile(btn.dataset.id);
+    });
+
+    this.container.querySelectorAll('.btn-vault-edit').forEach(btn => {
+      btn.onclick = () => this.edit(btn.dataset.id);
     });
 
     this.container.querySelectorAll('.btn-vault-examine').forEach(btn => {
@@ -515,6 +523,14 @@ export class VaultManager {
       `;
 
       // Bind bottom actions
+      const btnEdit = document.getElementById('btn-vault-profile-edit');
+      if (btnEdit) {
+        btnEdit.onclick = () => {
+          modal.classList.remove('active');
+          this.edit(id);
+        };
+      }
+
       const btnExamine = document.getElementById('btn-vault-profile-examine');
       if (btnExamine) {
         btnExamine.onclick = () => {
@@ -533,6 +549,32 @@ export class VaultManager {
       modal.classList.add('active');
     } catch (err) {
       alert('Could not open agreement profile: ' + err.message);
+    }
+  }
+
+  async edit(id) {
+    try {
+      // 1. Try Firebase Realtime Database
+      let data = await getAgreementFromFirebase(id);
+
+      // 2. Fallback to server API
+      if (!data) {
+        const res = await fetch(`/api/vault/${encodeURIComponent(id)}`);
+        if (res.ok) {
+          data = await res.json();
+        }
+      }
+
+      if (!data) throw new Error('Could not find vault agreement in Firebase or server.');
+
+      if (this.onEditCallback) {
+        this.onEditCallback(data);
+      } else if (this.onExamineCallback) {
+        this.onExamineCallback(data);
+      }
+      this.close();
+    } catch (err) {
+      alert('Error loading agreement for editing: ' + err.message);
     }
   }
 

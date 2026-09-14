@@ -400,11 +400,9 @@ export class SealManager {
     const sealEl = document.getElementById('draggable-corporate-seal');
     if (!sealEl) return;
 
-    // Check if locked/archived
+    // Check if locked/archived (only locked in artist-sign or invalid link mode)
     const isLocked = document.body.classList.contains('mode-artist-sign') ||
-                     document.body.classList.contains('state-invalid-link') ||
-                     this.store.state.isArchivedInVault ||
-                     this.store.state.status === 'fully_executed';
+                     document.body.classList.contains('state-invalid-link');
 
     if (isLocked) {
       sealEl.classList.add('locked-seal');
