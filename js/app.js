@@ -2,13 +2,15 @@
  * Main Application Orchestrator for Obscura Rec LLC Agreement Creator
  */
 
-import { agreementStore, getDefaultAgreementState } from './agreement-data.js';
+import { agreementStore, getDefaultAgreementState, sanitizeStateForNewAgreement } from './agreement-data.js';
 import { renderDocument } from './document-renderer.js';
 import { SignatureEngine } from './signature-pad.js';
 import { exportToPdf, triggerPrint } from './pdf-export.js';
 import { EmailSender } from './email-sender.js';
 import { VaultManager } from './vault-manager.js';
 import { AuthManager } from './auth-manager.js';
+import { saveAgreementToVault } from './firebase-config.js';
+import { showToast } from './toast.js';
 
 class AgreementApp {
   constructor() {
@@ -16,7 +18,7 @@ class AgreementApp {
     this.zoomLevel = 1.0;
     this.documentViewport = document.getElementById('document-viewport');
     this.pagesWrapper = null;
-    
+
     // Components
     try {
       this.authManager = new AuthManager(this.store);
@@ -38,6 +40,14 @@ class AgreementApp {
     this.bindTopActions();
     this.bindZoomControls();
     this.bindTemplateModal();
+    this.initMobileTabs();
+
+    // Auto-fit document on startup for laptop and mobile screens
+    setTimeout(() => {
+      if (window.innerWidth <= 1366 || this.store.getMode() === 'artist-sign') {
+        this.fitToWidth();
+      }
+    }, 120);
 
     // Initial render from loaded store state only when link is active
     const linkStatus = this.store.getLinkStatus();
@@ -112,9 +122,9 @@ class AgreementApp {
     const urlParams = new URLSearchParams(window.location.search);
     const urlMode = urlParams.get('mode');
     const isArtist = (this.store.getMode() === 'artist-sign') ||
-                     (urlMode === 'artist-sign') ||
-                     status === 'just_submitted' ||
-                     status === 'artist_already_signed';
+      (urlMode === 'artist-sign') ||
+      status === 'just_submitted' ||
+      status === 'artist_already_signed';
 
     const returnBtn = document.getElementById('btn-invalid-return-home');
     const downloadPdfBtn = document.getElementById('btn-invalid-download-pdf');
@@ -227,7 +237,25 @@ class AgreementApp {
         if (btnSubmitArtist) btnSubmitArtist.style.display = 'none';
         if (btnArtistSealed) btnArtistSealed.style.display = 'inline-flex';
       } else {
-        if (artistBanner) artistBanner.style.display = 'flex';
+        if (artistBanner) {
+          artistBanner.style.display = 'flex';
+          const currentId = this.store.getCurrentSignerId();
+          const hasSigned = this.store.isArtistSigned(currentId);
+          const bannerText = artistBanner.querySelector('.role-banner-text');
+          if (bannerText) {
+            if (hasSigned) {
+              bannerText.innerHTML = `
+                <strong>✍️ SIGNATURE RECORDED:</strong>
+                Your digital signature has been placed on the agreement. You can click on your signature below to change or re-draw it at any time. When you are satisfied, click <strong>"✓ Submit Signed Agreement"</strong> above to officially deliver your contract to Obscura Rec LLC.
+              `;
+            } else {
+              bannerText.innerHTML = `
+                <strong>ARTIST SIGNING PORTAL:</strong>
+                Obscura Rec LLC has prepared this agreement for your digital execution. All contract terms & track allocations are locked for review. Please review all pages, click <strong>"✍️ Click to Sign as Artist"</strong> to add your signature, and then click <strong>"✓ Submit Signed Agreement"</strong> above.
+              `;
+            }
+          }
+        }
         if (lockedBanner) lockedBanner.style.display = 'none';
         if (btnSubmitArtist) btnSubmitArtist.style.display = 'inline-flex';
         if (btnArtistSealed) btnArtistSealed.style.display = 'none';
@@ -280,7 +308,7 @@ class AgreementApp {
           sidebar.style.width = `${parsed}px`;
         }
       }
-    } catch (e) {}
+    } catch (e) { }
 
     const onStart = (clientX) => {
       isResizing = true;
@@ -310,7 +338,7 @@ class AgreementApp {
         document.body.classList.remove('is-resizing-sidebar');
         try {
           localStorage.setItem('obscura_sidebar_width', sidebar.getBoundingClientRect().width);
-        } catch (e) {}
+        } catch (e) { }
       }
     };
 
@@ -346,7 +374,7 @@ class AgreementApp {
       sidebar.style.width = '480px';
       try {
         localStorage.setItem('obscura_sidebar_width', '480px');
-      } catch (e) {}
+      } catch (e) { }
     });
   }
 
@@ -412,6 +440,87 @@ class AgreementApp {
     document.getElementById('btn-clear-artist-sig')?.addEventListener('click', () => {
       this.sigEngine.removeSignature('artist');
     });
+
+    // Add another artist/collaborator button
+    document.getElementById('btn-add-artist')?.addEventListener('click', () => {
+      this.store.addArtist();
+    });
+  }
+
+  // Render Additional Artists in Section 1
+  renderAdditionalArtists(state) {
+    const container = document.getElementById('additional-artists-container');
+    if (!container) return;
+
+    const artists = Array.isArray(state.artists) ? state.artists.slice(1) : [];
+    if (artists.length === 0) {
+      container.innerHTML = '';
+      return;
+    }
+
+    container.innerHTML = artists.map((a, idx) => {
+      const artNum = idx + 2; // Artist 2, Artist 3, etc.
+      return `
+        <div class="additional-artist-card" data-artist-id="${a.id}" style="background:#11141e; border:1px solid #24293c; border-radius:8px; padding:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <div style="font-size:11px; font-weight:700; color:#c9a050; text-transform:uppercase;">
+              Artist ${artNum} (${a.role || 'Collaborator'})
+            </div>
+            <button type="button" class="btn-ghost-icon btn-remove-artist" data-artist-id="${a.id}" title="Remove this collaborator" style="background:transparent; border:none; color:#ef4444; cursor:pointer; font-size:11px; padding:2px 6px;">
+              ✕ Remove
+            </button>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Legal Name</label>
+              <input type="text" class="form-control input-extra-artist-legal" data-artist-id="${a.id}" value="${a.legalName || ''}" placeholder="Legal Name" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Stage Alias</label>
+              <input type="text" class="form-control input-extra-artist-stage" data-artist-id="${a.id}" value="${a.stageName || ''}" placeholder="Stage Name" />
+            </div>
+          </div>
+
+          <div class="form-row" style="margin-top:4px;">
+            <div class="form-group" style="flex:1;">
+              <label class="form-label">Email Address</label>
+              <input type="email" class="form-control input-extra-artist-email" data-artist-id="${a.id}" value="${a.email || ''}" placeholder="artist@example.com" />
+            </div>
+            <div class="form-group" style="flex:1;">
+              <label class="form-label">Role</label>
+              <input type="text" class="form-control input-extra-artist-role" data-artist-id="${a.id}" value="${a.role || 'Featured Artist'}" placeholder="e.g. Featured, Producer" />
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Bind remove buttons
+    container.querySelectorAll('.btn-remove-artist').forEach(btn => {
+      btn.onclick = () => {
+        this.store.removeArtist(btn.dataset.artistId);
+      };
+    });
+
+    // Bind input listeners
+    const bindFieldInput = (selector, field) => {
+      container.querySelectorAll(selector).forEach(input => {
+        const artId = input.dataset.artistId;
+        input.oninput = (e) => {
+          const target = this.store.state.artists?.find(a => a.id === artId);
+          if (target) {
+            target[field] = e.target.value;
+            this.store.save({ syncInputs: false, rebuildTracks: false });
+          }
+        };
+      });
+    };
+
+    bindFieldInput('.input-extra-artist-legal', 'legalName');
+    bindFieldInput('.input-extra-artist-stage', 'stageName');
+    bindFieldInput('.input-extra-artist-email', 'email');
+    bindFieldInput('.input-extra-artist-role', 'role');
   }
 
   // Sync inputs when state changes (e.g. on load, reset, or import)
@@ -432,6 +541,9 @@ class AgreementApp {
     setVal('input-artist-stage', state.artist.stageName);
     setVal('input-artist-email', state.artist.email);
     setVal('input-artist-date', state.artist.date);
+
+    // Render any additional collaborators
+    this.renderAdditionalArtists(state);
 
     setVal('input-term-years', state.terms.termYears);
     setVal('input-renewal-years', state.terms.renewalYears);
@@ -462,28 +574,64 @@ class AgreementApp {
       if (labelSigThumb) labelSigThumb.style.display = 'none';
     }
 
-    const artistSigPill = document.getElementById('sidebar-artist-sig-pill');
-    const artistSigThumb = document.getElementById('sidebar-artist-sig-thumb');
-    const artistClearBtn = document.getElementById('btn-clear-artist-sig');
-    if (state.artist.signature) {
-      if (artistSigPill) {
-        artistSigPill.textContent = '✓ Signed';
-        artistSigPill.className = 'sig-status-pill signed';
-      }
-      if (artistClearBtn) artistClearBtn.style.display = 'inline-flex';
-      if (artistSigThumb) {
-        artistSigThumb.style.display = 'flex';
-        artistSigThumb.innerHTML = state.artist.signature.type === 'type'
-          ? `<span style="font-family:'${state.artist.signature.font}', cursive; font-size:20px; color:#000;">${state.artist.signature.data}</span>`
-          : `<img src="${state.artist.signature.data}" style="max-height:40px; max-width:100%;" />`;
-      }
-    } else {
-      if (artistSigPill) {
-        artistSigPill.textContent = 'Pending';
-        artistSigPill.className = 'sig-status-pill pending';
-      }
-      if (artistClearBtn) artistClearBtn.style.display = 'none';
-      if (artistSigThumb) artistSigThumb.style.display = 'none';
+    // Update dynamic artist signature cards for all collaborators in Section 4
+    const artistsSigContainer = document.getElementById('sidebar-artists-sig-container');
+    if (artistsSigContainer) {
+      const artists = (Array.isArray(state.artists) && state.artists.length > 0)
+        ? state.artists
+        : [{ id: 'art-1', role: 'Recording Artist', ...(state.artist || {}) }];
+
+      artistsSigContainer.innerHTML = artists.map((art, idx) => {
+        const hasSig = Boolean(art.signature);
+        const artName = (art.legalName && art.legalName.trim())
+          ? `${art.legalName.trim()}${art.stageName ? ` (${art.stageName.trim()})` : ''}`
+          : (art.stageName || `Artist ${idx + 1}`);
+        const artRole = art.role || (idx === 0 ? 'Primary Artist' : 'Collaborator');
+
+        let thumbHtml = '';
+        if (hasSig) {
+          thumbHtml = art.signature.type === 'type'
+            ? `<span style="font-family:'${art.signature.font}', cursive; font-size:18px; color:#000;">${art.signature.data}</span>`
+            : `<img src="${art.signature.data}" style="max-height:36px; max-width:100%;" />`;
+        }
+
+        return `
+          <div class="signing-party-card" data-artist-id="${art.id}" style="margin-top:6px;">
+            <div class="signing-party-header">
+              <div class="signing-party-name" style="display:flex; flex-direction:column; gap:2px;">
+                <span>${idx + 1}. ${artName}</span>
+                <span style="font-size:10px; color:#9ca3af; font-weight:normal;">Role: ${artRole}</span>
+              </div>
+              <span class="sig-status-pill ${hasSig ? 'signed' : 'pending'}">
+                ${hasSig ? '✓ Signed' : 'Pending'}
+              </span>
+            </div>
+            <div class="sig-preview-thumb" style="display:${hasSig ? 'flex' : 'none'};">
+              ${thumbHtml}
+            </div>
+            <div style="display:flex; gap:8px; margin-top:6px;">
+              <button type="button" class="btn btn-emerald btn-sign-artist-target" data-artist-id="${art.id}" style="flex:1; font-size:11.5px; padding:6px 10px;">
+                ✍️ Sign as ${(art.legalName && art.legalName.trim()) || art.stageName || `Artist ${idx + 1}`}
+              </button>
+              <button type="button" class="btn btn-danger-ghost btn-clear-artist-target" data-artist-id="${art.id}" style="display:${hasSig ? 'inline-flex' : 'none'}; font-size:11px; padding:4px 8px;">
+                Clear
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      artistsSigContainer.querySelectorAll('.btn-sign-artist-target').forEach(btn => {
+        btn.onclick = () => {
+          this.sigEngine.open('artist', btn.dataset.artistId);
+        };
+      });
+
+      artistsSigContainer.querySelectorAll('.btn-clear-artist-target').forEach(btn => {
+        btn.onclick = () => {
+          this.sigEngine.removeSignature('artist', btn.dataset.artistId);
+        };
+      });
     }
   }
 
@@ -711,7 +859,7 @@ class AgreementApp {
         elToFocus.focus();
         try {
           elToFocus.setSelectionRange(cursorStart, cursorEnd);
-        } catch (e) {}
+        } catch (e) { }
       }
     }
   }
@@ -760,14 +908,16 @@ class AgreementApp {
     const container = document.getElementById('document-render-target');
     if (!container) return;
 
-    renderDocument(state, container, (party) => {
-      // In artist mode, if agreement is locked/submitted, completely block clicking
+    renderDocument(state, container, (party, artistId) => {
+      // In artist mode, if agreement or this specific signer is locked/submitted, block clicking
       if (this.store.getMode() === 'artist-sign' && party === 'artist') {
-        if (this.store.isArtistLocked()) {
+        const targetId = artistId || this.store.getCurrentSignerId();
+        const artistObj = this.store.getArtist(targetId);
+        if (this.store.isArtistLocked() || (artistObj && (artistObj.submitted === true || (artistObj.status === 'signed' && artistObj.signedAt)))) {
           return;
         }
       }
-      this.sigEngine.open(party);
+      this.sigEngine.open(party, artistId);
     }, this.store.getMode());
 
     this.pagesWrapper = document.getElementById('printable-document');
@@ -784,9 +934,15 @@ class AgreementApp {
   // Status Badge Updater
   updateStatusBadge() {
     const badge = document.getElementById('header-status-badge');
+    const headerRefCode = document.getElementById('header-ref-code');
+    const sidebarRefCode = document.getElementById('sidebar-ref-code');
+    const state = this.store.getState();
+
+    if (headerRefCode) headerRefCode.textContent = state.id || 'OBS-AGR';
+    if (sidebarRefCode) sidebarRefCode.textContent = state.id || 'OBS-AGR';
+
     if (!badge) return;
     const mode = this.store.getMode();
-    const state = this.store.getState();
 
     if (mode === 'artist-sign') {
       if (this.store.isArtistLocked()) {
@@ -844,11 +1000,24 @@ class AgreementApp {
     });
 
     document.getElementById('btn-zoom-fit')?.addEventListener('click', () => {
-      const containerWidth = this.documentViewport ? this.documentViewport.clientWidth : 900;
-      const targetScale = Math.min(1.2, Math.max(0.65, (containerWidth - 60) / 794));
-      this.zoomLevel = parseFloat(targetScale.toFixed(2));
-      this.applyZoom();
+      this.fitToWidth();
     });
+
+    // Auto-fit document on window resize
+    window.addEventListener('resize', () => {
+      if (window.innerWidth <= 1366 || this.store.getMode() === 'artist-sign') {
+        this.fitToWidth();
+      }
+    });
+  }
+
+  fitToWidth() {
+    if (!this.documentViewport || !this.pagesWrapper) return;
+    const containerWidth = this.documentViewport.clientWidth || window.innerWidth;
+    const margin = window.innerWidth <= 768 ? 20 : (window.innerWidth <= 1366 ? 36 : 60);
+    const targetScale = Math.min(1.25, Math.max(0.35, (containerWidth - margin) / 794));
+    this.zoomLevel = parseFloat(targetScale.toFixed(2));
+    this.applyZoom();
   }
 
   applyZoom() {
@@ -858,6 +1027,25 @@ class AgreementApp {
     if (zoomText) {
       zoomText.textContent = `${Math.round(this.zoomLevel * 100)}%`;
     }
+  }
+
+  initMobileTabs() {
+    const tabEditor = document.getElementById('tab-btn-editor');
+    const tabPreview = document.getElementById('tab-btn-preview');
+    const appContainer = document.querySelector('.app-container');
+
+    tabEditor?.addEventListener('click', () => {
+      tabEditor.classList.add('active');
+      tabPreview?.classList.remove('active');
+      appContainer?.classList.remove('show-preview');
+    });
+
+    tabPreview?.addEventListener('click', () => {
+      tabPreview.classList.add('active');
+      tabEditor?.classList.remove('active');
+      appContainer?.classList.add('show-preview');
+      setTimeout(() => this.fitToWidth(), 50);
+    });
   }
 
   exportPdf() {
@@ -885,6 +1073,19 @@ class AgreementApp {
 
   // Top Nav Actions (Export, Print, Send to Artist, Submit, Reset)
   bindTopActions() {
+    // Copy Unified Agreement Ref ID
+    document.getElementById('header-ref-chip')?.addEventListener('click', () => {
+      const refId = this.store.getState().id;
+      navigator.clipboard.writeText(refId);
+      showToast(`Copied Agreement Reference ID: ${refId}`, 'success');
+    });
+
+    document.getElementById('btn-copy-sidebar-ref')?.addEventListener('click', () => {
+      const refId = this.store.getState().id;
+      navigator.clipboard.writeText(refId);
+      showToast(`Copied Agreement Reference ID: ${refId}`, 'success');
+    });
+
     document.getElementById('btn-print-doc')?.addEventListener('click', () => {
       triggerPrint();
     });
@@ -901,12 +1102,15 @@ class AgreementApp {
     // Artist: Submit executed contract
     document.getElementById('btn-submit-artist-agreement')?.addEventListener('click', () => {
       const state = this.store.getState();
-      if (!state.artist.signature) {
-        const sigTarget = document.querySelector('.doc-signature-box[data-party="artist"]');
+      const currentSignerId = this.store.getCurrentSignerId();
+      const hasSigned = this.store.isArtistSigned(currentSignerId) || Boolean(state.artist?.signature);
+      if (!hasSigned) {
+        const sigTarget = document.querySelector(`.doc-signature-box[data-party="artist"][data-artist-id="${currentSignerId}"]`) ||
+                          document.querySelector('.doc-signature-box[data-party="artist"]');
         if (sigTarget) {
           sigTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
-        alert('Please add your signature in Section 4 on Page 2 before submitting.');
+        alert('Please add your signature in the Signatures section before submitting.');
         return;
       }
       this.emailSender.openArtistSubmitModal();
@@ -950,11 +1154,66 @@ class AgreementApp {
       this.exportPdf();
     });
 
+    // Save to Vault (Persist full agreement & sync signatures in real time)
+    document.getElementById('btn-save-to-vault')?.addEventListener('click', () => {
+      this.saveCurrentAgreementToVault();
+    });
+
     document.getElementById('btn-reset-agreement')?.addEventListener('click', () => {
-      if (confirm('Reset entire agreement form to default Obscura Rec LLC sample? All unsaved edits will be cleared.')) {
+      if (confirm('Create a brand new blank agreement? All form fields and signatures will be cleared, and a new unique Agreement Reference ID will be generated.')) {
         this.store.resetAll();
+        showToast(`✓ Started fresh agreement #${this.store.state.id} with clean signatures!`, 'success');
       }
     });
+  }
+
+  async saveCurrentAgreementToVault() {
+    const btn = document.getElementById('btn-save-to-vault');
+    const state = this.store.getState();
+    const originalText = btn ? btn.innerHTML : '💾 Save to Vault';
+
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span>⏳ Saving to Vault...</span>';
+    }
+
+    try {
+      // 1. Save directly to Firebase RTDB vault/ and vault_meta/
+      await saveAgreementToVault(state);
+
+      // 2. Also save to server backend VAULT_DIR if running
+      try {
+        await fetch('/api/vault/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(state)
+        });
+      } catch (srvErr) {
+        console.warn('Backend server save warning (non-fatal):', srvErr);
+      }
+
+      // 3. Refresh vault count badge
+      if (this.vaultManager) {
+        await this.vaultManager.refreshCount();
+      }
+
+      showToast(`✓ Agreement ${state.id} successfully saved to Vault!`, 'success');
+      if (btn) {
+        btn.innerHTML = '<span>✓ Saved in Vault</span>';
+        btn.style.background = '#10b981';
+      }
+    } catch (err) {
+      console.error('Error saving agreement to vault:', err);
+      showToast('Failed to save to vault: ' + (err.message || err), 'error');
+    } finally {
+      setTimeout(() => {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = originalText;
+          btn.style.background = '';
+        }
+      }, 2500);
+    }
   }
 
   onSignatureUpdated(party) {
@@ -996,9 +1255,10 @@ class AgreementApp {
 
       tplList.querySelectorAll('.btn-load-tpl').forEach(b => {
         b.onclick = () => {
-          if (confirm('Load this template? Current unsaved edits will be replaced.')) {
+          if (confirm('Load this template as a new agreement? A fresh Reference ID will be generated and all signatures will be blank for signing.')) {
             this.store.loadTemplate(b.dataset.id);
             modal.classList.remove('active');
+            showToast(`✓ Template loaded as fresh agreement #${this.store.state.id} with clean signatures!`, 'success');
           }
         };
       });
@@ -1010,6 +1270,19 @@ class AgreementApp {
         };
       });
     };
+
+    // Official Quick Presets
+    document.querySelectorAll('.btn-preset-choice').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const presetType = btn.dataset.preset;
+        const label = btn.querySelector('strong')?.textContent || presetType;
+        if (confirm(`Load the "${label}" preset as a new agreement? A fresh Reference ID will be generated and all signatures will be blank for signing.`)) {
+          this.store.loadPreset(presetType);
+          modal.classList.remove('active');
+          showToast(`✓ Loaded ${label} as fresh agreement #${this.store.state.id}!`, 'success');
+        }
+      });
+    });
 
     openBtn?.addEventListener('click', () => {
       renderTpls();
@@ -1029,7 +1302,7 @@ class AgreementApp {
       this.store.saveTemplate(name);
       tplNameInput.value = '';
       renderTpls();
-      alert('Template saved successfully!');
+      showToast('✓ Template blueprint saved (signatures excluded)!', 'success');
     });
 
     // JSON Export
@@ -1052,10 +1325,16 @@ class AgreementApp {
       reader.onload = (evt) => {
         try {
           const parsed = JSON.parse(evt.target.result);
-          this.store.state = { ...getDefaultAgreementState(), ...parsed };
+          // Always sanitize signatures & assign fresh Ref ID when importing a template/preset!
+          const cleanData = sanitizeStateForNewAgreement(parsed);
+          this.store.state = this.store.normalizeArtistsState({ ...getDefaultAgreementState(), ...cleanData });
+          if (typeof window !== 'undefined' && window.history && window.history.replaceState) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+          this.store.restartAgreementListener();
           this.store.save({ syncInputs: true, rebuildTracks: true, forceRebuildTracks: true });
           modal.classList.remove('active');
-          alert('Agreement data imported successfully!');
+          showToast(`✓ Imported as new agreement #${this.store.state.id} with clean signatures!`, 'success');
         } catch (err) {
           alert('Invalid JSON file format.');
         }

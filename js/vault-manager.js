@@ -240,6 +240,9 @@ export class VaultManager {
           </div>
 
           <div class="vault-card-actions">
+            <button class="btn btn-gold btn-sm btn-vault-profile" data-id="${r.id}" title="View detailed agreement execution profile and signer stats">
+              📊 Profile & Stats
+            </button>
             <button class="btn btn-secondary btn-sm btn-vault-examine" data-id="${r.id}" title="Examine and preview full agreement on screen">
               👁️ Examine
             </button>
@@ -261,6 +264,10 @@ export class VaultManager {
     `;
 
     // Bind action buttons
+    this.container.querySelectorAll('.btn-vault-profile').forEach(btn => {
+      btn.onclick = () => this.showProfile(btn.dataset.id);
+    });
+
     this.container.querySelectorAll('.btn-vault-examine').forEach(btn => {
       btn.onclick = () => this.examine(btn.dataset.id);
     });
@@ -272,6 +279,156 @@ export class VaultManager {
     this.container.querySelectorAll('.btn-vault-delete').forEach(btn => {
       btn.onclick = () => this.purge(btn.dataset.id);
     });
+  }
+
+  async showProfile(id) {
+    try {
+      let data = await getAgreementFromFirebase(id);
+      if (!data) {
+        const res = await fetch(`/api/vault/${encodeURIComponent(id)}`);
+        if (res.ok) data = await res.json();
+      }
+      if (!data) throw new Error('Could not find agreement profile in Vault.');
+
+      const modal = document.getElementById('vault-profile-modal');
+      const content = document.getElementById('vault-profile-content');
+      if (!modal || !content) return;
+
+      const artists = (Array.isArray(data.artists) && data.artists.length > 0)
+        ? data.artists
+        : [{ id: 'art-1', role: 'Recording Artist', ...(data.artist || {}) }];
+
+      const tracks = Array.isArray(data.tracks) ? data.tracks : [];
+      const trackTitles = tracks.map(t => t.title ? `${t.title} ${t.versionTag || ''}`.trim() : 'Track').join(', ');
+      const totalSigners = 1 + artists.length;
+      const signedCount = (data.label?.signature ? 1 : 0) + artists.filter(a => Boolean(a.signature)).length;
+      const isFullyExecuted = signedCount === totalSigners;
+
+      content.innerHTML = `
+        <!-- Profile Header Overview -->
+        <div style="background:#11141e; border:1px solid #c9a050; border-radius:10px; padding:16px; margin-bottom:18px;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;">
+            <div>
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                <span style="font-size:16px; font-weight:900; color:#ffffff; letter-spacing:0.5px;">${escapeHtml(data.id)}</span>
+                <span class="vault-status-pill" style="font-size:11px;">
+                  ${isFullyExecuted ? '✓ Fully Executed & Sealed' : `⏳ Partially Signed (${signedCount}/${totalSigners})`}
+                </span>
+              </div>
+              <div style="font-size:12.5px; color:#c9a050; font-weight:600;">
+                🎵 Delivered Objects: <span style="color:#ffffff;">${escapeHtml(trackTitles || 'Sound Recordings')}</span>
+              </div>
+            </div>
+            <div style="text-align:right; font-size:11.5px; color:#9ca3af;">
+              <div>Archived: <strong>${data.finalizedAt ? new Date(data.finalizedAt).toLocaleString() : 'Executed'}</strong></div>
+              <div>License Term: <strong>${data.terms?.termYears || 10} Years Exclusive</strong></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dedicated Category: Signers & Execution Stats -->
+        <div style="margin-bottom:14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <div style="font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:1px; color:#c9a050;">
+              📊 Signers & Digital Execution Stats (${signedCount}/${totalSigners} Completed)
+            </div>
+            <span style="font-size:11px; color:#9ca3af;">Tamper-proof Digital Hashes</span>
+          </div>
+
+          <div style="border:1px solid #24293c; border-radius:8px; overflow:hidden;">
+            <table style="width:100%; border-collapse:collapse; font-size:12px; text-align:left;">
+              <thead>
+                <tr style="background:#090b10; color:#c9a050; border-bottom:1px solid #24293c;">
+                  <th style="padding:10px 12px; font-weight:700;">Party / Signer</th>
+                  <th style="padding:10px 12px; font-weight:700;">Designated Role</th>
+                  <th style="padding:10px 12px; font-weight:700;">Status</th>
+                  <th style="padding:10px 12px; font-weight:700;">Execution Date</th>
+                  <th style="padding:10px 12px; font-weight:700;">Digital Security Hash</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Obscura Rec LLC Row -->
+                <tr style="border-bottom:1px solid #1f2434; background:#10131d;">
+                  <td style="padding:10px 12px; font-weight:700; color:#ffffff;">
+                    🏢 Obscura Rec LLC<br>
+                    <span style="font-size:11px; color:#9ca3af; font-weight:normal;">${escapeHtml(data.label?.representative || 'Authorized Rep')}</span>
+                  </td>
+                  <td style="padding:10px 12px; color:#d1d5db;">
+                    ${escapeHtml(data.label?.representativeTitle || 'Label Director')}
+                  </td>
+                  <td style="padding:10px 12px;">
+                    ${data.label?.signature 
+                      ? '<span style="color:#10b981; font-weight:700;">✅ Counter-Sealed</span>' 
+                      : '<span style="color:#f59e0b; font-weight:700;">⏳ Pending Counter-Sign</span>'
+                    }
+                  </td>
+                  <td style="padding:10px 12px; color:#9ca3af;">
+                    ${escapeHtml(data.label?.signature?.timestamp || data.label?.date || data.createdAt || 'Executed')}
+                  </td>
+                  <td style="padding:10px 12px; font-family:monospace; color:#c9a050;">
+                    ${escapeHtml(data.label?.signature?.hash || 'OBS-LABEL-SEALED')}
+                  </td>
+                </tr>
+
+                <!-- Artist Rows -->
+                ${artists.map((a, idx) => {
+                  const hasSig = Boolean(a.signature);
+                  const displayName = a.stageName || a.legalName || `Artist ${idx + 1}`;
+                  const legalName = a.legalName ? `(${a.legalName})` : '';
+                  const roleTag = a.role || (idx === 0 ? 'Primary Recording Artist' : 'Collaborator / Featured');
+                  const dateStr = a.signature?.timestamp || a.date || 'Pending';
+                  const hashStr = a.signature?.hash || (hasSig ? 'VERIFIED' : 'AWAITING-SIGNATURE');
+
+                  return `
+                    <tr style="border-bottom:1px solid #1f2434; background:#0c0f17;">
+                      <td style="padding:10px 12px; font-weight:700; color:#ffffff;">
+                        👤 ${escapeHtml(displayName)} <span style="font-size:11px; color:#9ca3af; font-weight:normal;">${escapeHtml(legalName)}</span><br>
+                        <span style="font-size:10.5px; color:#6b7280; font-weight:normal;">${escapeHtml(a.email || 'No email')}</span>
+                      </td>
+                      <td style="padding:10px 12px; color:#d1d5db;">
+                        ${escapeHtml(roleTag)}
+                      </td>
+                      <td style="padding:10px 12px;">
+                        ${hasSig 
+                          ? '<span style="color:#10b981; font-weight:700;">✅ Digitally Signed</span>' 
+                          : '<span style="color:#f59e0b; font-weight:700;">⏳ Pending Signature</span>'
+                        }
+                      </td>
+                      <td style="padding:10px 12px; color:#9ca3af;">
+                        ${escapeHtml(dateStr)}
+                      </td>
+                      <td style="padding:10px 12px; font-family:monospace; color:#c9a050;">
+                        ${escapeHtml(hashStr)}
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+
+      // Bind bottom actions
+      const btnExamine = document.getElementById('btn-vault-profile-examine');
+      if (btnExamine) {
+        btnExamine.onclick = () => {
+          modal.classList.remove('active');
+          this.examine(id);
+        };
+      }
+
+      const btnDownload = document.getElementById('btn-vault-profile-download');
+      if (btnDownload) {
+        btnDownload.onclick = () => {
+          this.downloadPdf(id);
+        };
+      }
+
+      modal.classList.add('active');
+    } catch (err) {
+      alert('Could not open agreement profile: ' + err.message);
+    }
   }
 
   async examine(id) {

@@ -71,27 +71,31 @@ body {
 }
 
 .app-header {
-  height: 68px;
+  min-height: 64px;
+  height: auto;
   background-color: #07090e;
   border-bottom: 1px solid rgba(201, 160, 80, 0.2);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 28px;
+  padding: 8px 24px;
   z-index: 40;
   flex-shrink: 0;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  gap: 12px;
+  box-sizing: border-box;
 }
 
 .brand-section {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
+  flex-shrink: 0;
 }
 
 .brand-logo-wrap {
-  width: 44px;
-  height: 44px;
+  width: 42px;
+  height: 42px;
   background: #000000;
   border: 1.5px solid rgba(201, 160, 80, 0.5);
   border-radius: 50%;
@@ -101,6 +105,7 @@ body {
   padding: 1px;
   overflow: hidden;
   box-shadow: 0 0 14px rgba(201, 160, 80, 0.25);
+  flex-shrink: 0;
 }
 
 .brand-logo-wrap img {
@@ -116,30 +121,34 @@ body {
 }
 
 .brand-name {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 800;
   letter-spacing: 0.8px;
   color: #ffffff;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  white-space: nowrap;
 }
 
 .brand-subtext {
   font-size: 11px;
   color: var(--text-muted);
   letter-spacing: 0.3px;
+  white-space: nowrap;
 }
 
 .doc-status-badge {
   display: inline-flex;
   align-items: center;
-  padding: 3px 10px;
+  padding: 3px 8px;
   border-radius: 20px;
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
   letter-spacing: 0.5px;
   text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .status-dot {
@@ -170,19 +179,93 @@ body {
   box-shadow: 0 0 14px rgba(16, 185, 129, 0.3);
 }
 
+.header-ref-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #090b10;
+  border: 1px solid rgba(201, 160, 80, 0.4);
+  color: #c9a050;
+  padding: 2.5px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: all;
+}
+
+.header-ref-chip:hover {
+  background: rgba(201, 160, 80, 0.15);
+  border-color: #c9a050;
+  color: #ffffff;
+}
+
+.sidebar-ref-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #0c0f17;
+  border: 1px solid #24293c;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
+.sidebar-ref-label {
+  font-size: 10px;
+  font-weight: 800;
+  color: #c9a050;
+  letter-spacing: 0.8px;
+}
+
+.sidebar-ref-code {
+  font-size: 12px;
+  color: #ffffff;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+}
+
+.btn-copy-ref-badge {
+  background: #191e2b;
+  border: 1px solid #374151;
+  color: #d1d5db;
+  border-radius: 4px;
+  font-size: 11px;
+  padding: 2px 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-copy-ref-badge:hover {
+  background: #252d40;
+  border-color: #c9a050;
+  color: #c9a050;
+}
+
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding: 2px 0;
+}
+
+.header-actions::-webkit-scrollbar {
+  display: none;
 }
 
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  padding: 8px 14px;
-  font-size: 12.5px;
+  gap: 6px;
+  padding: 7.5px 12px;
+  font-size: 12px;
   font-weight: 600;
   border-radius: 7px;
   border: 1px solid transparent;
@@ -190,6 +273,9 @@ body {
   transition: all var(--transition-fast);
   text-decoration: none;
   font-family: inherit;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  line-height: 1.2;
 }
 
 .btn-icon-only {
@@ -794,7 +880,7 @@ body.mode-counter-sign .sidebar-resizer {
   border: 2px dashed #d1d5db;
   position: relative;
   overflow: hidden;
-  height: 200px;
+  height: 190px;
   touch-action: none;
 }
 
@@ -881,28 +967,221 @@ body.mode-counter-sign .sidebar-resizer {
   to { opacity: 1; transform: translateY(0); }
 }
 
-.mobile-view-toggle {
+/* ==========================================================================
+   Comprehensive Responsive System for All Screen Sizes
+   ========================================================================== */
+
+.mobile-view-tabs {
   display: none;
+  background: #0f121b;
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 8px 12px;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-@media (max-width: 900px) {
-  .app-container {
-    flex-direction: column;
+.mobile-tab-btn {
+  flex: 1;
+  padding: 9px 14px;
+  font-size: 12.5px;
+  font-weight: 700;
+  border-radius: 6px;
+  background: #171b26;
+  border: 1px solid var(--border-subtle);
+  color: #9ca3af;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all var(--transition-fast);
+}
+
+.mobile-tab-btn.active {
+  background: #232a3d;
+  color: var(--gold-primary);
+  border-color: var(--gold-border);
+  box-shadow: 0 2px 8px rgba(201, 160, 80, 0.2);
+}
+
+/* 1. Laptop Screens (<= 1400px) - Fix Header Squeeze */
+@media (max-width: 1400px) {
+  .app-header {
+    padding: 6px 16px;
+    gap: 10px;
+  }
+
+  .brand-subtext {
+    display: none; /* Hide lengthy subtext to save 220px of precious space */
+  }
+
+  .brand-logo-wrap {
+    width: 36px;
+    height: 36px;
+  }
+
+  .brand-name {
+    font-size: 14px;
+  }
+
+  .btn {
+    padding: 7px 10px;
+    font-size: 11.5px;
+    gap: 5px;
+  }
+
+  .admin-user-pill {
+    max-width: 110px;
+    font-size: 11px;
+  }
+
+  .doc-toolbar {
+    top: 8px;
+    right: 12px;
+    padding: 4px 8px;
+    gap: 6px;
+  }
+}
+
+/* 2. Compact Laptop / Tablet Landscape (<= 1150px) */
+@media (max-width: 1150px) {
+  .app-header {
+    flex-wrap: wrap;
+    padding: 8px 14px;
+    gap: 8px;
+  }
+
+  .brand-section {
+    flex: 1;
+    justify-content: flex-start;
+  }
+
+  .header-actions {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    width: auto;
+    max-width: 100%;
+    padding-bottom: 2px;
   }
 
   .sidebar-configurator {
+    width: 380px;
+  }
+}
+
+/* 3. Tablet Portrait & Mobile Screens (<= 860px) */
+@media (max-width: 860px) {
+  .app-header {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  .header-top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     width: 100%;
-    height: 50vh;
+  }
+
+  .header-actions {
+    width: 100%;
+    overflow-x: auto;
+    justify-content: flex-start;
+    padding: 4px 0 6px;
+  }
+
+  .mobile-view-tabs {
+    display: flex;
+  }
+
+  .app-container {
+    flex-direction: column;
+    height: calc(100vh - 120px);
+    overflow: hidden;
+  }
+
+  .sidebar-resizer {
+    display: none !important;
+  }
+
+  .sidebar-configurator {
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 100%;
+    display: flex;
   }
 
   .document-viewport {
-    height: 50vh;
-    padding: 16px 8px;
+    width: 100% !important;
+    height: 100% !important;
+    padding: 12px 8px 80px;
+    display: none;
   }
 
-  .a4-page {
-    width: 100%;
-    min-height: auto;
+  /* When document preview tab is active */
+  .app-container.show-preview .sidebar-configurator {
+    display: none !important;
+  }
+  .app-container.show-preview .document-viewport {
+    display: flex !important;
+  }
+
+  /* In artist sign mode or counter sign mode, always show document */
+  html.mode-artist-sign .mobile-view-tabs,
+  html.mode-counter-sign .mobile-view-tabs {
+    display: none !important;
+  }
+  html.mode-artist-sign .document-viewport,
+  html.mode-counter-sign .document-viewport {
+    display: flex !important;
+  }
+
+  .doc-toolbar {
+    position: sticky;
+    top: 6px;
+    align-self: center;
+    margin: 0 0 10px 0;
+  }
+}
+
+/* 4. Small Mobile Phones (<= 560px) */
+@media (max-width: 560px) {
+  .app-header {
+    padding: 6px 10px;
+  }
+
+  .brand-name {
+    font-size: 13px;
+  }
+
+  .doc-status-badge {
+    display: none; /* Hide badge on tiny mobile screens */
+  }
+
+  .btn {
+    padding: 6px 9px;
+    font-size: 11px;
+  }
+
+  .modal-dialog {
+    width: 96vw !important;
+    max-height: 94vh !important;
+    margin: 10px auto;
+  }
+
+  .modal-header {
+    padding: 12px 14px;
+  }
+
+  .modal-body {
+    padding: 14px 10px;
+  }
+
+  .modal-footer {
+    padding: 10px 14px;
   }
 }
 
@@ -988,6 +1267,7 @@ body.mode-artist-sign #btn-print-doc,
 body.mode-artist-sign #btn-export-pdf,
 body.mode-artist-sign #btn-artist-download-pdf,
 body.mode-artist-sign #btn-open-vault,
+body.mode-artist-sign #btn-save-to-vault,
 body.mode-artist-sign #btn-invalid-return-home,
 body.mode-artist-sign #btn-invalid-download-pdf,
 body.artist-locked #btn-invalid-return-home,

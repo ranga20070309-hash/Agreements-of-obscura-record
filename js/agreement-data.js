@@ -14,6 +14,17 @@ const TEMPLATES_KEY = 'obscura_rec_saved_templates';
 export function getDefaultAgreementState() {
   const today = new Date().toISOString().split('T')[0];
 
+  const primaryArtist = {
+    id: 'art-1',
+    role: 'Recording Artist',
+    legalName: '', // when empty, displays [Artist Legal Name]
+    stageName: '', // when empty, displays [Artist Alias]
+    email: '',
+    signature: null,
+    date: today,
+    status: 'pending'
+  };
+
   return {
     id: 'OBS-AGR-' + Math.random().toString(36).substring(2, 8).toUpperCase(),
     createdAt: today,
@@ -31,6 +42,9 @@ export function getDefaultAgreementState() {
       signature: null,
       date: today
     },
+    artists: [
+      { ...primaryArtist }
+    ],
     terms: {
       termYears: 10,
       renewalYears: 10,
@@ -81,6 +95,57 @@ export function getDefaultAgreementState() {
       }
     ]
   };
+}
+
+export function sanitizeStateForNewAgreement(data) {
+  if (!data) return getDefaultAgreementState();
+  const clean = JSON.parse(JSON.stringify(data));
+  const today = new Date().toISOString().split('T')[0];
+
+  // 1. ALWAYS assign a brand new unique Reference ID so it never collides with past agreements
+  clean.id = 'OBS-AGR-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+  clean.createdAt = today;
+
+  // 2. Wipe Label signature completely
+  if (clean.label) {
+    clean.label.signature = null;
+    clean.label.date = today;
+  }
+
+  // 3. Wipe Primary Artist signature completely
+  if (clean.artist) {
+    clean.artist.signature = null;
+    clean.artist.date = today;
+    clean.artist.status = 'pending';
+    clean.artist.submitted = false;
+    delete clean.artist.signedAt;
+    delete clean.artist.sigHash;
+    delete clean.artist.sigTimestamp;
+  }
+
+  // 4. Wipe all Collaborators/Featured Artists signatures completely
+  if (Array.isArray(clean.artists)) {
+    clean.artists.forEach((a, idx) => {
+      a.signature = null;
+      a.date = today;
+      a.status = 'pending';
+      a.submitted = false;
+      delete a.signedAt;
+      delete a.sigHash;
+      delete a.sigTimestamp;
+    });
+  }
+
+  // 5. Reset document lifecycle & execution statuses
+  clean.status = 'draft';
+  clean.isLockedForArtist = false;
+  delete clean.isArchivedInVault;
+  delete clean.finalizedAt;
+  delete clean.savedToVaultAt;
+  delete clean.lastUpdatedInVaultAt;
+  delete clean.artistSignedAt;
+
+  return clean;
 }
 
 export function encodeAgreementState(state) {
@@ -140,6 +205,148 @@ class AgreementStore {
     this.state = this.loadInitial();
     this.subscribers = [];
     this.checkServerAgreementLoad();
+    this.initLiveSync();
+  }
+
+  initLiveSync() {
+    if (typeof window === 'undefined') return;
+
+    // 1. BroadcastChannel for instant same-browser cross-tab synchronization
+    try {
+      this.syncChannel = new BroadcastChannel('obscura_agreements_sync');
+      this.syncChannel.onmessage = (event) => {
+        if (event.data && event.data.type === 'ARTIST_SIGNED') {
+          if (event.data.id === this.state.id && event.data.state) {
+            console.log('⚡ [Sync Channel] Instant signature received for:', event.data.id);
+            this.mergeIncomingState(event.data.state);
+          }
+        }
+      };
+    } catch (bcErr) {
+      console.warn('BroadcastChannel not supported:', bcErr);
+    }
+
+    // 2. Storage event listener for cross-tab local fallback
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'obscura_rec_last_signed_agreement') {
+        try {
+          const payload = JSON.parse(e.newValue);
+          if (payload && payload.id === this.state.id) {
+            this.mergeIncomingState(payload);
+          }
+        } catch (err) {}
+      }
+    });
+
+    // 3. Start live listeners & polling
+    this.restartAgreementListener();
+  }
+
+  restartAgreementListener() {
+    if (typeof window === 'undefined') return;
+    const currentId = this.state?.id;
+    if (!currentId) return;
+
+    // A. Firebase Realtime Database live listener
+    if (this.unsubFirebase) {
+      try { this.unsubFirebase(); } catch (e) {}
+      this.unsubFirebase = null;
+    }
+    try {
+      this.unsubFirebase = listenToAgreement(currentId, (remoteState) => {
+        if (remoteState && remoteState.id === this.state.id) {
+          console.log('🔥 [Firebase RTDB] Live signature update detected for:', currentId);
+          this.mergeIncomingState(remoteState);
+        }
+      });
+    } catch (e) {
+      console.warn('Firebase live listener setup error:', e);
+    }
+
+    // B. Periodic Polling (every 3 seconds for local server / offline fallback)
+    if (this.pollInterval) {
+      clearInterval(this.pollInterval);
+    }
+    this.pollInterval = setInterval(() => {
+      this.pollServerForSignatures();
+    }, 3000);
+
+    // Initial check right now
+    this.pollServerForSignatures();
+  }
+
+  async pollServerForSignatures() {
+    if (typeof window === 'undefined') return;
+    const currentId = this.state?.id;
+    if (!currentId) return;
+
+    try {
+      // 1. Try Firebase first
+      const fbState = await getAgreementFromFirebase(currentId);
+      if (fbState && fbState.id === currentId) {
+        this.mergeIncomingState(fbState);
+        return;
+      }
+
+      // 2. Fallback to local server API
+      const res = await fetch(`/api/agreements/${encodeURIComponent(currentId)}`);
+      if (res.ok) {
+        const serverData = await res.json();
+        if (serverData && serverData.id === currentId) {
+          this.mergeIncomingState(serverData);
+        }
+      }
+    } catch (err) {
+      // Silent catch on background poll
+    }
+  }
+
+  mergeIncomingState(remoteState) {
+    if (!remoteState || !Array.isArray(remoteState.artists)) return;
+    let changed = false;
+
+    remoteState.artists.forEach(remoteArt => {
+      const localArt = this.state.artists?.find(a => a.id === remoteArt.id);
+      if (localArt) {
+        const remoteHasSig = Boolean(remoteArt.signature);
+        const localHasSig = Boolean(localArt.signature);
+        const sigChanged = remoteHasSig && (!localHasSig || JSON.stringify(localArt.signature) !== JSON.stringify(remoteArt.signature));
+
+        if (sigChanged) {
+          localArt.signature = remoteArt.signature;
+          localArt.status = remoteArt.status || 'signed';
+          localArt.submitted = Boolean(remoteArt.submitted || (remoteArt.status === 'signed'));
+          localArt.signedAt = remoteArt.signedAt || localArt.signedAt || new Date().toISOString();
+          changed = true;
+        } else if (remoteArt.status === 'signed' && localArt.status !== 'signed') {
+          localArt.status = 'signed';
+          localArt.submitted = true;
+          changed = true;
+        }
+      } else if (remoteArt.id) {
+        this.state.artists.push({ ...remoteArt });
+        changed = true;
+      }
+    });
+
+    // Synchronize primary artist
+    if (this.state.artists?.[0]) {
+      if (JSON.stringify(this.state.artist?.signature) !== JSON.stringify(this.state.artists[0].signature)) {
+        this.state.artist.signature = this.state.artists[0].signature;
+        this.state.artist.status = this.state.artists[0].status;
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      console.log('✅ [Live Sync] Agreement state updated with artist signatures:', this.state.id);
+      if (this.mode === 'label') {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
+        } catch (e) {}
+      }
+      this.notify({ syncInputs: false, rebuildTracks: false, forceRebuildTracks: false });
+    }
   }
 
   getLinkStatus() {
@@ -201,24 +408,15 @@ class AgreementStore {
         // Case 1: Agreement already finalized and archived in Vault!
         if (serverState.isArchivedInVault === true || serverState.status === 'fully_executed') {
           this.linkStatus = 'already_finalized';
-          this.invalidReason = `Agreement ${id} has been fully executed by both parties and archived into the Obscura Rec LLC Vault. The temporary signing link has been permanently closed.`;
-          this.notify();
+          this.invalidReason = `Agreement ${id} has been fully executed by both parties and archived into the Obscura Rec LLC Vault.`;
+          this.state = this.normalizeArtistsState({ ...getDefaultAgreementState(), ...serverState });
+          this.notify({ syncInputs: true, rebuildTracks: true, forceRebuildTracks: true });
           return;
         }
 
-        // Case 2: Artist signing link, but Artist already signed & submitted!
-        if (mode === 'artist-sign') {
-          if (serverState.isLockedForArtist === true || serverState.status === 'artist_signed') {
-            this.linkStatus = 'artist_already_signed';
-            this.invalidReason = `This agreement has already been digitally executed by the artist and delivered to Obscura Rec LLC. This signing link is now closed and terminated.`;
-            this.notify();
-            return;
-          }
-        }
-
-        // Valid, active session
+        // Case 2: In artist mode, keep linkStatus as active so the document renders normally!
         this.linkStatus = 'active';
-        this.state = { ...getDefaultAgreementState(), ...serverState };
+        this.state = this.normalizeArtistsState({ ...getDefaultAgreementState(), ...serverState });
         this.notify({ syncInputs: true, rebuildTracks: true, forceRebuildTracks: true });
       } catch (e) {
         console.warn('Could not fetch agreement:', e);
@@ -238,6 +436,45 @@ class AgreementStore {
     }
   }
 
+  normalizeArtistsState(targetState) {
+    if (!targetState) return getDefaultAgreementState();
+    if (!Array.isArray(targetState.artists) || targetState.artists.length === 0) {
+      const art = targetState.artist || {};
+      targetState.artists = [
+        {
+          id: 'art-1',
+          role: 'Recording Artist',
+          legalName: art.legalName || '',
+          stageName: art.stageName || '',
+          email: art.email || '',
+          signature: art.signature || null,
+          date: art.date || new Date().toISOString().split('T')[0],
+          status: art.status || ((art.submitted || art.signedAt) ? 'signed' : 'pending'),
+          submitted: Boolean(art.submitted || (art.status === 'signed' && art.signedAt))
+        }
+      ];
+    } else {
+      // Ensure every artist has an ID and role
+      targetState.artists.forEach((a, idx) => {
+        if (!a.id) a.id = `art-${idx + 1}`;
+        if (!a.role) a.role = idx === 0 ? 'Recording Artist' : 'Collaborator / Featured';
+        if (!a.status) a.status = (a.submitted || a.signedAt) ? 'signed' : 'pending';
+        if (typeof a.submitted === 'undefined') a.submitted = Boolean(a.status === 'signed' && a.signedAt);
+      });
+    }
+    // Keep primary artist synced with artists[0]
+    if (targetState.artists[0]) {
+      targetState.artist = {
+        legalName: targetState.artists[0].legalName || '',
+        stageName: targetState.artists[0].stageName || '',
+        email: targetState.artists[0].email || '',
+        signature: targetState.artists[0].signature || null,
+        date: targetState.artists[0].date || targetState.createdAt
+      };
+    }
+    return targetState;
+  }
+
   loadInitial() {
     // 1. Check if URL contains signing link parameters
     if (typeof window !== 'undefined' && window.location.search) {
@@ -253,7 +490,7 @@ class AgreementStore {
       if (docParam) {
         const decoded = decodeAgreementState(docParam);
         if (decoded && Array.isArray(decoded.tracks)) {
-          return { ...getDefaultAgreementState(), ...decoded };
+          return this.normalizeArtistsState({ ...getDefaultAgreementState(), ...decoded });
         }
       }
 
@@ -270,7 +507,7 @@ class AgreementStore {
         if (saved) {
           const parsed = JSON.parse(saved);
           if (parsed && Array.isArray(parsed.tracks) && parsed.tracks.length > 0) {
-            return { ...getDefaultAgreementState(), ...parsed };
+            return this.normalizeArtistsState({ ...getDefaultAgreementState(), ...parsed });
           }
         }
       }
@@ -289,37 +526,148 @@ class AgreementStore {
     this.notify();
   }
 
-  isArtistLocked() {
-    return Boolean(this.state && (
-      this.state.isLockedForArtist === true ||
-      this.state.status === 'artist_signed' ||
-      this.state.status === 'fully_executed' ||
-      this.state.isArchivedInVault === true
-    ));
+  getCurrentSignerId() {
+    if (typeof window !== 'undefined' && window.location?.search) {
+      const p = new URLSearchParams(window.location.search);
+      const signer = p.get('signer');
+      if (signer) return signer;
+    }
+    return this.state?.artists?.[0]?.id || 'art-1';
   }
 
-  generateArtistSigningUrl() {
+  getArtist(artistId = null) {
+    const targetId = artistId || this.getCurrentSignerId();
+    if (!Array.isArray(this.state?.artists) || this.state.artists.length === 0) {
+      return this.state?.artist;
+    }
+    return this.state.artists.find(a => a.id === targetId) || this.state.artists[0];
+  }
+
+  isArtistSigned(artistId = null) {
+    const artist = this.getArtist(artistId);
+    return Boolean(artist && artist.signature);
+  }
+
+  isCurrentSignerLocked() {
+    if (this.mode !== 'artist-sign') return false;
+    if (this.state.isArchivedInVault || this.state.status === 'fully_executed') return true;
+    const currentId = this.getCurrentSignerId();
+    const artist = this.getArtist(currentId);
+    // Signer is ONLY locked if they have officially submitted the agreement!
+    return Boolean(artist && artist.signature && (artist.submitted === true || (artist.status === 'signed' && artist.signedAt)));
+  }
+
+  isArtistLocked() {
+    return this.isCurrentSignerLocked();
+  }
+
+  areAllArtistsSigned() {
+    if (!Array.isArray(this.state?.artists) || this.state.artists.length === 0) {
+      return Boolean(this.state?.artist?.signature);
+    }
+    return this.state.artists.every(a => Boolean(a.signature));
+  }
+
+  addArtist(data = null) {
+    const today = new Date().toISOString().split('T')[0];
+    const newIdx = (this.state.artists?.length || 0) + 1;
+    const newArtist = data || {
+      id: 'art-' + Math.random().toString(36).substring(2, 7),
+      role: 'Featured Artist / Collaborator',
+      legalName: '',
+      stageName: '',
+      email: '',
+      signature: null,
+      date: today,
+      status: 'pending'
+    };
+
+    if (!Array.isArray(this.state.artists)) {
+      this.normalizeArtistsState(this.state);
+    }
+    this.state.artists.push(newArtist);
+    this.save({ syncInputs: true });
+    return newArtist;
+  }
+
+  removeArtist(artistId) {
+    if (!Array.isArray(this.state.artists) || this.state.artists.length <= 1) {
+      alert('At least one primary artist is required.');
+      return false;
+    }
+    this.state.artists = this.state.artists.filter(a => a.id !== artistId);
+    // Keep state.artist in sync with new primary
+    if (this.state.artists[0]) {
+      this.state.artist = {
+        legalName: this.state.artists[0].legalName || '',
+        stageName: this.state.artists[0].stageName || '',
+        email: this.state.artists[0].email || '',
+        signature: this.state.artists[0].signature || null,
+        date: this.state.artists[0].date || this.state.createdAt
+      };
+    }
+    this.save({ syncInputs: true });
+    return true;
+  }
+
+  applyArtistSignature(artistId, signatureObj) {
+    const targetId = artistId || this.getCurrentSignerId();
+    if (!Array.isArray(this.state.artists)) {
+      this.normalizeArtistsState(this.state);
+    }
+    const artist = this.state.artists.find(a => a.id === targetId);
+    if (artist) {
+      artist.signature = signatureObj;
+      if (signatureObj) {
+        artist.date = new Date().toISOString().split('T')[0];
+        // Do NOT set artist.status = 'signed' or artist.submitted = true here!
+        // The artist has only drawn/placed their signature on the document preview.
+        // It stays fully editable and unsubmitted until "Submit Signed Agreement" is clicked.
+        if (artist.status !== 'signed' || !artist.submitted) {
+          artist.status = 'pending';
+          artist.submitted = false;
+        }
+      } else {
+        artist.status = 'pending';
+        artist.submitted = false;
+        delete artist.signedAt;
+      }
+    }
+    // Sync with primary artist if applicable
+    if (this.state.artists[0]?.id === targetId) {
+      this.state.artist = {
+        legalName: this.state.artists[0].legalName || '',
+        stageName: this.state.artists[0].stageName || '',
+        email: this.state.artists[0].email || '',
+        signature: signatureObj,
+        date: this.state.artists[0].date
+      };
+    }
+
+    // Do NOT lock or mark all_artists_signed here! That happens only on final submission!
+    this.save({ syncInputs: false });
+  }
+
+  generateArtistSigningUrl(artistId = null) {
     if (typeof window === 'undefined') return '';
-    const cleanState = JSON.parse(JSON.stringify(this.state));
-    // Reset artist signature for signing request
-    cleanState.artist.signature = null;
-    const token = encodeAgreementState(cleanState);
+    const targetId = artistId || this.state.artists?.[0]?.id || 'art-1';
     const baseUrl = window.location.origin + window.location.pathname;
-    return `${baseUrl}?mode=artist-sign&doc=${token}`;
+    return `${baseUrl}?mode=artist-sign&id=${this.state.id}&signer=${targetId}`;
   }
 
   generateCounterSignUrl() {
     if (typeof window === 'undefined') return '';
-    const token = encodeAgreementState(this.state);
     const baseUrl = window.location.origin + window.location.pathname;
-    return `${baseUrl}?mode=counter-sign&doc=${token}`;
+    return `${baseUrl}?mode=counter-sign&id=${this.state.id}`;
   }
 
   save(options = {}) {
     // Only persist to localStorage in label mode to avoid leaking signatures/locks between roles on same browser
     if (this.mode === 'label') {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
+        }
       } catch (e) {
         console.error('Failed to save to localStorage:', e);
       }
@@ -350,6 +698,20 @@ class AgreementStore {
       current = current[keys[i]];
     }
     current[keys[keys.length - 1]] = value;
+
+    // Bidirectional sync between artist and artists[0]
+    if (path.startsWith('artist.')) {
+      const field = path.replace('artist.', '');
+      if (Array.isArray(this.state.artists) && this.state.artists[0]) {
+        this.state.artists[0][field] = value;
+      }
+    } else if (path.startsWith('artists.0.')) {
+      const field = path.replace('artists.0.', '');
+      if (this.state.artist) {
+        this.state.artist[field] = value;
+      }
+    }
+
     this.save({ syncInputs: false, rebuildTracks: false });
   }
 
@@ -421,34 +783,57 @@ class AgreementStore {
 
   resetAll() {
     this.state = getDefaultAgreementState();
+
+    // Clean any previous signing query parameters from the browser address bar
+    if (typeof window !== 'undefined' && window.history && window.history.replaceState) {
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    // Restart live listener and background polling for the brand new Agreement Ref ID
+    this.restartAgreementListener();
+
     this.save({ syncInputs: true, rebuildTracks: true, forceRebuildTracks: true });
   }
 
   getStatus() {
-    const hasLabelSig = Boolean(this.state.label.signature);
-    const hasArtistSig = Boolean(this.state.artist.signature);
+    const hasLabelSig = Boolean(this.state.label?.signature);
+    const artists = Array.isArray(this.state.artists) && this.state.artists.length > 0 
+      ? this.state.artists 
+      : [this.state.artist];
+    const totalArtists = artists.length;
+    const signedArtists = artists.filter(a => Boolean(a?.signature)).length;
+    const allArtistsSigned = totalArtists > 0 && signedArtists === totalArtists;
 
-    if (hasLabelSig && hasArtistSig) {
-      return { code: 'executed', label: 'Fully Executed', class: 'status-executed' };
-    } else if (hasLabelSig || hasArtistSig) {
+    if (hasLabelSig && allArtistsSigned) {
+      return { code: 'executed', label: 'Fully Executed & Sealed', class: 'status-executed' };
+    } else if (allArtistsSigned && !hasLabelSig) {
       return { 
         code: 'partial', 
-        label: hasLabelSig ? 'Label Signed (Awaiting Artist)' : 'Artist Signed (Awaiting Label)', 
+        label: totalArtists > 1 ? `All ${totalArtists} Artists Signed (Awaiting Counter-Sign)` : 'Artist Signed (Awaiting Counter-Sign)', 
+        class: 'status-partial' 
+      };
+    } else if (signedArtists > 0 || hasLabelSig) {
+      return { 
+        code: 'partial', 
+        label: totalArtists > 1 ? `Signed (${signedArtists}/${totalArtists} Artists)` : 'Partially Signed', 
         class: 'status-partial' 
       };
     }
     return { code: 'draft', label: 'Draft Mode', class: 'status-draft' };
   }
 
-  // Templates in localStorage
+  // Templates in localStorage (Blueprints for future contracts - NEVER store signatures)
   saveTemplate(templateName) {
     try {
-      const templates = JSON.parse(localStorage.getItem(TEMPLATES_KEY) || '[]');
+      const templates = this.getSavedTemplates();
+      // Sanitize the current state so signatures & old IDs are NEVER stored in a template blueprint!
+      const cleanData = sanitizeStateForNewAgreement(this.state);
+      delete cleanData.id;
       templates.push({
         id: 'tpl-' + Date.now(),
         name: templateName,
         savedAt: new Date().toLocaleDateString(),
-        data: JSON.parse(JSON.stringify(this.state))
+        data: cleanData
       });
       localStorage.setItem(TEMPLATES_KEY, JSON.stringify(templates));
       return true;
@@ -460,7 +845,15 @@ class AgreementStore {
 
   getSavedTemplates() {
     try {
-      return JSON.parse(localStorage.getItem(TEMPLATES_KEY) || '[]');
+      const templates = JSON.parse(localStorage.getItem(TEMPLATES_KEY) || '[]');
+      // Automatically sanitize any older templates that might have had signatures saved in them
+      return templates.map(t => {
+        if (t && t.data) {
+          t.data = sanitizeStateForNewAgreement(t.data);
+          delete t.data.id;
+        }
+        return t;
+      });
     } catch (e) {
       return [];
     }
@@ -470,7 +863,18 @@ class AgreementStore {
     const templates = this.getSavedTemplates();
     const found = templates.find(t => t.id === templateId);
     if (found && found.data) {
-      this.state = { ...getDefaultAgreementState(), ...found.data };
+      // 1. Sanitize to guarantee 0 signatures and a fresh brand new Ref ID!
+      const cleanData = sanitizeStateForNewAgreement(found.data);
+      this.state = this.normalizeArtistsState({ ...getDefaultAgreementState(), ...cleanData });
+
+      // 2. Clean URL query parameters from address bar
+      if (typeof window !== 'undefined' && window.history && window.history.replaceState) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+
+      // 3. Restart live listener & polling for the brand new Ref ID
+      this.restartAgreementListener();
+
       this.save({ syncInputs: true, rebuildTracks: true, forceRebuildTracks: true });
       return true;
     }
@@ -481,6 +885,115 @@ class AgreementStore {
     let templates = this.getSavedTemplates();
     templates = templates.filter(t => t.id !== templateId);
     localStorage.setItem(TEMPLATES_KEY, JSON.stringify(templates));
+  }
+
+  // Load pre-configured official agreement presets (Always zero signatures & fresh Ref ID)
+  loadPreset(presetType) {
+    const today = new Date().toISOString().split('T')[0];
+    let state = getDefaultAgreementState();
+
+    if (presetType === 'single') {
+      state.tracks = [
+        {
+          id: 'trk-1',
+          title: '',
+          versionTag: '',
+          year: new Date().getFullYear().toString(),
+          musicAuthors: '',
+          lyricsAuthors: '',
+          phonogramProducers: 'Obscura Rec LLC',
+          royaltyShare: 50,
+          royaltyDetails: '[50]% of Label Net Income',
+          transferDate: today
+        }
+      ];
+    } else if (presetType === 'bundle') {
+      state.tracks = [
+        {
+          id: 'trk-1',
+          title: '',
+          versionTag: '',
+          year: new Date().getFullYear().toString(),
+          musicAuthors: '',
+          lyricsAuthors: '',
+          phonogramProducers: 'Obscura Rec LLC',
+          royaltyShare: 50,
+          royaltyDetails: '[50]% of Label Net Income',
+          transferDate: today
+        },
+        {
+          id: 'trk-2',
+          title: '',
+          versionTag: '(Slowed)',
+          year: new Date().getFullYear().toString(),
+          musicAuthors: '',
+          lyricsAuthors: '',
+          phonogramProducers: 'Obscura Rec LLC',
+          royaltyShare: 50,
+          royaltyDetails: '[50]% of Label Net Income',
+          transferDate: today
+        },
+        {
+          id: 'trk-3',
+          title: '',
+          versionTag: '(Sped Up)',
+          year: new Date().getFullYear().toString(),
+          musicAuthors: '',
+          lyricsAuthors: '',
+          phonogramProducers: 'Obscura Rec LLC',
+          royaltyShare: 50,
+          royaltyDetails: '[50]% of Label Net Income',
+          transferDate: today
+        }
+      ];
+    } else if (presetType === 'ep') {
+      state.tracks = [
+        { id: 'trk-1', title: 'Track 1', versionTag: '', year: '2026', royaltyShare: 50, royaltyDetails: '50% of Label Net Income', phonogramProducers: 'Obscura Rec LLC', transferDate: today },
+        { id: 'trk-2', title: 'Track 2', versionTag: '', year: '2026', royaltyShare: 50, royaltyDetails: '50% of Label Net Income', phonogramProducers: 'Obscura Rec LLC', transferDate: today },
+        { id: 'trk-3', title: 'Track 3', versionTag: '', year: '2026', royaltyShare: 50, royaltyDetails: '50% of Label Net Income', phonogramProducers: 'Obscura Rec LLC', transferDate: today }
+      ];
+    } else if (presetType === 'collab') {
+      state.tracks = [
+        { id: 'trk-1', title: '', versionTag: '', year: '2026', royaltyShare: 50, royaltyDetails: '50% of Label Net Income', phonogramProducers: 'Obscura Rec LLC', transferDate: today }
+      ];
+      state.artists = [
+        {
+          id: 'art-1',
+          role: 'Primary Recording Artist',
+          legalName: '',
+          stageName: '',
+          email: '',
+          signature: null,
+          date: today,
+          status: 'pending'
+        },
+        {
+          id: 'art-2',
+          role: 'Featured Artist / Collaborator',
+          legalName: '',
+          stageName: '',
+          email: '',
+          signature: null,
+          date: today,
+          status: 'pending'
+        }
+      ];
+      state.artist = { ...state.artists[0] };
+    }
+
+    // Always sanitize to guarantee 0 signatures and fresh Ref ID
+    this.state = sanitizeStateForNewAgreement(state);
+
+    // Clean address bar query string
+    if (typeof window !== 'undefined' && window.history && window.history.replaceState) {
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    // Restart live listener & polling for the new ID
+    this.restartAgreementListener();
+
+    this.save({ syncInputs: true, rebuildTracks: true, forceRebuildTracks: true });
+    return this.state;
   }
 }
 

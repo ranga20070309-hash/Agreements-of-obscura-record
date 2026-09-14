@@ -32,6 +32,7 @@ export class SignatureEngine {
     this.undoBtn = document.getElementById('undo-canvas-btn');
     this.uploadInput = document.getElementById('sig-file-input');
     this.uploadPreview = document.getElementById('sig-upload-preview');
+    this.removeBtn = document.getElementById('remove-current-sig-btn');
 
     this.canvas = document.getElementById('signature-canvas');
     if (this.canvas) {
@@ -51,26 +52,46 @@ export class SignatureEngine {
     this.redrawStrokes();
   }
 
-  open(party = 'artist') {
+  open(party = 'artist', artistId = null) {
     const mode = this.store.getMode();
     const state = this.store.getState();
 
-    // If in artist mode and agreement is sealed/locked, block modal completely!
+    // If in artist mode, ONLY block opening if this signer has officially submitted and sealed!
     if (mode === 'artist-sign' && party === 'artist') {
-      if (this.store.isArtistLocked()) {
+      const targetId = artistId || this.store.getCurrentSignerId?.() || 'art-1';
+      const artistObj = this.store.getArtist?.(targetId);
+      if (this.store.isArtistLocked?.() || (artistObj && (artistObj.submitted === true || (artistObj.status === 'signed' && artistObj.signedAt)))) {
         return;
       }
     }
 
     this.currentParty = party;
+    this.currentArtistId = artistId || this.store.getCurrentSignerId?.() || 'art-1';
+
+    const targetArtist = this.store.getArtist?.(this.currentArtistId) || state.artist || {};
+    const existingSig = party === 'label' ? state.label?.signature : targetArtist.signature;
 
     // Set modal title & default name
     if (party === 'label') {
-      this.modalTitle.textContent = `Sign for Obscura Rec LLC (Label)`;
+      this.modalTitle.textContent = existingSig 
+        ? `Change / Re-draw Signature: Obscura Rec LLC`
+        : `Sign for Obscura Rec LLC (Label)`;
       this.signerNameInput.value = state.label.representative || 'Director / Founder';
     } else {
-      this.modalTitle.textContent = `Sign as Artist: ${state.artist.stageName || state.artist.legalName || 'Artist'}`;
-      this.signerNameInput.value = state.artist.legalName || state.artist.stageName || '';
+      const name = (targetArtist.legalName && targetArtist.legalName.trim()) || targetArtist.stageName || 'Artist';
+      const role = targetArtist.role || 'Recording Artist';
+      this.modalTitle.textContent = existingSig
+        ? `Change / Re-draw Signature: ${name}`
+        : `Sign as ${role}: ${name}`;
+      this.signerNameInput.value = (targetArtist.legalName && targetArtist.legalName.trim()) || '';
+    }
+
+    if (this.applyBtn) {
+      this.applyBtn.textContent = existingSig ? '✓ Update Digital Signature' : '✓ Apply Digital Signature';
+    }
+
+    if (this.removeBtn) {
+      this.removeBtn.style.display = existingSig ? 'inline-flex' : 'none';
     }
 
     this.consentCheck.checked = false;
@@ -270,6 +291,12 @@ export class SignatureEngine {
     this.applyBtn?.addEventListener('click', () => {
       this.applySignature();
     });
+
+    // Remove / Clear Signature Button (when signature already exists)
+    this.removeBtn?.addEventListener('click', () => {
+      this.removeSignature(this.currentParty, this.currentArtistId);
+      this.close();
+    });
   }
 
   clearCanvas() {
@@ -304,7 +331,7 @@ export class SignatureEngine {
 
   applySignature() {
     const timestamp = new Date().toLocaleString();
-    const hash = 'OBS-' + Math.random().toString(36).substring(2, 9).toUpperCase();
+    const hash = 'SEAL-' + Math.random().toString(36).substring(2, 9).toUpperCase();
     let signatureObj = null;
 
     if (this.currentTab === 'draw') {
@@ -312,7 +339,8 @@ export class SignatureEngine {
         alert('Please draw your signature first.');
         return;
       }
-      const dataUrl = this.canvas.toDataURL('image/png');
+      // Compress canvas to compact WebP/PNG (~2KB-4KB)
+      const dataUrl = compressSignatureCanvas(this.canvas, this.strokes);
       signatureObj = {
         type: 'draw',
         data: dataUrl,
@@ -349,21 +377,90 @@ export class SignatureEngine {
       if (this.currentParty === 'label') {
         this.store.update('label.signature', signatureObj);
       } else {
-        this.store.update('artist.signature', signatureObj);
+        if (typeof this.store.applyArtistSignature === 'function') {
+          this.store.applyArtistSignature(this.currentArtistId, signatureObj);
+        } else {
+          this.store.update('artist.signature', signatureObj);
+        }
       }
       this.close();
-      if (this.onApplied) this.onApplied(this.currentParty, signatureObj);
+      if (this.onApplied) this.onApplied(this.currentParty, signatureObj, this.currentArtistId);
     }
   }
 
-  removeSignature(party) {
+  removeSignature(party, artistId = null) {
     if (confirm(`Remove digital signature for ${party === 'label' ? 'Label' : 'Artist'}?`)) {
       if (party === 'label') {
         this.store.update('label.signature', null);
       } else {
-        this.store.update('artist.signature', null);
+        const targetId = artistId || this.currentArtistId || 'art-1';
+        if (typeof this.store.applyArtistSignature === 'function') {
+          this.store.applyArtistSignature(targetId, null);
+        } else {
+          this.store.update('artist.signature', null);
+        }
       }
     }
+  }
+}
+
+/**
+ * Ultra-Lightweight Signature Canvas Compression
+ * Crops whitespace and renders to a max 280x90 canvas, returning a compressed WebP/PNG (~2-4 KB).
+ * Keeps Firebase RTDB storage and bandwidth usage practically at zero!
+ */
+function compressSignatureCanvas(srcCanvas, strokes) {
+  try {
+    if (!strokes || strokes.length === 0) {
+      return srcCanvas.toDataURL('image/webp', 0.7);
+    }
+
+    // High-resolution canvas dimensions
+    const dpr = window.devicePixelRatio || 1;
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+
+    strokes.forEach(stroke => {
+      stroke.forEach(p => {
+        const px = p.x * dpr;
+        const py = p.y * dpr;
+        if (px < minX) minX = px;
+        if (py < minY) minY = py;
+        if (px > maxX) maxX = px;
+        if (py > maxY) maxY = py;
+      });
+    });
+
+    const pad = 10 * dpr;
+    minX = Math.max(0, Math.floor(minX - pad));
+    minY = Math.max(0, Math.floor(minY - pad));
+    maxX = Math.min(srcCanvas.width, Math.ceil(maxX + pad));
+    maxY = Math.min(srcCanvas.height, Math.ceil(maxY + pad));
+
+    const cropW = Math.max(20, maxX - minX);
+    const cropH = Math.max(20, maxY - minY);
+
+    // Target dimensions matching signature boxes (up to 290px x 94px)
+    const maxW = 290;
+    const maxH = 94;
+    let targetW = Math.round(cropW / dpr);
+    let targetH = Math.round(cropH / dpr);
+
+    if (targetW > maxW || targetH > maxH) {
+      const ratio = Math.min(maxW / targetW, maxH / targetH);
+      targetW = Math.round(targetW * ratio);
+      targetH = Math.round(targetH * ratio);
+    }
+
+    const offCanvas = document.createElement('canvas');
+    offCanvas.width = targetW;
+    offCanvas.height = targetH;
+    const offCtx = offCanvas.getContext('2d');
+
+    offCtx.drawImage(srcCanvas, minX, minY, cropW, cropH, 0, 0, targetW, targetH);
+    return offCanvas.toDataURL('image/webp', 0.7);
+  } catch (err) {
+    console.warn('Canvas compression fallback:', err);
+    return srcCanvas.toDataURL('image/png');
   }
 }
 

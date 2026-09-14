@@ -20,6 +20,16 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json({ limit: '25mb' }));
 app.use(cors());
 
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 const IS_VERCEL = Boolean(process.env.VERCEL);
 const DATA_DIR = IS_VERCEL ? path.join('/tmp', 'data') : path.join(__dirname, 'data');
 const BUNDLE_DATA_DIR = path.join(__dirname, 'data');
@@ -222,6 +232,37 @@ app.post('/api/finalize-to-vault', async (req, res) => {
 
   // 1. Sync to Firebase Realtime Database Vault and purge from active queue
   await firebaseSet(`vault/${state.id}`, state);
+
+  // 1b. Write lightweight metadata to vault_meta to optimize Firebase bandwidth
+  const metaRecord = {
+    id: state.id,
+    finalizedAt: state.finalizedAt,
+    artistLegalName: state.artist?.legalName || '',
+    artistStageName: state.artist?.stageName || '',
+    artistEmail: state.artist?.email || '',
+    labelRepresentative: state.label?.representative || '',
+    labelTitle: state.label?.representativeTitle || 'Director / Founder',
+    trackCount: Array.isArray(state.tracks) ? state.tracks.length : 0,
+    firstTrackTitle: state.tracks?.[0]?.title || '',
+    tracksList: Array.isArray(state.tracks) ? state.tracks.map(t => t.title).filter(Boolean) : [],
+    hasArtistSignature: Boolean(state.artist?.signature),
+    hasLabelSignature: Boolean(state.label?.signature),
+    artistSigHash: state.artist?.signature?.hash || 'Verified',
+    artistSigTimestamp: state.artist?.signature?.timestamp || '',
+    labelSigTimestamp: state.label?.signature?.timestamp || '',
+    labelSigHash: state.label?.signature?.hash || 'OBS-LABEL-SEALED',
+    artists: Array.isArray(state.artists) ? state.artists.map(a => ({
+      id: a.id,
+      role: a.role || 'Recording Artist',
+      legalName: a.legalName || '',
+      stageName: a.stageName || '',
+      email: a.email || '',
+      hasSignature: Boolean(a.signature),
+      sigHash: a.signature?.hash || 'Verified',
+      sigTimestamp: a.signature?.timestamp || a.date || ''
+    })) : []
+  };
+  await firebaseSet(`vault_meta/${state.id}`, metaRecord);
   await firebaseDelete(`agreements/${state.id}`);
 
   // 2. Local fallback
@@ -246,11 +287,78 @@ app.post('/api/finalize-to-vault', async (req, res) => {
   res.json({ success: true, id: state.id, finalizedAt: state.finalizedAt });
 });
 
+// Save agreement directly to Vault (without purging active signing link)
+app.post('/api/vault/save', async (req, res) => {
+  const state = req.body;
+  if (!state || !state.id) {
+    return res.status(400).json({ error: 'Missing agreement state.' });
+  }
+
+  state.savedToVaultAt = state.savedToVaultAt || new Date().toISOString();
+  state.lastUpdatedInVaultAt = new Date().toISOString();
+  state.isArchivedInVault = true;
+
+  // 1. Sync to Firebase Vault and vault_meta
+  await firebaseSet(`vault/${state.id}`, state);
+  const metaRecord = {
+    id: state.id,
+    finalizedAt: state.savedToVaultAt,
+    artistLegalName: state.artist?.legalName || '',
+    artistStageName: state.artist?.stageName || '',
+    artistEmail: state.artist?.email || '',
+    labelRepresentative: state.label?.representative || '',
+    labelTitle: state.label?.representativeTitle || 'Director / Founder',
+    trackCount: Array.isArray(state.tracks) ? state.tracks.length : 0,
+    firstTrackTitle: state.tracks?.[0]?.title || '',
+    tracksList: Array.isArray(state.tracks) ? state.tracks.map(t => t.title).filter(Boolean) : [],
+    hasArtistSignature: Boolean(state.artist?.signature),
+    hasLabelSignature: Boolean(state.label?.signature),
+    artistSigHash: state.artist?.signature?.hash || 'Verified',
+    artistSigTimestamp: state.artist?.signature?.timestamp || '',
+    labelSigTimestamp: state.label?.signature?.timestamp || '',
+    labelSigHash: state.label?.signature?.hash || 'OBS-LABEL-SEALED',
+    artists: Array.isArray(state.artists) ? state.artists.map(a => ({
+      id: a.id,
+      role: a.role || 'Recording Artist',
+      legalName: a.legalName || '',
+      stageName: a.stageName || '',
+      email: a.email || '',
+      hasSignature: Boolean(a.signature),
+      sigHash: a.signature?.hash || 'Verified',
+      sigTimestamp: a.signature?.timestamp || a.date || ''
+    })) : []
+  };
+  await firebaseSet(`vault_meta/${state.id}`, metaRecord);
+
+  // 2. Keep active agreements in sync so artists can still sign
+  await firebaseSet(`agreements/${state.id}`, state);
+
+  // 3. Local fallback
+  try {
+    fs.mkdirSync(VAULT_DIR, { recursive: true });
+    fs.mkdirSync(AGREEMENTS_DIR, { recursive: true });
+  } catch (e) {}
+
+  const vaultFile = path.join(VAULT_DIR, `${state.id}.json`);
+  fs.writeFileSync(vaultFile, JSON.stringify(state, null, 2), 'utf8');
+
+  const activeFile = path.join(AGREEMENTS_DIR, `${state.id}.json`);
+  fs.writeFileSync(activeFile, JSON.stringify(state, null, 2), 'utf8');
+
+  console.log(`[Vault Saved] Agreement ${state.id} saved to permanent vault archive.`);
+  res.json({ success: true, id: state.id, savedToVaultAt: state.savedToVaultAt });
+});
+
 // List all agreements in the Vault for search & management
 app.get('/api/vault', async (req, res) => {
   try {
-    // 1. Try Firebase Realtime Database first
-    const fbVault = await firebaseGet('vault');
+    // 1. Try Firebase Realtime Database first - check lightweight vault_meta index
+    let fbVault = await firebaseGet('vault_meta');
+    if (!fbVault || typeof fbVault !== 'object' || Object.keys(fbVault).length === 0) {
+      // Fallback for legacy vault records
+      fbVault = await firebaseGet('vault');
+    }
+
     if (fbVault && typeof fbVault === 'object') {
       const records = [];
       Object.keys(fbVault).forEach(key => {
@@ -259,18 +367,19 @@ app.get('/api/vault', async (req, res) => {
           records.push({
             id: c.id || key,
             finalizedAt: c.finalizedAt || c.createdAt || new Date().toISOString(),
-            artistLegalName: c.artist?.legalName || '',
-            artistStageName: c.artist?.stageName || '',
-            artistEmail: c.artist?.email || '',
-            labelRepresentative: c.label?.representative || '',
-            trackCount: Array.isArray(c.tracks) ? c.tracks.length : 0,
-            firstTrackTitle: c.tracks?.[0]?.title || '',
-            tracksList: Array.isArray(c.tracks) ? c.tracks.map(t => t.title).filter(Boolean) : [],
-            hasArtistSignature: Boolean(c.artist?.signature),
-            hasLabelSignature: Boolean(c.label?.signature),
-            artistSigHash: c.artist?.signature?.hash || 'Verified',
-            artistSigTimestamp: c.artist?.signature?.timestamp || '',
-            labelSigTimestamp: c.label?.signature?.timestamp || ''
+            artistLegalName: c.artistLegalName || c.artist?.legalName || '',
+            artistStageName: c.artistStageName || c.artist?.stageName || '',
+            artistEmail: c.artistEmail || c.artist?.email || '',
+            labelRepresentative: c.labelRepresentative || c.label?.representative || '',
+            trackCount: typeof c.trackCount === 'number' ? c.trackCount : (Array.isArray(c.tracks) ? c.tracks.length : 0),
+            firstTrackTitle: c.firstTrackTitle || c.tracks?.[0]?.title || '',
+            tracksList: Array.isArray(c.tracksList) ? c.tracksList : (Array.isArray(c.tracks) ? c.tracks.map(t => t.title).filter(Boolean) : []),
+            hasArtistSignature: Boolean(c.hasArtistSignature !== undefined ? c.hasArtistSignature : c.artist?.signature),
+            hasLabelSignature: Boolean(c.hasLabelSignature !== undefined ? c.hasLabelSignature : c.label?.signature),
+            artistSigHash: c.artistSigHash || c.artist?.signature?.hash || 'Verified',
+            artistSigTimestamp: c.artistSigTimestamp || c.artist?.signature?.timestamp || '',
+            labelSigTimestamp: c.labelSigTimestamp || c.label?.signature?.timestamp || '',
+            artists: Array.isArray(c.artists) ? c.artists : []
           });
         }
       });
@@ -356,8 +465,9 @@ app.get('/api/vault/:id', async (req, res) => {
 app.delete('/api/vault/:id', async (req, res) => {
   const id = req.params.id;
 
-  // 1. Delete from Firebase Realtime Database
+  // 1. Delete from Firebase Realtime Database (both full vault and lightweight index)
   await firebaseDelete(`vault/${id}`);
+  await firebaseDelete(`vault_meta/${id}`);
 
   const file = path.join(VAULT_DIR, `${id}.json`);
   if (fs.existsSync(file)) {
@@ -371,12 +481,25 @@ app.delete('/api/vault/:id', async (req, res) => {
   res.json({ success: true, message: `Agreement ${id} permanently deleted from vault.` });
 });
 
+const emailRateLimits = new Map();
+
 // 3. Send Branded Email to Artist from ocr.agreements@gmail.com
 app.post('/api/send-artist-email', async (req, res) => {
   const { state, recipientEmail, signingUrl } = req.body;
 
   if (!state || !recipientEmail) {
     return res.status(400).json({ error: 'Missing agreement state or recipient email.' });
+  }
+
+  // Rate-limiting / Cooldown (30s window per recipient + agreement to prevent spam)
+  const rateKey = `${recipientEmail.toLowerCase().trim()}_${state.id}`;
+  const now = Date.now();
+  const lastSent = emailRateLimits.get(rateKey);
+  if (lastSent && (now - lastSent) < 30000) {
+    const waitSec = Math.ceil((30000 - (now - lastSent)) / 1000);
+    return res.status(429).json({
+      error: `Cooldown active: An invitation was recently sent to ${recipientEmail}. Please wait ${waitSec}s to prevent spamming.`
+    });
   }
 
   // Ensure clean agreement state for artist: clear any prior artist signature and unlock
@@ -403,16 +526,18 @@ app.post('/api/send-artist-email', async (req, res) => {
     });
   }
 
-  const artistName = state.artist.stageName || state.artist.legalName || 'Artist';
-  const labelRep = state.label.representative || 'Director / Founder';
+  const artistName = (state.artist?.legalName && state.artist.legalName.trim())
+    ? `${state.artist.legalName.trim()}${state.artist.stageName ? ` (${state.artist.stageName.trim()})` : ''}`
+    : (state.artist?.stageName || 'Artist');
+  const labelRep = state.label?.representative || 'Director / Founder';
   
-  // Format HTML tracks list
-  const tracksHtml = state.tracks.map((t, idx) => `
+  // Generate dynamic track list for email
+  const tracksHtml = (state.tracks || []).map((t, idx) => `
     <tr>
-      <td style="padding: 10px 12px; border-bottom: 1px solid #222738; color: #ffffff; font-weight: 600; font-size: 13px;">
-        ${idx + 1}. ${t.title || '[Track Name]'} ${t.versionTag || ''} (${t.year || '2026'})
+      <td style="padding: 8px 12px; border-bottom: 1px solid #232a3d; color: #ffffff; font-size: 13px;">
+        <strong>${idx + 1}. ${escapeHtml(t.title || 'Untitled Track')}</strong> ${escapeHtml(t.versionTag || '')} (${escapeHtml(t.year || '2026')})
       </td>
-      <td style="padding: 10px 12px; border-bottom: 1px solid #222738; color: #c9a050; font-weight: 700; text-align: right; font-size: 13px;">
+      <td style="padding: 8px 12px; border-bottom: 1px solid #232a3d; color: #c9a050; font-weight: bold; text-align: right; font-size: 13px;">
         ${t.royaltyShare || 50}% Net Royalty
       </td>
     </tr>
@@ -425,31 +550,30 @@ app.post('/api/send-artist-email', async (req, res) => {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Obscura Rec LLC - Agreement Ready for Signature</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #07090e; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
-  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #07090e; padding: 30px 15px;">
+<body style="margin: 0; padding: 0; background-color: #080a0f; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #080a0f; padding: 40px 20px;">
     <tr>
       <td align="center">
         <!-- Main Card Wrapper -->
-        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #0c0f17; border: 1px solid #c9a050; border-radius: 12px; overflow: hidden; box-shadow: 0 15px 40px rgba(0,0,0,0.8);">
+        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 620px; background-color: #0e111a; border: 1px solid #252b3d; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
           
-          <!-- Black Header Banner -->
+          <!-- Header Banner -->
           <tr>
-            <td style="background-color: #000000; padding: 26px 30px; border-bottom: 2px solid #c9a050;">
+            <td style="background-color: #07090e; padding: 24px 30px; border-bottom: 2px solid #c9a050;">
               <table width="100%" border="0" cellspacing="0" cellpadding="0">
                 <tr>
                   <td>
-                    <div style="font-size: 18px; font-weight: 900; letter-spacing: 2px; color: #ffffff; text-transform: uppercase;">
+                    <div style="font-size: 19px; font-weight: 800; letter-spacing: 1.5px; color: #ffffff;">
                       OBSCURA REC LLC
                     </div>
-                    <div style="font-size: 11px; color: #9ca3af; letter-spacing: 0.8px; margin-top: 4px; text-transform: uppercase;">
+                    <div style="font-size: 11px; color: #c9a050; letter-spacing: 0.8px; text-transform: uppercase; margin-top: 3px;">
                       Act of Acceptance and Transfer of Objects
                     </div>
                   </td>
                   <td align="right">
-                    <span style="background: #151822; color: #c9a050; border: 1px solid #c9a050; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px;">
-                      Ref: ${state.id}
+                    <span style="display: inline-block; background: #1a202c; color: #c9a050; border: 1px solid #c9a050; padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 700; letter-spacing: 0.5px;">
+                      ocr.agreements@gmail.com
                     </span>
                   </td>
                 </tr>
@@ -511,7 +635,7 @@ app.post('/api/send-artist-email', async (req, res) => {
                 <tr>
                   <td>
                     Sent from <strong>Obscura Rec LLC Legal Department</strong><br>
-                    Official Legal & Rights Management Portal
+                    Official Legal & Rights Management Portal • Ref ID: <strong>${state.id}</strong>
                   </td>
                   <td align="right" style="color: #4b5563;">
                     © 2026 Obscura Rec LLC<br>All rights reserved.
@@ -534,12 +658,14 @@ app.post('/api/send-artist-email', async (req, res) => {
       from: '"Obscura Rec LLC" <ocr.agreements@gmail.com>',
       to: recipientEmail,
       replyTo: 'ocr.agreements@gmail.com',
-      subject: `[ACTION REQUIRED] Obscura Rec LLC: Agreement Ready for Signature (${artistName})`,
+      subject: `[ACTION REQUIRED] Obscura Rec LLC: Agreement Ready for Signature (${artistName}) [Ref: ${state.id}]`,
       html: htmlContent
     });
 
+    // Record rate limit timestamp
+    emailRateLimits.set(rateKey, Date.now());
     console.log(`Email delivered to ${recipientEmail}, messageId: ${info.messageId}`);
-    res.json({ success: true, messageId: info.messageId });
+    res.json({ success: true, messageId: info.messageId, cooldownSeconds: 60 });
   } catch (err) {
     console.error('Nodemailer error:', err);
     res.status(500).json({ error: `Failed to dispatch email via Gmail: ${err.message}` });
@@ -571,10 +697,12 @@ app.post('/api/submit-signed-agreement', async (req, res) => {
     }
   }
 
-  // Stamp contract as locked and executed
-  state.isLockedForArtist = true;
+  // Stamp contract status
+  const allArtists = Array.isArray(state.artists) && state.artists.length > 0 ? state.artists : [state.artist];
+  const allDone = allArtists.every(a => a && (a.submitted === true || (a.status === 'signed' && a.signedAt)));
+  state.isLockedForArtist = allDone;
   state.artistSignedAt = new Date().toISOString();
-  state.status = 'artist_signed';
+  state.status = allDone ? 'all_artists_signed' : 'partially_signed';
 
   // Save locked contract on server and Firebase Realtime Database
   await firebaseSet(`agreements/${state.id}`, state);
@@ -583,8 +711,51 @@ app.post('/api/submit-signed-agreement', async (req, res) => {
   } catch (e) {}
   fs.writeFileSync(file, JSON.stringify(state, null, 2), 'utf8');
 
+  // Keep Vault 100% up to date with the latest signatures if this agreement was saved in the Vault
+  const vaultFile = path.join(VAULT_DIR, `${state.id}.json`);
+  if (fs.existsSync(vaultFile) || state.isArchivedInVault) {
+    try {
+      fs.writeFileSync(vaultFile, JSON.stringify(state, null, 2), 'utf8');
+      await firebaseSet(`vault/${state.id}`, state);
+      const metaRecord = {
+        id: state.id,
+        finalizedAt: state.finalizedAt || state.savedToVaultAt || new Date().toISOString(),
+        artistLegalName: state.artist?.legalName || '',
+        artistStageName: state.artist?.stageName || '',
+        artistEmail: state.artist?.email || '',
+        labelRepresentative: state.label?.representative || '',
+        labelTitle: state.label?.representativeTitle || 'Director / Founder',
+        trackCount: Array.isArray(state.tracks) ? state.tracks.length : 0,
+        firstTrackTitle: state.tracks?.[0]?.title || '',
+        tracksList: Array.isArray(state.tracks) ? state.tracks.map(t => t.title).filter(Boolean) : [],
+        hasArtistSignature: Boolean(state.artist?.signature),
+        hasLabelSignature: Boolean(state.label?.signature),
+        artistSigHash: state.artist?.signature?.hash || 'Verified',
+        artistSigTimestamp: state.artist?.signature?.timestamp || '',
+        labelSigTimestamp: state.label?.signature?.timestamp || '',
+        labelSigHash: state.label?.signature?.hash || 'OBS-LABEL-SEALED',
+        artists: Array.isArray(state.artists) ? state.artists.map(a => ({
+          id: a.id,
+          role: a.role || 'Recording Artist',
+          legalName: a.legalName || '',
+          stageName: a.stageName || '',
+          email: a.email || '',
+          hasSignature: Boolean(a.signature),
+          sigHash: a.signature?.hash || 'Verified',
+          sigTimestamp: a.signature?.timestamp || a.date || ''
+        })) : []
+      };
+      await firebaseSet(`vault_meta/${state.id}`, metaRecord);
+      console.log(`[Vault Auto-Synced] Updated vault record with latest signatures for ${state.id}`);
+    } catch (ve) {
+      console.warn('Vault auto-sync error on submit:', ve);
+    }
+  }
+
   const transporter = getTransporter();
-  const artistName = state.artist.stageName || state.artist.legalName || 'Artist';
+  const artistName = (state.artist?.legalName && state.artist.legalName.trim())
+    ? `${state.artist.legalName.trim()}${state.artist.stageName ? ` (${state.artist.stageName.trim()})` : ''}`
+    : (state.artist?.stageName || 'Artist');
   const counterSignUrl = `${hostUrl || 'http://localhost:3000'}/?mode=counter-sign&id=${state.id}`;
 
   if (transporter) {
@@ -597,19 +768,15 @@ app.post('/api/submit-signed-agreement', async (req, res) => {
           The artist has reviewed and applied their digital signature to the Act of Acceptance and Transfer of Objects (Ref: <strong>${state.id}</strong>).
         </p>
         <div style="background: #131722; padding: 14px; border-radius: 8px; margin: 16px 0; border: 1px solid #252c3d;">
-          <div style="color: #9ca3af; font-size: 12px; margin-bottom: 4px;">SIGNATURE VERIFICATION:</div>
-          <div style="color: #ffffff; font-size: 13px;"><strong>Signer:</strong> ${state.artist.legalName || artistName} (${artistName})</div>
+          <div style="color: #9ca3af; font-size: 12px; margin-bottom: 4px;">DIGITAL VERIFICATION RECORD:</div>
+          <div style="color: #ffffff; font-size: 13px;"><strong>Agreement Ref ID:</strong> ${state.id}</div>
+          <div style="color: #ffffff; font-size: 13px;"><strong>Signer:</strong> ${artistName}</div>
           <div style="color: #ffffff; font-size: 13px;"><strong>Timestamp:</strong> ${state.artist.signature?.timestamp || new Date().toISOString()}</div>
-          <div style="color: #ffffff; font-size: 13px;"><strong>Hash:</strong> ${state.artist.signature?.hash || 'Verified'}</div>
+          <div style="color: #ffffff; font-size: 13px;"><strong>Digital Seal Hash:</strong> ${state.artist.signature?.hash || 'Verified'}</div>
           <div style="color: #10b981; font-size: 12px; margin-top: 4px;">🔒 Status: Sealed & Link Expired for Artist</div>
         </div>
-        <div style="margin: 20px 0;">
-          <a href="${counterSignUrl}" target="_blank" style="background: #c9a050; color: #000000; font-weight: bold; text-decoration: none; padding: 12px 24px; border-radius: 6px; display: inline-block;">
-            ⚖️ Open Agreement & Counter-Sign
-          </a>
-        </div>
-        <div style="font-size: 11px; color: #6b7280;">
-          Ref ID: ${state.id} • Delivered to ocr.agreements@gmail.com
+        <div style="font-size: 11px; color: #6b7280; margin-top: 14px;">
+          Agreement Reference ID: ${state.id} • Delivered to ocr.agreements@gmail.com
         </div>
       </div>
     `;

@@ -25,7 +25,10 @@
   .modal-backdrop,
   .modal-dialog,
   .toast-container,
-  .sign-btn-tag {
+  .sign-btn-tag,
+  .sig-redraw-badge,
+  .sig-redraw-hint,
+  .no-print {
     display: none !important;
   }
 

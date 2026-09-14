@@ -1,0 +1,19 @@
+{
+  "id": "OBS-TEST-COOL12",
+  "artist": {
+    "legalName": "Test Artist",
+    "stageName": "Tester",
+    "email": "test@example.com",
+    "signature": null,
+    "date": "2026-09-13"
+  },
+  "tracks": [
+    {
+      "title": "Cool Track",
+      "royaltyShare": 50,
+      "year": "2026"
+    }
+  ],
+  "isLockedForArtist": false,
+  "status": "awaiting_artist_signature"
+}

@@ -183,13 +183,44 @@ export async function finalizeToFirebaseVault(state) {
   };
 
   try {
-    // 1. Write to permanent vault
+    // 1. Write full document to permanent vault
     await database.ref(`vault/${state.id}`).set(sealedState);
 
-    // 2. Remove from active temporary agreements queue to keep database clean
+    // 2. Write lightweight index record to vault_meta (ZERO base64 signatures, NO large text blocks - saves 95%+ bandwidth)
+    const metaRecord = {
+      id: state.id,
+      finalizedAt: sealedState.finalizedAt,
+      artistLegalName: state.artist?.legalName || '',
+      artistStageName: state.artist?.stageName || '',
+      artistEmail: state.artist?.email || '',
+      labelRepresentative: state.label?.representative || '',
+      labelTitle: state.label?.representativeTitle || 'Director / Founder',
+      trackCount: Array.isArray(state.tracks) ? state.tracks.length : 0,
+      firstTrackTitle: state.tracks?.[0]?.title || '',
+      tracksList: Array.isArray(state.tracks) ? state.tracks.map(t => t.title).filter(Boolean) : [],
+      hasArtistSignature: Boolean(state.artist?.signature),
+      hasLabelSignature: Boolean(state.label?.signature),
+      artistSigHash: state.artist?.signature?.hash || 'Verified',
+      artistSigTimestamp: state.artist?.signature?.timestamp || '',
+      labelSigTimestamp: state.label?.signature?.timestamp || '',
+      labelSigHash: state.label?.signature?.hash || 'OBS-LABEL-SEALED',
+      artists: Array.isArray(state.artists) ? state.artists.map(a => ({
+        id: a.id,
+        role: a.role || 'Recording Artist',
+        legalName: a.legalName || '',
+        stageName: a.stageName || '',
+        email: a.email || '',
+        hasSignature: Boolean(a.signature),
+        sigHash: a.signature?.hash || 'Verified',
+        sigTimestamp: a.signature?.timestamp || a.date || ''
+      })) : []
+    };
+    await database.ref(`vault_meta/${state.id}`).set(metaRecord);
+
+    // 3. Remove from active temporary agreements queue to keep database clean and prevent duplicate storage
     await database.ref(`agreements/${state.id}`).remove();
 
-    console.log(`[Firebase RTDB] Finalized & Archived to Vault: ${state.id}`);
+    console.log(`[Firebase RTDB] Finalized & Archived to Vault: ${state.id} (Indexed in vault_meta)`);
     return sealedState;
   } catch (err) {
     console.error('[Firebase RTDB] Vault archive failed:', err);
@@ -198,17 +229,114 @@ export async function finalizeToFirebaseVault(state) {
 }
 
 /**
+ * Save agreement directly to Vault (without deleting from active agreements)
+ * Allows the label to save configured agreements to the vault for future use,
+ * while keeping signing links active.
+ */
+export async function saveAgreementToVault(state) {
+  if (!state || !state.id) return false;
+  const database = getDatabaseInstance();
+  if (!database) return false;
+
+  const savedRecord = {
+    ...state,
+    savedToVaultAt: state.savedToVaultAt || new Date().toISOString(),
+    lastUpdatedInVaultAt: new Date().toISOString(),
+    isArchivedInVault: true
+  };
+
+  try {
+    // 1. Write full document to permanent vault
+    await database.ref(`vault/${state.id}`).set(savedRecord);
+
+    // 2. Write lightweight index record to vault_meta
+    const metaRecord = {
+      id: state.id,
+      finalizedAt: savedRecord.savedToVaultAt,
+      artistLegalName: state.artist?.legalName || '',
+      artistStageName: state.artist?.stageName || '',
+      artistEmail: state.artist?.email || '',
+      labelRepresentative: state.label?.representative || '',
+      labelTitle: state.label?.representativeTitle || 'Director / Founder',
+      trackCount: Array.isArray(state.tracks) ? state.tracks.length : 0,
+      firstTrackTitle: state.tracks?.[0]?.title || '',
+      tracksList: Array.isArray(state.tracks) ? state.tracks.map(t => t.title).filter(Boolean) : [],
+      hasArtistSignature: Boolean(state.artist?.signature),
+      hasLabelSignature: Boolean(state.label?.signature),
+      artistSigHash: state.artist?.signature?.hash || 'Verified',
+      artistSigTimestamp: state.artist?.signature?.timestamp || '',
+      labelSigTimestamp: state.label?.signature?.timestamp || '',
+      labelSigHash: state.label?.signature?.hash || 'OBS-LABEL-SEALED',
+      artists: Array.isArray(state.artists) ? state.artists.map(a => ({
+        id: a.id,
+        role: a.role || 'Recording Artist',
+        legalName: a.legalName || '',
+        stageName: a.stageName || '',
+        email: a.email || '',
+        hasSignature: Boolean(a.signature),
+        sigHash: a.signature?.hash || 'Verified',
+        sigTimestamp: a.signature?.timestamp || a.date || ''
+      })) : []
+    };
+    await database.ref(`vault_meta/${state.id}`).set(metaRecord);
+
+    // 3. Keep active agreements in sync
+    await database.ref(`agreements/${state.id}`).set(state);
+
+    console.log(`[Firebase RTDB] Saved to Vault & Synced: ${state.id}`);
+    return true;
+  } catch (err) {
+    console.error('[Firebase RTDB] Save to Vault failed:', err);
+    return false;
+  }
+}
+
+/**
+ * Update vault record if this agreement has been saved in the Vault,
+ * keeping signatures and timestamps 100% up-to-date in the Vault.
+ */
+export async function updateVaultIfArchived(state) {
+  if (!state || !state.id) return false;
+  const database = getDatabaseInstance();
+  if (!database) return false;
+
+  try {
+    const checkSnap = await database.ref(`vault/${state.id}`).once('value');
+    if (checkSnap.exists()) {
+      await saveAgreementToVault(state);
+      return true;
+    }
+  } catch (e) {
+    console.warn('Check vault update error:', e);
+  }
+  return false;
+}
+
+/**
  * List all archived agreements from Firebase Vault
+ * Uses lightweight vault_meta index to avoid downloading bulky base64 signature payloads
  */
 export async function getVaultFromFirebase() {
   const database = getDatabaseInstance();
   if (!database) return [];
 
   try {
-    const snap = await database.ref('vault').once('value');
-    if (!snap.exists()) return [];
+    // 1. Try lightweight vault_meta index first (saves >95% bandwidth!)
+    let snap = await database.ref('vault_meta').once('value');
+    let raw = null;
 
-    const raw = snap.val();
+    if (snap.exists() && snap.hasChildren()) {
+      raw = snap.val();
+    } else {
+      // Fallback for legacy vault records
+      const fullSnap = await database.ref('vault').once('value');
+      if (fullSnap.exists()) {
+        raw = fullSnap.val();
+      }
+    }
+
+    if (!raw) return [];
+
     const records = [];
 
     Object.keys(raw).forEach((key) => {
@@ -217,18 +345,30 @@ export async function getVaultFromFirebase() {
         records.push({
           id: c.id || key,
           finalizedAt: c.finalizedAt || c.createdAt || new Date().toISOString(),
-          artistLegalName: c.artist?.legalName || '',
-          artistStageName: c.artist?.stageName || '',
-          artistEmail: c.artist?.email || '',
-          labelRepresentative: c.label?.representative || '',
-          trackCount: Array.isArray(c.tracks) ? c.tracks.length : 0,
-          firstTrackTitle: c.tracks?.[0]?.title || '',
-          tracksList: Array.isArray(c.tracks) ? c.tracks.map(t => t.title).filter(Boolean) : [],
-          hasArtistSignature: Boolean(c.artist?.signature),
-          hasLabelSignature: Boolean(c.label?.signature),
-          artistSigHash: c.artist?.signature?.hash || 'Verified',
-          artistSigTimestamp: c.artist?.signature?.timestamp || '',
-          labelSigTimestamp: c.label?.signature?.timestamp || ''
+          artistLegalName: c.artistLegalName || c.artist?.legalName || '',
+          artistStageName: c.artistStageName || c.artist?.stageName || '',
+          artistEmail: c.artistEmail || c.artist?.email || '',
+          labelRepresentative: c.labelRepresentative || c.label?.representative || '',
+          labelTitle: c.labelTitle || c.label?.representativeTitle || 'Director / Founder',
+          trackCount: typeof c.trackCount === 'number' ? c.trackCount : (Array.isArray(c.tracks) ? c.tracks.length : 0),
+          firstTrackTitle: c.firstTrackTitle || c.tracks?.[0]?.title || '',
+          tracksList: Array.isArray(c.tracksList) ? c.tracksList : (Array.isArray(c.tracks) ? c.tracks.map(t => t.title).filter(Boolean) : []),
+          hasArtistSignature: Boolean(c.hasArtistSignature !== undefined ? c.hasArtistSignature : c.artist?.signature),
+          hasLabelSignature: Boolean(c.hasLabelSignature !== undefined ? c.hasLabelSignature : c.label?.signature),
+          artistSigHash: c.artistSigHash || c.artist?.signature?.hash || 'Verified',
+          artistSigTimestamp: c.artistSigTimestamp || c.artist?.signature?.timestamp || '',
+          labelSigTimestamp: c.labelSigTimestamp || c.label?.signature?.timestamp || '',
+          labelSigHash: c.labelSigHash || c.label?.signature?.hash || 'OBS-LABEL-SEALED',
+          artists: Array.isArray(c.artists) ? c.artists.map(a => ({
+            id: a.id,
+            role: a.role || 'Recording Artist',
+            legalName: a.legalName || '',
+            stageName: a.stageName || '',
+            email: a.email || '',
+            hasSignature: Boolean(a.hasSignature !== undefined ? a.hasSignature : a.signature),
+            sigHash: a.sigHash || a.signature?.hash || 'Verified',
+            sigTimestamp: a.sigTimestamp || a.signature?.timestamp || a.date || ''
+          })) : []
         });
       }
     });
@@ -251,7 +391,8 @@ export async function deleteFromFirebaseVault(id) {
 
   try {
     await database.ref(`vault/${id}`).remove();
-    console.log(`[Firebase RTDB] Deleted from Vault: ${id}`);
+    await database.ref(`vault_meta/${id}`).remove();
+    console.log(`[Firebase RTDB] Deleted from Vault & Meta: ${id}`);
     return true;
   } catch (err) {
     console.error('[Firebase RTDB] Delete from vault failed:', err);

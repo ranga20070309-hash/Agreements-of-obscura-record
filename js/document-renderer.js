@@ -49,12 +49,19 @@ export function renderDocument(state, container, onSignClick, mode = 'label') {
     `;
   };
 
+  const artistsList = (Array.isArray(state.artists) && state.artists.length > 0)
+    ? state.artists
+    : [{ id: 'art-1', role: 'Recording Artist', ...(state.artist || {}) }];
+
   // Optimized Pagination:
   // Page 1: Banner + Preamble + Section 1 + Section 2 Header + Up to 4 Tracks
   // If > 4 tracks: Continuation page(s) hold up to 6 tracks each.
-  // Final Page: Section 3 + Section 4 + Signatures.
+  // Main Terms & Signatures Page: Section 3 + Section 4 + Record Label + up to 4 Artists.
+  // If > 4 artists: Any additional artists (Artist 5, 6, 7...) cleanly overflow to a continuation signature page.
   const PAGE_1_CAPACITY = 4;
   const CONTINUATION_CAPACITY = 6;
+  const PAGE_2_ARTIST_CAPACITY = 4;
+  const CONT_SIGNATURE_CAPACITY = 7;
 
   const allTracks = state.tracks || [];
   const page1Tracks = allTracks.slice(0, PAGE_1_CAPACITY);
@@ -65,8 +72,16 @@ export function renderDocument(state, container, onSignClick, mode = 'label') {
     continuationPages.push(remainingTracks.slice(i, i + CONTINUATION_CAPACITY));
   }
 
-  // Total pages = Page 1 + (any continuation pages) + Final Signature page
-  const totalPages = 1 + continuationPages.length + 1;
+  const page2Artists = artistsList.slice(0, PAGE_2_ARTIST_CAPACITY);
+  const overflowArtists = artistsList.slice(PAGE_2_ARTIST_CAPACITY);
+
+  const artistContinuationPages = [];
+  for (let i = 0; i < overflowArtists.length; i += CONT_SIGNATURE_CAPACITY) {
+    artistContinuationPages.push(overflowArtists.slice(i, i + CONT_SIGNATURE_CAPACITY));
+  }
+
+  // Total pages = Page 1 + (any track continuation pages) + Main Terms & Signatures Page + (any artist continuation pages)
+  const totalPages = 1 + continuationPages.length + 1 + artistContinuationPages.length;
 
   // Build Signatures HTML depending on viewer mode (label | artist-sign | counter-sign)
   let labelSigHtml = '';
@@ -79,6 +94,9 @@ export function renderDocument(state, container, onSignClick, mode = 'label') {
           ? `<div class="rendered-typed-sig" style="font-family: '${sig.font || 'Great Vibes'}', cursive;">${escapeHtml(sig.data)}</div>`
           : `<img src="${sig.data}" class="rendered-sig-img" alt="Label Signature" />`
         }
+        ${canEditLabel ? `
+          <span class="sig-redraw-badge no-print" title="Click to re-draw or change signature">✏️ Re-draw</span>
+        ` : ''}
       </div>
     `;
   } else {
@@ -100,34 +118,127 @@ export function renderDocument(state, container, onSignClick, mode = 'label') {
     }
   }
 
-  const isArtistLocked = Boolean(
-    state.isLockedForArtist ||
-    state.status === 'artist_signed' ||
-    state.status === 'fully_executed' ||
-    state.isArchivedInVault
+  // Current active signer in artist mode (e.g. ?mode=artist-sign&id=...&signer=art-1)
+  const currentSignerId = (() => {
+    if (typeof window !== 'undefined' && window.location?.search) {
+      const p = new URLSearchParams(window.location.search);
+      const s = p.get('signer');
+      if (s) return s;
+    }
+    return state.artists?.[0]?.id || 'art-1';
+  })();
+
+  const isGlobalLocked = Boolean(
+    state.isArchivedInVault ||
+    state.status === 'fully_executed'
   );
 
-  let artistSigHtml = '';
-  if (state.artist.signature) {
-    const sig = state.artist.signature;
-    // Signature remains fully editable/redrawable until submitted by artist or executed
-    const canEditArtist = !isArtistLocked;
-    artistSigHtml = `
-      <div class="doc-signature-box signed ${canEditArtist ? '' : 'locked-view'}" ${canEditArtist ? 'data-party="artist"' : ''} title="${canEditArtist ? 'Click to re-draw or change signature' : 'Digitally Signed & Sealed'}">
-        ${sig.type === 'type'
-          ? `<div class="rendered-typed-sig" style="font-family: '${sig.font || 'Great Vibes'}', cursive;">${escapeHtml(sig.data)}</div>`
-          : `<img src="${sig.data}" class="rendered-sig-img" alt="Artist Signature" />`
+  const renderArtistSigRow = (artist, index) => {
+    const isThisSigner = (mode !== 'artist-sign') || (currentSignerId === artist.id);
+    const hasSig = Boolean(artist.signature);
+    const canEdit = isThisSigner && !isGlobalLocked && (mode !== 'counter-sign') && !hasSig;
+
+    let boxHtml = '';
+    const isThisSubmitted = Boolean(artist.submitted === true || (artist.status === 'signed' && artist.signedAt));
+    const allowReSign = (mode === 'label' && !isGlobalLocked) ||
+                        (mode === 'artist-sign' && isThisSigner && !isGlobalLocked && !isThisSubmitted);
+
+    const signerDisplayName = (artist.stageName && artist.stageName.trim())
+      ? artist.stageName.trim()
+      : ((artist.legalName && artist.legalName.trim()) || `Artist ${index + 1}`);
+
+    if (hasSig) {
+      const sig = artist.signature;
+      boxHtml = `
+        <div class="doc-signature-box signed ${allowReSign ? '' : 'locked-view'}" 
+             ${allowReSign ? `data-party="artist" data-artist-id="${escapeHtml(artist.id)}"` : ''} 
+             title="${allowReSign ? 'Click to re-draw or change signature' : `Digitally Signed by ${escapeHtml(signerDisplayName)}`}">
+          ${sig.type === 'type'
+            ? `<div class="rendered-typed-sig" style="font-family: '${sig.font || 'Great Vibes'}', cursive;">${escapeHtml(sig.data)}</div>`
+            : `<img src="${sig.data}" class="rendered-sig-img" alt="Artist Signature" onerror="this.style.display='none';" />`
+          }
+          ${allowReSign ? `
+            <span class="sig-redraw-badge no-print" title="Click to re-draw or change signature">✏️ Re-draw</span>
+          ` : ''}
+        </div>
+      `;
+    } else {
+      if (mode === 'artist-sign') {
+        if (isThisSigner) {
+          boxHtml = `
+            <div class="doc-signature-box clickable-sign-prompt artist-required-pulse" 
+                 data-party="artist" data-artist-id="${escapeHtml(artist.id)}" 
+                 title="Click to Sign as ${escapeHtml(signerDisplayName)}">
+              <div class="sign-underline-placeholder"></div>
+              <span class="sign-btn-tag artist-action-tag">✍️ Click to Sign (Required)</span>
+            </div>
+          `;
+        } else {
+          boxHtml = `
+            <div class="doc-signature-box locked-prompt" title="Pending signature from ${escapeHtml(signerDisplayName)}">
+              <div class="sign-underline-placeholder"></div>
+              <span style="font-size:11px; color:#6b7280; font-style:italic;">(Pending ${escapeHtml(signerDisplayName)} Signature)</span>
+            </div>
+          `;
         }
+      } else {
+        boxHtml = `
+          <div class="doc-signature-box clickable-sign-prompt ${mode === 'counter-sign' ? 'locked-prompt' : ''}" 
+               ${mode !== 'counter-sign' ? `data-party="artist" data-artist-id="${escapeHtml(artist.id)}"` : ''} 
+               title="Click to Sign as ${escapeHtml(signerDisplayName)}">
+            <div class="sign-underline-placeholder"></div>
+            <span class="sign-btn-tag">${mode === 'counter-sign' ? '⏳ Pending Artist' : '✍️ Click to Sign'}</span>
+          </div>
+        `;
+      }
+    }
+
+    const roleTag = artist.role || (index === 0 ? 'Recording Artist' : 'Collaborator / Featured Artist');
+    // Header entity name displays Artist Name (Stage Alias)
+    const entityName = (artist.stageName && artist.stageName.trim()) 
+      ? artist.stageName.trim() 
+      : '[Artist Alias]';
+    const signDate = artist.date || (hasSig ? artist.signature.timestamp?.split(',')[0] : agreementDate);
+
+    return `
+      <div class="doc-sig-row-full artist-row" data-artist-id="${escapeHtml(artist.id)}">
+        <div class="sig-row-info-col">
+          <div class="doc-party-header-inline">
+            <div class="party-role-tag">FOR AND ON BEHALF OF ${escapeHtml(roleTag)}:</div>
+            <div class="party-entity-name">${escapeHtml(entityName)}</div>
+          </div>
+          <div class="sig-meta-horizontal">
+            <div class="sig-meta-item">
+              <span class="sig-meta-label">LEGAL NAME:</span>
+              <span class="sig-meta-val">${escapeHtml((artist.legalName && artist.legalName.trim()) || '[Artist Legal Name]')}</span>
+            </div>
+            <div class="sig-meta-item">
+              <span class="sig-meta-label">STAGE NAME:</span>
+              <span class="sig-meta-val">${escapeHtml((artist.stageName && artist.stageName.trim()) || '[Artist Alias]')}</span>
+            </div>
+            <div class="sig-meta-item">
+              <span class="sig-meta-label">DATE:</span>
+              <span class="sig-meta-val">${escapeHtml(signDate)}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="sig-row-sign-col">
+          <div class="doc-sig-line-container">
+            ${boxHtml}
+            <div class="doc-sig-caption">
+              <span>${escapeHtml(artist.role || 'Artist')} Signature</span>
+            </div>
+            ${allowReSign ? `
+              <div class="sig-redraw-hint no-print" data-party="artist" data-artist-id="${escapeHtml(artist.id)}" title="Click to re-draw or change signature">
+                <span class="sig-redraw-hint-text">✏️ Click to re-draw / edit</span>
+              </div>
+            ` : ''}
+          </div>
+        </div>
       </div>
     `;
-  } else {
-    artistSigHtml = `
-      <div class="doc-signature-box clickable-sign-prompt ${mode === 'artist-sign' ? 'artist-required-pulse' : ''}" data-party="artist" title="Click to Sign as Artist">
-        <div class="sign-underline-placeholder"></div>
-        <span class="sign-btn-tag ${mode === 'artist-sign' ? 'artist-action-tag' : ''}">${mode === 'artist-sign' ? '✍️ Click to Sign (Required)' : '✍️ Click to Sign'}</span>
-      </div>
-    `;
-  }
+  };
 
   const termYearsRaw = state.terms && state.terms.termYears;
   const termYearsEdited = Boolean(state.terms && state.terms.termYearsEdited);
@@ -187,7 +298,7 @@ export function renderDocument(state, container, onSignClick, mode = 'label') {
       </div>
 
       <div class="page-number-footer">
-        <span>Ref ID: ${escapeHtml(state.id)}</span>
+        <span>Ref ID: ${escapeHtml(state.id)} • Obscura Rec LLC</span>
         <span>Page 1 of ${totalPages}</span>
       </div>
     </section>
@@ -225,14 +336,14 @@ export function renderDocument(state, container, onSignClick, mode = 'label') {
     `;
   });
 
-  // Render Final Page (Section 3, Section 4, Signatures)
-  const finalPageNum = totalPages;
+  // Render Main Terms & Signatures Page (Section 3 + Section 4 + Label + up to 4 Artists)
+  const mainSignaturesPageNum = 2 + continuationPages.length;
   pagesHtml += `
-    <!-- ================= FINAL SIGNATURES PAGE ================= -->
-    <section class="a4-page page-signatures" id="doc-page-${finalPageNum}">
+    <!-- ================= MAIN TERMS & SIGNATURES PAGE ================= -->
+    <section class="a4-page page-signatures" id="doc-page-${mainSignaturesPageNum}">
       <div class="page-2-content">
         <div class="doc-section">
-          <div class="doc-section-title">3. TERM & RENEWAL</div>
+          <div class="doc-section-title">3. TERM &amp; RENEWAL</div>
           <ul class="doc-bullets">
             <li>
               The term of the exclusive license for the Objects transferred under this Act shall be 
@@ -242,13 +353,13 @@ export function renderDocument(state, container, onSignClick, mode = 'label') {
               The term shall automatically extend for successive periods of 
               <strong>${renewalYearsDisplay} years</strong>, unless either Party provides written notice 
               of non-renewal at least <strong>${noticeDays} days</strong> prior to the expiration 
-              of the initial or any extended term.
+              of the current term.
             </li>
           </ul>
         </div>
 
         <div class="doc-section">
-          <div class="doc-section-title">4. SOURCE MATERIALS & DELIVERY</div>
+          <div class="doc-section-title">4. DELIVERY &amp; ACCEPTANCE</div>
           <ul class="doc-bullets">
             <li>
               The Parties confirm that the Artist(s) has delivered the master audio files, stems, 
@@ -261,76 +372,70 @@ export function renderDocument(state, container, onSignClick, mode = 'label') {
           </ul>
         </div>
 
-        <!-- Signatures Section -->
+        <!-- Signatures Section - Distinct Two-Tier Legal Execution Layout -->
         <div class="doc-signatures-section">
           <div class="doc-signatures-title-wrap">
             <div class="doc-signatures-line"></div>
-            <div class="doc-signatures-title">SIGNATURES OF THE PARTIES</div>
+            <div class="doc-signatures-title">SIGNATURES &amp; EXECUTION</div>
             <div class="doc-signatures-line"></div>
           </div>
           
-          <div class="doc-signatures-grid">
-            <!-- Column 1: For the Label -->
-            <div class="doc-sig-col label-col">
-              <div class="doc-party-header">
-                <div class="party-role-tag">For and On Behalf of Label</div>
-                <div class="party-entity-name">OBSCURA REC LLC</div>
-              </div>
-              
-              <div class="doc-sig-line-container">
-                ${labelSigHtml}
-                <div class="doc-sig-caption">
-                  <span>Authorized Representative</span>
+          <!-- RECORD LABEL (OBSCURA REC LLC) SEPARATE EXECUTION BLOCK -->
+          <div class="doc-sig-block-tier label-tier">
+            <div class="doc-tier-header">
+              <div class="doc-tier-title">RECORD LABEL EXECUTION: OBSCURA REC LLC</div>
+              <div class="doc-tier-sub">Official Corporate Sign-off</div>
+            </div>
+
+            <div class="doc-sig-row-full label-row" data-party="label">
+              <div class="sig-row-info-col">
+                <div class="doc-party-header-inline">
+                  <div class="party-role-tag">FOR AND ON BEHALF OF RECORD LABEL:</div>
+                  <div class="party-entity-name">OBSCURA REC LLC</div>
+                </div>
+                <div class="sig-meta-horizontal">
+                  <div class="sig-meta-item">
+                    <span class="sig-meta-label">AUTHORIZED BY:</span>
+                    <span class="sig-meta-val">${escapeHtml(labelRep)}</span>
+                  </div>
+                  <div class="sig-meta-item">
+                    <span class="sig-meta-label">TITLE:</span>
+                    <span class="sig-meta-val">${escapeHtml(labelTitle)}</span>
+                  </div>
+                  <div class="sig-meta-item">
+                    <span class="sig-meta-label">DATE:</span>
+                    <span class="sig-meta-val">${escapeHtml(agreementDate)}</span>
+                  </div>
                 </div>
               </div>
 
-              <div class="sig-meta-grid">
-                <div class="sig-meta-row">
-                  <span class="sig-meta-label">BY:</span>
-                  <span class="sig-meta-val">${escapeHtml(labelRep)}</span>
-                </div>
-                <div class="sig-meta-row">
-                  <span class="sig-meta-label">TITLE:</span>
-                  <span class="sig-meta-val">${escapeHtml(labelTitle)}</span>
-                </div>
-                <div class="sig-meta-row">
-                  <span class="sig-meta-label">DATE:</span>
-                  <span class="sig-meta-val">${escapeHtml(agreementDate)}</span>
+              <div class="sig-row-sign-col">
+                <div class="doc-sig-line-container">
+                  ${labelSigHtml}
+                  <div class="doc-sig-caption">
+                    <span>Authorized Representative Signature</span>
+                  </div>
                 </div>
               </div>
             </div>
+          </div>
 
-            <!-- Vertical Divider -->
-            <div class="doc-sig-divider"></div>
+          <!-- SPACIOUS LEGAL SEPARATION DIVIDER -->
+          <div class="doc-sig-tier-divider">
+            <div class="tier-divider-line"></div>
+            <span class="tier-divider-label">✦ INDEPENDENT PARTY EXECUTION ✦</span>
+            <div class="tier-divider-line"></div>
+          </div>
 
-            <!-- Column 2: For the Artist(s) -->
-            <div class="doc-sig-col artist-col">
-              <div class="doc-party-header">
-                <div class="party-role-tag">For and On Behalf of Artist</div>
-                <div class="party-entity-name">${escapeHtml(artistStage || artistLegal || 'RECORDING ARTIST')}</div>
-              </div>
-              
-              <div class="doc-sig-line-container">
-                ${artistSigHtml}
-                <div class="doc-sig-caption">
-                  <span>Artist / Grantor Signature</span>
-                </div>
-              </div>
+          <!-- ARTISTS & CONTRIBUTORS SEPARATE EXECUTION BLOCK -->
+          <div class="doc-sig-block-tier artists-tier">
+            <div class="doc-tier-header">
+              <div class="doc-tier-title">RECORDING ARTIST(S) &amp; CONTRIBUTORS EXECUTION</div>
+              <div class="doc-tier-sub">${artistsList.length} Executing ${artistsList.length === 1 ? 'Party' : 'Parties'}</div>
+            </div>
 
-              <div class="sig-meta-grid">
-                <div class="sig-meta-row">
-                  <span class="sig-meta-label">LEGAL NAME:</span>
-                  <span class="sig-meta-val">${escapeHtml(artistLegal)}</span>
-                </div>
-                <div class="sig-meta-row">
-                  <span class="sig-meta-label">STAGE NAME:</span>
-                  <span class="sig-meta-val">${escapeHtml(artistStage)}</span>
-                </div>
-                <div class="sig-meta-row">
-                  <span class="sig-meta-label">DATE:</span>
-                  <span class="sig-meta-val">${escapeHtml(artistDate)}</span>
-                </div>
-              </div>
+            <div class="doc-signatures-list-rows">
+              ${page2Artists.map(renderArtistSigRow).join('')}
             </div>
           </div>
         </div>
@@ -338,10 +443,54 @@ export function renderDocument(state, container, onSignClick, mode = 'label') {
 
       <div class="page-number-footer">
         <span>Ref ID: ${escapeHtml(state.id)} • Obscura Rec LLC</span>
-        <span>Page ${finalPageNum} of ${totalPages}</span>
+        <span>Page ${mainSignaturesPageNum} of ${totalPages}</span>
       </div>
     </section>
   `;
+
+  // Render Any Overflow Artist Continuation Pages (Artist 5, 6, 7...)
+  artistContinuationPages.forEach((contArtists, idx) => {
+    const contPageNum = mainSignaturesPageNum + 1 + idx;
+    pagesHtml += `
+      <!-- ================= ARTIST SIGNATURES CONTINUATION PAGE ${contPageNum} ================= -->
+      <section class="a4-page page-signatures page-execution" id="doc-page-${contPageNum}">
+        <div class="doc-continuation-header">
+          <div class="doc-continuation-header-brand">
+            <img src="./assets/ocr-logo.jpeg" alt="Obscura Rec LLC" />
+            <span>OBSCURA REC LLC • ACT OF ACCEPTANCE AND TRANSFER OF OBJECTS</span>
+          </div>
+          <span>SIGNATURES &amp; EXECUTION (CONTINUED)</span>
+        </div>
+
+        <div class="page-2-content" style="padding-top: 24px;">
+          <div class="doc-signatures-section" style="margin-top: 0;">
+            <div class="doc-signatures-title-wrap">
+              <div class="doc-signatures-line"></div>
+              <div class="doc-signatures-title">SIGNATURES &amp; EXECUTION (CONTINUED)</div>
+              <div class="doc-signatures-line"></div>
+            </div>
+
+            <!-- ARTISTS & CONTRIBUTORS CONTINUATION BLOCK -->
+            <div class="doc-sig-block-tier artists-tier">
+              <div class="doc-tier-header">
+                <div class="doc-tier-title">RECORDING ARTIST(S) &amp; CONTRIBUTORS EXECUTION (CONTINUED)</div>
+                <div class="doc-tier-sub">${artistsList.length} Executing Parties (Schedule Continued)</div>
+              </div>
+
+              <div class="doc-signatures-list-rows">
+                ${contArtists.map(renderArtistSigRow).join('')}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="page-number-footer">
+          <span>Ref ID: ${escapeHtml(state.id)} • Obscura Rec LLC</span>
+          <span>Page ${contPageNum} of ${totalPages}</span>
+        </div>
+      </section>
+    `;
+  });
 
   container.innerHTML = `
     <div class="document-pages-wrapper" id="printable-document">
@@ -351,11 +500,12 @@ export function renderDocument(state, container, onSignClick, mode = 'label') {
 
   // Bind interactive signature clicks on the document
   if (onSignClick) {
-    const sigBoxes = container.querySelectorAll('.doc-signature-box');
-    sigBoxes.forEach(box => {
-      box.addEventListener('click', () => {
-        const party = box.dataset.party;
-        onSignClick(party);
+    const clickableElements = container.querySelectorAll('.doc-signature-box[data-party], .sig-redraw-hint[data-party]');
+    clickableElements.forEach(el => {
+      el.addEventListener('click', () => {
+        const party = el.dataset.party;
+        const artistId = el.dataset.artistId || null;
+        onSignClick(party, artistId);
       });
     });
   }

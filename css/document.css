@@ -53,6 +53,7 @@
   padding: 0;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -75,7 +76,7 @@
   justify-content: space-between;
   align-items: center;
   flex-shrink: 0;
-  border-bottom: 2px solid #c9a050;
+  border-bottom: 2px solid #000000;
   position: relative;
 }
 
@@ -136,8 +137,8 @@
   border-radius: 50%;
   object-fit: cover;
   display: block;
-  border: 1.5px solid #c9a050;
-  box-shadow: 0 0 12px rgba(201, 160, 80, 0.3);
+  border: 1.5px solid #ffffff;
+  box-shadow: none;
 }
 
 .doc-brand-text {
@@ -338,9 +339,51 @@
   color: #000000;
 }
 
+/* ================= LEGAL EXECUTION NOTICE ================= */
+.doc-execution-notice {
+  margin-top: 32px;
+  background: #fdfbf7;
+  border: 1px solid #d1b87a;
+  border-left: 4px solid #c9a050;
+  border-radius: 6px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  box-shadow: 0 1px 4px rgba(201, 160, 80, 0.08);
+}
+
+.execution-notice-icon {
+  font-size: 22px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.execution-notice-text {
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: #374151;
+}
+
+.execution-notice-text strong {
+  display: block;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #111827;
+  margin-bottom: 4px;
+}
+
+.execution-notice-text em {
+  font-style: normal;
+  font-weight: 700;
+  color: #c9a050;
+}
+
 /* ================= SIGNATURES SECTION ================= */
 .doc-signatures-section {
-  margin-top: 36px;
+  margin-top: 24px;
   break-inside: avoid;
   page-break-inside: avoid;
 }
@@ -350,7 +393,7 @@
   align-items: center;
   justify-content: center;
   gap: 16px;
-  margin-bottom: 28px;
+  margin-bottom: 20px;
 }
 
 .doc-signatures-line {
@@ -369,76 +412,200 @@
   color: #000000;
 }
 
-.doc-signatures-grid {
-  display: grid;
-  grid-template-columns: 1fr 1px 1fr;
-  align-items: stretch;
-  gap: 0;
-  margin-top: 14px;
-}
-
-.doc-sig-divider {
-  background-color: #d1d5db;
-  width: 1px;
-  height: 100%;
-}
-
-.doc-sig-col {
+/* ================= BLACK & WHITE LEGAL EXECUTION SECTION ================= */
+.doc-sig-block-tier {
   display: flex;
   flex-direction: column;
+  width: 100%;
 }
 
-.doc-sig-col.label-col {
-  padding-right: 28px;
+.doc-tier-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 6px;
+  margin-bottom: 8px;
+  border-bottom: 1.5px solid #000000;
 }
 
-.doc-sig-col.artist-col {
-  padding-left: 28px;
+.doc-sig-block-tier.label-tier .doc-tier-header {
+  border-bottom: 1.5px solid #000000;
 }
 
-.doc-party-header {
-  margin-bottom: 12px;
-  border-bottom: 1.5px solid #111827;
-  padding-bottom: 5px;
-}
-
-.party-role-tag {
-  font-size: 9.5px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: #4b5563;
-  margin-bottom: 2px;
-}
-
-.party-entity-name {
-  font-size: 13.5px;
+.doc-tier-title {
+  font-size: 12.5px;
   font-weight: 800;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.8px;
   text-transform: uppercase;
-  color: #111827;
+  color: #000000;
 }
 
-.doc-sig-line-container {
-  display: flex;
-  flex-direction: column;
-  margin-top: 4px;
+.doc-tier-sub {
+  margin-left: auto;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #000000;
+  font-style: italic;
+  letter-spacing: 0.3px;
 }
 
-.doc-signature-box {
-  min-height: 65px;
+.doc-sig-tier-divider {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-bottom: 1.5px solid #111827;
+  gap: 14px;
+  margin: 18px 0 16px 0;
+}
+
+.tier-divider-line {
+  flex: 1;
+  height: 1px;
+  background: #000000;
+}
+
+.tier-divider-label {
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: #000000;
+}
+
+.doc-signatures-list-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.doc-sig-row-full {
+  display: grid;
+  grid-template-columns: 1fr 265px;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 16px;
+  background: #ffffff;
+  border: 1.5px solid #000000;
+  border-left: 4px solid #000000;
+  border-radius: 5px;
+  box-sizing: border-box;
+  box-shadow: none;
+}
+
+.doc-sig-row-full.label-row {
+  background: #ffffff;
+  border-color: #000000;
+  border-left: 4px solid #000000;
+  box-shadow: none;
+}
+
+.doc-sig-row-full.artist-row {
+  background: #ffffff;
+  border-color: #000000;
+  border-left: 4px solid #000000;
+  box-shadow: none;
+}
+
+.sig-row-info-col {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.doc-party-header-inline {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  border-bottom: 1.5px solid #000000;
+  padding-bottom: 3px;
+}
+
+.doc-party-header-inline .party-role-tag {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #000000;
+  white-space: nowrap;
+}
+
+.doc-party-header-inline .party-entity-name {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: none !important;
+  color: #000000;
+  white-space: normal;
+  overflow: visible;
+}
+
+.sig-meta-horizontal {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin-top: 2px;
+}
+
+.sig-meta-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.sig-meta-item .sig-meta-label {
+  font-size: 9px;
+  font-weight: 800;
+  color: #000000;
+  letter-spacing: 0.5px;
+}
+
+.sig-meta-item .sig-meta-val {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #000000;
+}
+
+.sig-row-sign-col {
+  width: 265px;
+  display: flex;
+  flex-direction: column;
+}
+
+.sig-row-sign-col .doc-sig-line-container {
+  margin-top: 0;
+  width: 100%;
+}
+
+/* ================= EXACT PROPORTIONAL SIGNATURE BOX ================= */
+.doc-signature-box,
+.sig-row-sign-col .doc-signature-box {
+  min-height: 66px !important;
+  height: 66px !important;
+  max-height: 66px !important;
+  width: 100% !important;
+  padding: 4px 8px !important;
+  background: #ffffff !important;
+  border-radius: 4px !important;
+  border: 1.5px solid #000000 !important;
+  border-bottom: 2px solid #000000 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: relative !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
   cursor: pointer;
-  position: relative;
-  transition: background-color 0.2s;
-  padding: 4px 0;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
 .doc-signature-box.locked-view,
-body.artist-locked .doc-signature-box {
+body.artist-locked .doc-signature-box,
+.doc-signature-box.locked-prompt {
   cursor: default !important;
   pointer-events: none !important;
   user-select: none !important;
@@ -449,77 +616,81 @@ body.artist-locked .doc-signature-box {
 }
 
 .doc-signature-box.signed:hover:not(.locked-view) {
-  background-color: rgba(201, 160, 80, 0.12);
-  border-radius: 4px;
+  background-color: #f9f9f9 !important;
+  border-color: #000000 !important;
 }
 
-.doc-sig-caption {
-  font-size: 9.5px;
-  font-weight: 600;
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-  color: #6b7280;
-  margin-top: 4px;
+.doc-signature-box.clickable-sign-prompt:hover {
+  background-color: #f5f5f5 !important;
 }
 
-.sig-meta-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  margin-top: 14px;
+/* ================= RENDERED SIGNATURE IMAGE (PERFECT CROP FIT) ================= */
+.rendered-sig-img,
+.doc-signature-box .rendered-sig-img,
+.sig-row-sign-col .doc-signature-box .rendered-sig-img {
+  max-height: 56px !important;
+  max-width: 92% !important;
+  width: auto !important;
+  height: auto !important;
+  object-fit: contain !important;
+  display: block !important;
+  margin: auto !important;
+  filter: contrast(1.1);
 }
 
-.sig-meta-row {
-  display: grid;
-  grid-template-columns: 92px 1fr;
-  align-items: baseline;
-  font-size: 12px;
-  line-height: 1.4;
+/* ================= TYPED SIGNATURE ================= */
+.rendered-typed-sig,
+.doc-signature-box .rendered-typed-sig {
+  font-size: 26px !important;
+  line-height: 1.15 !important;
+  color: #000000 !important;
+  text-align: center !important;
+  user-select: none;
 }
 
-.sig-meta-label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-  color: #4b5563;
-}
-
-.sig-meta-val {
-  font-size: 12.5px;
-  font-weight: 600;
-  color: #111827;
-  word-break: break-word;
+/* ================= SIGNATURE CAPTION ================= */
+.doc-sig-caption,
+.sig-row-sign-col .doc-sig-caption {
+  font-size: 8.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.8px !important;
+  text-transform: uppercase !important;
+  color: #000000 !important;
+  margin-top: 3px !important;
+  text-align: center !important;
 }
 
 .sign-underline-placeholder {
   width: 100%;
-  height: 48px;
+  height: 58px;
 }
 
 .sign-btn-tag {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  background: #090b10;
-  color: #c9a050;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 5px 12px;
-  border-radius: 20px;
-  border: 1px dashed #c9a050;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+  gap: 6px;
+  background: #000000 !important;
+  color: #ffffff !important;
+  font-size: 11.5px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.4px;
+  padding: 6px 16px !important;
+  border-radius: 20px !important;
+  border: 1.5px solid #000000 !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   pointer-events: none;
+  white-space: nowrap !important;
+  line-height: 1.2;
   animation: pulse-sign 2s infinite;
 }
 
 @keyframes pulse-sign {
   0%, 100% { transform: translate(-50%, -50%) scale(1); }
-  50% { transform: translate(-50%, -50%) scale(1.05); }
+  50% { transform: translate(-50%, -50%) scale(1.04); }
 }
 
 /* Clean vector formatting during PDF export */
@@ -533,13 +704,85 @@ body.artist-locked .doc-signature-box {
   animation: none !important;
   box-shadow: none !important;
   background: transparent !important;
-  border-color: #111827 !important;
+  border-color: #000000 !important;
 }
 
 @media print {
-  .sign-btn-tag {
+  .sign-btn-tag,
+  .sig-redraw-badge,
+  .sig-redraw-hint,
+  .no-print {
     display: none !important;
   }
+}
+
+/* ================= PRESERVE EXACT USER TYPED CASING ================= */
+.doc-track-item,
+.doc-track-header,
+.doc-track-header strong,
+.doc-track-sublist,
+.doc-track-subitem,
+.doc-track-subitem strong,
+.sig-meta-item,
+.sig-meta-val,
+.party-entity-name {
+  text-transform: none !important;
+}
+
+/* ================= RE-DRAW / CHANGE SIGNATURE HINT (ON-SCREEN ONLY) ================= */
+.sig-redraw-badge {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  background: rgba(0, 0, 0, 0.75);
+  color: #ffffff !important;
+  font-size: 8.5px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 10px;
+  letter-spacing: 0.3px;
+  pointer-events: none;
+  line-height: 1.2;
+  z-index: 5;
+  transition: opacity 0.15s ease, background 0.15s ease;
+}
+
+.doc-signature-box.signed:hover:not(.locked-view) .sig-redraw-badge {
+  background: #000000;
+}
+
+.sig-redraw-hint {
+  text-align: center;
+  margin-top: 3px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.sig-redraw-hint-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 9px;
+  font-weight: 700;
+  color: #2563eb;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  padding: 2px 7px;
+  border-radius: 4px;
+  letter-spacing: 0.2px;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.sig-redraw-hint:hover .sig-redraw-hint-text {
+  background: #dbeafe;
+  border-color: #93c5fd;
+  color: #1d4ed8;
+}
+
+.exporting-pdf .sig-redraw-badge,
+.exporting-pdf .sig-redraw-hint,
+.exporting-pdf .no-print {
+  display: none !important;
 }
 
 .exporting-pdf .document-pages-wrapper {
@@ -554,29 +797,267 @@ body.artist-locked .doc-signature-box {
   margin: 0 !important;
 }
 
-.rendered-sig-img {
-  max-height: 62px;
-  max-width: 100%;
-  object-fit: contain;
-}
-
-.rendered-typed-sig {
-  font-size: 30px;
-  color: #000000;
-  user-select: none;
-}
-
 /* ================= PAGE NUMBER FOOTER ================= */
 .page-number-footer {
   margin-top: auto;
-  padding: 16px 48px;
+  padding: 12px 48px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 11px;
-  font-weight: 500;
-  color: #4b5563;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #000000;
   border-top: 1px solid #000000;
   flex-shrink: 0;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.4px;
+  background: #ffffff;
+  z-index: 10;
+}
+
+/* ================= BALANCED MAIN TERMS & SIGNATURES PAGE LAYOUT ================= */
+/* Distributes space gracefully across Sheet 3 while keeping the footer 100% visible */
+.page-signatures .page-2-content {
+  padding: 26px 48px 16px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+.page-signatures .doc-section {
+  margin-bottom: 11px;
+}
+
+.page-signatures .doc-section-title {
+  font-size: 13px;
+  font-weight: 800;
+  margin: 0 0 4px 0;
+  letter-spacing: 0.6px;
+}
+
+.page-signatures .doc-bullets {
+  margin: 3px 0 6px 0;
+  gap: 4px;
+}
+
+.page-signatures .doc-bullets li {
+  font-size: 12px;
+  line-height: 1.45;
+  padding-left: 16px;
+}
+
+.page-signatures .doc-bullets li::before {
+  font-size: 14px;
+  top: -1px;
+}
+
+.page-signatures .doc-signatures-section {
+  margin-top: 14px;
+}
+
+.page-signatures .doc-signatures-title-wrap {
+  gap: 14px;
+  margin-bottom: 10px;
+}
+
+.page-signatures .doc-signatures-title {
+  font-size: 13.5px;
+  letter-spacing: 1.3px;
+}
+
+.page-signatures .doc-tier-header {
+  padding-bottom: 3px;
+  margin-bottom: 6px;
+}
+
+.page-signatures .doc-tier-title {
+  font-size: 12px;
+}
+
+.page-signatures .doc-tier-sub {
+  font-size: 9.5px;
+}
+
+.page-signatures .doc-sig-tier-divider {
+  margin: 11px 0 9px 0;
+  gap: 12px;
+}
+
+.page-signatures .tier-divider-label {
+  font-size: 8.5px;
+  letter-spacing: 1.2px;
+}
+
+.page-signatures .doc-signatures-list-rows {
+  gap: 9px;
+}
+
+/* ================= RECORD LABEL EXECUTION CARD (PROMINENT & LARGE) ================= */
+.page-signatures .doc-sig-row-full.label-row {
+  padding: 14px 20px;
+  grid-template-columns: 1fr 290px;
+  gap: 18px;
+  border-radius: 6px;
+  border: 1.5px solid #000000;
+  border-left: 5px solid #000000;
+  background: #ffffff;
+  margin-bottom: 2px;
+}
+
+.page-signatures .label-row .doc-party-header-inline {
+  padding-bottom: 4px;
+  gap: 6px 10px;
+  border-bottom: 1.5px solid #000000;
+}
+
+.page-signatures .label-row .party-role-tag {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+}
+
+.page-signatures .label-row .party-entity-name {
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+}
+
+.page-signatures .label-row .sig-meta-horizontal {
+  gap: 6px 18px;
+  margin-top: 5px;
+}
+
+.page-signatures .label-row .sig-meta-item {
+  font-size: 11.5px;
+}
+
+.page-signatures .label-row .sig-meta-label {
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.page-signatures .label-row .sig-meta-val {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.page-signatures .label-row .sig-row-sign-col {
+  width: 290px;
+}
+
+.page-signatures .label-row .doc-signature-box {
+  height: 94px !important;
+  min-height: 94px !important;
+  max-height: 94px !important;
+  padding: 6px 12px !important;
+  border-radius: 5px !important;
+  border: 1.5px solid #000000 !important;
+  border-bottom: 2px solid #000000 !important;
+}
+
+.page-signatures .label-row .rendered-sig-img {
+  max-height: 82px !important;
+  max-width: 95% !important;
+}
+
+.page-signatures .label-row .rendered-typed-sig {
+  font-size: 30px !important;
+}
+
+.page-signatures .label-row .sign-underline-placeholder {
+  height: 84px;
+}
+
+.page-signatures .label-row .sign-btn-tag {
+  font-size: 12.5px !important;
+  padding: 8px 20px !important;
+}
+
+.page-signatures .label-row .doc-sig-caption {
+  font-size: 8.5px !important;
+  margin-top: 4px !important;
+}
+
+/* ================= ARTIST EXECUTION CARDS (SPACIOUS & BALANCED WITH FREE BREATHING ROOM) ================= */
+.page-signatures .doc-sig-row-full.artist-row {
+  padding: 9px 16px;
+  grid-template-columns: 1fr 260px;
+  gap: 14px;
+  border-radius: 5px;
+  border: 1.5px solid #000000;
+  border-left: 4px solid #000000;
+  background: #ffffff;
+}
+
+.page-signatures .artist-row .doc-party-header-inline {
+  padding-bottom: 3px;
+  gap: 4px 8px;
+  border-bottom: 1.5px solid #000000;
+}
+
+.page-signatures .artist-row .party-role-tag {
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.page-signatures .artist-row .party-entity-name {
+  font-size: 12.5px;
+  font-weight: 800;
+}
+
+.page-signatures .artist-row .sig-meta-horizontal {
+  gap: 5px 16px;
+  margin-top: 3px;
+}
+
+.page-signatures .artist-row .sig-meta-item {
+  font-size: 11px;
+}
+
+.page-signatures .artist-row .sig-meta-label {
+  font-size: 8.5px;
+  font-weight: 800;
+}
+
+.page-signatures .artist-row .sig-meta-val {
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.page-signatures .artist-row .sig-row-sign-col {
+  width: 260px;
+}
+
+.page-signatures .artist-row .doc-signature-box {
+  height: 66px !important;
+  min-height: 66px !important;
+  max-height: 66px !important;
+  padding: 5px 10px !important;
+  border-radius: 4px !important;
+  border: 1.5px solid #000000 !important;
+  border-bottom: 2px solid #000000 !important;
+}
+
+.page-signatures .artist-row .rendered-sig-img {
+  max-height: 56px !important;
+  max-width: 92% !important;
+}
+
+.page-signatures .artist-row .rendered-typed-sig {
+  font-size: 26px !important;
+}
+
+.page-signatures .artist-row .sign-underline-placeholder {
+  height: 58px;
+}
+
+.page-signatures .artist-row .sign-btn-tag {
+  font-size: 11.5px !important;
+  padding: 6px 16px !important;
+}
+
+.page-signatures .artist-row .doc-sig-caption {
+  font-size: 8.5px !important;
+  margin-top: 3px !important;
 }
