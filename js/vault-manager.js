@@ -584,7 +584,7 @@ export class VaultManager {
 
       setTimeout(() => {
         exportToPdf(data);
-      }, 300);
+      }, 500);
     } catch (err) {
       alert('Error downloading PDF from vault: ' + err.message);
     }

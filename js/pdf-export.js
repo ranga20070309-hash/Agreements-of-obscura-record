@@ -8,21 +8,27 @@ export function triggerPrint() {
   window.print();
 }
 
+/**
+ * Automatically format exported filename:
+ * Agreement - [Ref ID] - [Song Name] - [Label Name].pdf
+ */
 export function generatePdfFileName(state) {
   const sanitize = (str, fallback) => {
-    const clean = String(str || fallback || '')
+    if (!str) return fallback;
+    const clean = String(str)
       .trim()
-      .replace(/\s+/g, '_')
-      .replace(/[^a-zA-Z0-9_-]/g, '');
+      .replace(/[\\/*?:"<>|]/g, '')
+      .replace(/\s+/g, ' ');
     return clean || fallback;
   };
 
   const refId = sanitize(state?.id, 'OBS-AGR');
-  const artistName = sanitize(state?.artist?.stageName || state?.artist?.legalName, 'Artist');
-  const labelName = sanitize(state?.label?.companyName, 'ObscuraRecLLC');
-  const firstTrack = state?.tracks?.[0]?.title ? sanitize(state.tracks[0].title, 'MasterTrack') : 'MasterTrack';
+  const songName = state?.tracks?.[0]?.title
+    ? sanitize(state.tracks[0].title, 'Track')
+    : (state?.tracks?.[0]?.name ? sanitize(state.tracks[0].name, 'Track') : 'Track');
+  const labelName = sanitize(state?.label?.companyName, 'Obscura Rec LLC');
 
-  return `${refId}_${artistName}_${labelName}_${firstTrack}.pdf`;
+  return `Agreement - ${refId} - ${songName} - ${labelName}.pdf`;
 }
 
 export async function exportToPdf(state) {
@@ -55,6 +61,19 @@ export async function exportToPdf(state) {
 
     showToast(`Generating ${pages.length}-page high-resolution PDF...`, 'info');
 
+    // Wait for all images inside container (signatures, logo, seal SVG) to be fully loaded & decoded
+    const allImgs = Array.from(container.querySelectorAll('img'));
+    await Promise.all(allImgs.map(img => {
+      if (img.complete && img.naturalWidth > 0) {
+        return img.decode ? img.decode().catch(() => {}) : Promise.resolve();
+      }
+      return new Promise(resolve => {
+        img.onload = () => (img.decode ? img.decode().catch(() => {}).then(resolve) : resolve());
+        img.onerror = resolve;
+        setTimeout(resolve, 1200);
+      });
+    }));
+
     // Create jsPDF portrait A4 instance
     const pdf = new jsPdfLib({
       orientation: 'portrait',
@@ -75,10 +94,12 @@ export async function exportToPdf(state) {
       const canvas = await window.html2canvas(pageEl, {
         scale: 2.5, // 240 DPI crisp resolution for razor-sharp legal typography
         useCORS: true,
+        allowTaint: true,
         backgroundColor: '#ffffff',
         logging: false,
         scrollY: 0,
-        scrollX: 0
+        scrollX: 0,
+        imageTimeout: 15000
       });
 
       // High-fidelity JPEG (0.98 quality)
