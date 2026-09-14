@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%">
+  <defs>
+    <!-- Executive Navy Blue Gradient -->
+    <linearGradient id="navyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="40%" stop-color="#1d4ed8" />
+      <stop offset="70%" stop-color="#1e40af" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+
+    <!-- Circular Text Paths -->
+    <path id="navyTopArc" d="M 54 200 A 146 146 0 0 1 346 200" fill="none" />
+    <path id="navyBottomArc" d="M 346 200 A 146 146 0 0 1 54 200" fill="none" />
+  </defs>
+
+  <!-- Outer Double Rings -->
+  <circle cx="200" cy="200" r="186" fill="none" stroke="url(#navyGrad)" stroke-width="3.5" />
+  <circle cx="200" cy="200" r="176" fill="none" stroke="url(#navyGrad)" stroke-width="1.2" stroke-dasharray="3 3" />
+  
+  <!-- Inner Rings around text band -->
+  <circle cx="200" cy="200" r="118" fill="none" stroke="url(#navyGrad)" stroke-width="1.2" />
+  <circle cx="200" cy="200" r="112" fill="none" stroke="url(#navyGrad)" stroke-width="2.5" />
+
+  <!-- Top Text: OBSCURA REC LLC -->
+  <text fill="url(#navyGrad)" font-family="'Cinzel', 'Georgia', serif" font-size="18" font-weight="900" letter-spacing="4">
+    <textPath href="#navyTopArc" startOffset="50%" text-anchor="middle">
+      OBSCURA REC LLC • LK
+    </textPath>
+  </text>
+
+  <!-- Bottom Text: RIGHTS & LICENSING NOTARY -->
+  <text fill="url(#navyGrad)" font-family="'Cinzel', 'Georgia', serif" font-size="11.5" font-weight="800" letter-spacing="2.6">
+    <textPath href="#navyBottomArc" startOffset="50%" text-anchor="middle">
+      ★ EST. 2024 - 2027 • OFFICIAL SEAL ★
+    </textPath>
+  </text>
+
+  <!-- Side Star Icons -->
+  <g fill="url(#navyGrad)" transform="translate(42, 200)">
+    <polygon points="0,-4 1.2,-1.2 4,0 1.2,1.2 0,4 -1.2,1.2 -4,0 -1.2,-1.2" />
+  </g>
+  <g fill="url(#navyGrad)" transform="translate(358, 200)">
+    <polygon points="0,-4 1.2,-1.2 4,0 1.2,1.2 0,4 -1.2,1.2 -4,0 -1.2,-1.2" />
+  </g>
+
+  <!-- CENTER: Corporate Crest / Shield -->
+  <path d="M 200 148 L 244 165 C 244 205 200 234 200 234 C 200 234 156 205 156 165 Z" fill="none" stroke="url(#navyGrad)" stroke-width="2.5" />
+  
+  <!-- Inner Shield Detail -->
+  <path d="M 200 156 L 236 170 C 236 202 200 224 200 224 C 200 224 164 202 164 170 Z" fill="none" stroke="url(#navyGrad)" stroke-width="1" stroke-dasharray="2 2" />
+
+  <!-- Monogram in Shield -->
+  <text x="200" y="196" fill="url(#navyGrad)" font-family="'Cinzel', 'Times New Roman', serif" font-size="22" font-weight="900" letter-spacing="2" text-anchor="middle">
+    OCR
+  </text>
+
+  <!-- Bottom Tagline -->
+  <text x="200" y="254" fill="url(#navyGrad)" font-family="'Inter', sans-serif" font-size="9" font-weight="800" letter-spacing="2.5" text-anchor="middle">
+    VERIFIED LEGAL SEAL
+  </text>
+  <text x="200" y="268" fill="url(#navyGrad)" font-family="'Cinzel', serif" font-size="10" font-weight="700" letter-spacing="1.2" text-anchor="middle">
+    2024 - 2027
+  </text>
+</svg>

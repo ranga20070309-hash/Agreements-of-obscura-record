@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%">
+  <defs>
+    <!-- Metallic Gold Gradients -->
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fae084" />
+      <stop offset="25%" stop-color="#c9a050" />
+      <stop offset="50%" stop-color="#fff2b2" />
+      <stop offset="75%" stop-color="#b38838" />
+      <stop offset="100%" stop-color="#8c6520" />
+    </linearGradient>
+
+    <radialGradient id="goldGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#c9a050" stop-opacity="0.18" />
+      <stop offset="80%" stop-color="#c9a050" stop-opacity="0.04" />
+      <stop offset="100%" stop-color="#c9a050" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Circular Text Paths -->
+    <!-- Top arc (radius 142) -->
+    <path id="topArc" d="M 58 200 A 142 142 0 0 1 342 200" fill="none" />
+    <!-- Bottom arc (radius 142) -->
+    <path id="bottomArc" d="M 342 200 A 142 142 0 0 1 58 200" fill="none" />
+  </defs>
+
+  <!-- Background Soft Radial Glow -->
+  <circle cx="200" cy="200" r="195" fill="url(#goldGlow)" />
+
+  <!-- Outer Serrated / Toothed Border -->
+  <circle cx="200" cy="200" r="185" fill="none" stroke="url(#goldGrad)" stroke-width="2" stroke-dasharray="3 3" />
+
+  <!-- Outer Heavy Ring -->
+  <circle cx="200" cy="200" r="176" fill="none" stroke="url(#goldGrad)" stroke-width="3" />
+  <circle cx="200" cy="200" r="170" fill="none" stroke="url(#goldGrad)" stroke-width="1.2" />
+
+  <!-- Inner Concentric Ring -->
+  <circle cx="200" cy="200" r="114" fill="none" stroke="url(#goldGrad)" stroke-width="1.5" />
+  <circle cx="200" cy="200" r="108" fill="none" stroke="url(#goldGrad)" stroke-width="2.5" />
+
+  <!-- Upper Text: OBSCURA REC LLC -->
+  <text fill="url(#goldGrad)" font-family="'Cinzel', 'Trajan Pro', 'Georgia', 'Times New Roman', serif" font-size="18" font-weight="900" letter-spacing="4">
+    <textPath href="#topArc" startOffset="50%" text-anchor="middle">
+      OBSCURA REC LLC • LK
+    </textPath>
+  </text>
+
+  <!-- Lower Text: OFFICIAL CORPORATE SEAL -->
+  <text fill="url(#goldGrad)" font-family="'Cinzel', 'Trajan Pro', 'Georgia', 'Times New Roman', serif" font-size="12" font-weight="800" letter-spacing="3.2">
+    <textPath href="#bottomArc" startOffset="50%" text-anchor="middle">
+      ★ EST. 2024 - 2027 • OFFICIAL SEAL ★
+    </textPath>
+  </text>
+
+  <!-- Side Star Embellishments -->
+  <g fill="url(#goldGrad)" transform="translate(42, 200)">
+    <polygon points="0,-4 1.2,-1.2 4,0 1.2,1.2 0,4 -1.2,1.2 -4,0 -1.2,-1.2" />
+  </g>
+  <g fill="url(#goldGrad)" transform="translate(358, 200)">
+    <polygon points="0,-4 1.2,-1.2 4,0 1.2,1.2 0,4 -1.2,1.2 -4,0 -1.2,-1.2" />
+  </g>
+
+  <!-- Inner Center Medallion -->
+  <circle cx="200" cy="200" r="98" fill="none" stroke="url(#goldGrad)" stroke-width="1" stroke-dasharray="2 2" />
+
+  <!-- Five Stars Crest -->
+  <g fill="url(#goldGrad)" transform="translate(0, -38)">
+    <polygon points="200,166 202,171 207,171 203,174 205,179 200,176 195,179 197,174 193,171 198,171" />
+    <polygon points="186,169 187.5,173 191.5,173 188.5,175.5 190,179.5 186,177 182,179.5 183.5,175.5 180.5,173 184.5,173" transform="scale(0.85) translate(32, 28)" />
+    <polygon points="214,169 215.5,173 219.5,173 216.5,175.5 218,179.5 214,177 210,179.5 211.5,175.5 208.5,173 212.5,173" transform="scale(0.85) translate(38, 28)" />
+  </g>
+
+  <!-- Center Monogram: OCR -->
+  <text x="200" y="206" fill="url(#goldGrad)" font-family="'Cinzel', 'Times New Roman', serif" font-size="34" font-weight="900" letter-spacing="3" text-anchor="middle">
+    OCR
+  </text>
+
+  <!-- Center Decorative Dividing Line -->
+  <line x1="140" y1="216" x2="260" y2="216" stroke="url(#goldGrad)" stroke-width="1.2" />
+  <circle cx="200" cy="216" r="2.5" fill="url(#goldGrad)" />
+
+  <!-- Subtitle Text: LEGAL SEAL -->
+  <text x="200" y="234" fill="url(#goldGrad)" font-family="'Inter', -apple-system, sans-serif" font-size="9.5" font-weight="800" letter-spacing="3" text-anchor="middle">
+    DIGITALLY AUTHENTICATED
+  </text>
+
+  <!-- Established Year -->
+  <text x="200" y="250" fill="url(#goldGrad)" font-family="'Cinzel', 'Times New Roman', serif" font-size="10" font-weight="700" letter-spacing="2" text-anchor="middle">
+    • EST. 2024 - 2027 •
+  </text>
+</svg>

@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%">
+  <defs>
+    <!-- Crimson Red Wax / Ink Gradient -->
+    <linearGradient id="crimsonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ef4444" />
+      <stop offset="35%" stop-color="#b91c1c" />
+      <stop offset="70%" stop-color="#991b1b" />
+      <stop offset="100%" stop-color="#7f1d1d" />
+    </linearGradient>
+
+    <!-- Circular Text Paths -->
+    <path id="crimsonTopArc" d="M 56 200 A 144 144 0 0 1 344 200" fill="none" />
+    <path id="crimsonBottomArc" d="M 344 200 A 144 144 0 0 1 56 200" fill="none" />
+  </defs>
+
+  <!-- Outer Serrated Scalloped Border (Classic Notary / Wax Edge) -->
+  <circle cx="200" cy="200" r="188" fill="none" stroke="url(#crimsonGrad)" stroke-width="2.5" stroke-dasharray="2 3.5" />
+  <circle cx="200" cy="200" r="180" fill="none" stroke="url(#crimsonGrad)" stroke-width="3" />
+  <circle cx="200" cy="200" r="172" fill="none" stroke="url(#crimsonGrad)" stroke-width="1.2" />
+
+  <!-- Inner Band Border -->
+  <circle cx="200" cy="200" r="116" fill="none" stroke="url(#crimsonGrad)" stroke-width="1.2" />
+  <circle cx="200" cy="200" r="110" fill="none" stroke="url(#crimsonGrad)" stroke-width="2.5" />
+
+  <!-- Upper Text: OBSCURA REC LLC -->
+  <text fill="url(#crimsonGrad)" font-family="'Cinzel', 'Trajan Pro', 'Georgia', serif" font-size="18.5" font-weight="900" letter-spacing="3.8">
+    <textPath href="#crimsonTopArc" startOffset="50%" text-anchor="middle">
+      OBSCURA REC LLC • LK
+    </textPath>
+  </text>
+
+  <!-- Lower Text: ACT OF ACCEPTANCE & TRANSFER -->
+  <text fill="url(#crimsonGrad)" font-family="'Cinzel', 'Trajan Pro', 'Georgia', serif" font-size="11" font-weight="800" letter-spacing="2.4">
+    <textPath href="#crimsonBottomArc" startOffset="50%" text-anchor="middle">
+      ★ EST. 2024 - 2027 • OFFICIAL TRANSFER ★
+    </textPath>
+  </text>
+
+  <!-- Side Stars -->
+  <g fill="url(#crimsonGrad)" transform="translate(42, 200)">
+    <polygon points="0,-4 1.2,-1.2 4,0 1.2,1.2 0,4 -1.2,1.2 -4,0 -1.2,-1.2" />
+  </g>
+  <g fill="url(#crimsonGrad)" transform="translate(358, 200)">
+    <polygon points="0,-4 1.2,-1.2 4,0 1.2,1.2 0,4 -1.2,1.2 -4,0 -1.2,-1.2" />
+  </g>
+
+  <!-- CENTER: Classic Legal Scales of Justice & Laurel Crest -->
+  <g stroke="url(#crimsonGrad)" stroke-width="2" fill="none" transform="translate(0, -12)">
+    <!-- Scale Center Pillar -->
+    <line x1="200" y1="165" x2="200" y2="225" />
+    <line x1="184" y1="225" x2="216" y2="225" stroke-width="3" />
+    <!-- Pillar Capital -->
+    <circle cx="200" cy="163" r="3.5" fill="url(#crimsonGrad)" />
+    <!-- Crossbar -->
+    <line x1="162" y1="172" x2="238" y2="172" stroke-width="2.5" />
+    <!-- Left Scale Pan -->
+    <line x1="162" y1="172" x2="152" y2="194" stroke-width="1.2" />
+    <line x1="162" y1="172" x2="172" y2="194" stroke-width="1.2" />
+    <path d="M 148 194 Q 162 203 176 194" stroke-width="1.8" />
+    <!-- Right Scale Pan -->
+    <line x1="238" y1="172" x2="228" y2="194" stroke-width="1.2" />
+    <line x1="238" y1="172" x2="248" y2="194" stroke-width="1.2" />
+    <path d="M 224 194 Q 238 203 252 194" stroke-width="1.8" />
+  </g>
+
+  <!-- Center Text -->
+  <text x="200" y="238" fill="url(#crimsonGrad)" font-family="'Cinzel', 'Georgia', serif" font-size="13" font-weight="900" letter-spacing="2" text-anchor="middle">
+    AUTHENTICATED
+  </text>
+  <text x="200" y="254" fill="url(#crimsonGrad)" font-family="'Cinzel', 'Georgia', serif" font-size="10.5" font-weight="700" letter-spacing="1.5" text-anchor="middle">
+    • EST. 2024 - 2027 •
+  </text>
+</svg>

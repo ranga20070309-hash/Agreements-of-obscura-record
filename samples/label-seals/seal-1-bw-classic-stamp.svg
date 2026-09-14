@@ -1,0 +1,164 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%">
+  <defs>
+    <!-- Circular Text Paths -->
+    <!-- Outer Upper Arc (Radius 164) -->
+    <path id="bwOuterUpper" d="M 36 200 A 164 164 0 1 1 364 200" fill="none" />
+    <!-- Outer Lower Arc (Radius 164) -->
+    <path id="bwOuterLower" d="M 364 200 A 164 164 0 0 1 36 200" fill="none" />
+
+    <!-- Inner Upper Arc (Radius 128) -->
+    <path id="bwInnerUpper" d="M 72 200 A 128 128 0 1 1 328 200" fill="none" />
+    <!-- Inner Lower Arc (Radius 128) -->
+    <path id="bwInnerLower" d="M 328 200 A 128 128 0 0 1 72 200" fill="none" />
+  </defs>
+
+  <style>
+    .bw-text {
+      fill: #000000;
+      font-family: 'Inter', -apple-system, 'Segoe UI', Roboto, sans-serif;
+    }
+  </style>
+
+  <!-- Slight stamp tilt for real ink impression -->
+  <g transform="rotate(-1.2 200 200)">
+    
+    <!-- Outer Double Concentric Border -->
+    <circle cx="200" cy="200" r="186" fill="none" stroke="#000000" stroke-width="1.8" />
+    <circle cx="200" cy="200" r="181" fill="none" stroke="#000000" stroke-width="3.6" />
+
+    <!-- Intermediate Separation Rings -->
+    <circle cx="200" cy="200" r="147" fill="none" stroke="#000000" stroke-width="1.8" />
+    <circle cx="200" cy="200" r="143" fill="none" stroke="#000000" stroke-width="1" />
+
+    <!-- Inner Core Ring -->
+    <circle cx="200" cy="200" r="111" fill="none" stroke="#000000" stroke-width="2.2" />
+
+    <!-- ================================================================= -->
+    <!-- TOP SUNBURST RAYS (Radiating upward from top of text) -->
+    <!-- ================================================================= -->
+    <g stroke="#000000">
+      <line x1="200" y1="168" x2="200" y2="113" stroke-width="2.2" />
+      <line x1="200" y1="168" x2="200" y2="113" stroke-width="1.3" transform="rotate(4.5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="113" stroke-width="2.2" transform="rotate(9 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="113" stroke-width="1.3" transform="rotate(13.5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="113" stroke-width="2.2" transform="rotate(18 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="113" stroke-width="1.3" transform="rotate(22.5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="113" stroke-width="2.2" transform="rotate(27 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="113" stroke-width="1.3" transform="rotate(31.5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="113" stroke-width="2.2" transform="rotate(36 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="113" stroke-width="1.3" transform="rotate(40.5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="113" stroke-width="2.2" transform="rotate(45 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="113" stroke-width="1.3" transform="rotate(49.5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="113" stroke-width="2.2" transform="rotate(54 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="113" stroke-width="1.3" transform="rotate(58.5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="113" stroke-width="2.2" transform="rotate(63 200 200)" />
+
+      <!-- Left side fan rays -->
+      <line x1="200" y1="168" x2="200" y2="113" stroke-width="1.3" transform="rotate(-4.5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="113" stroke-width="2.2" transform="rotate(-9 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="113" stroke-width="1.3" transform="rotate(-13.5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="113" stroke-width="2.2" transform="rotate(-18 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="113" stroke-width="1.3" transform="rotate(-22.5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="113" stroke-width="2.2" transform="rotate(-27 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="113" stroke-width="1.3" transform="rotate(-31.5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="113" stroke-width="2.2" transform="rotate(-36 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="113" stroke-width="1.3" transform="rotate(-40.5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="113" stroke-width="2.2" transform="rotate(-45 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="113" stroke-width="1.3" transform="rotate(-49.5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="113" stroke-width="2.2" transform="rotate(-54 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="113" stroke-width="1.3" transform="rotate(-58.5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="113" stroke-width="2.2" transform="rotate(-63 200 200)" />
+    </g>
+
+    <!-- ================================================================= -->
+    <!-- BOTTOM SUNBURST RAYS (Radiating downward from below underline) -->
+    <!-- ================================================================= -->
+    <g stroke="#000000">
+      <line x1="200" y1="233" x2="200" y2="287" stroke-width="2.2" />
+      <line x1="200" y1="233" x2="200" y2="287" stroke-width="1.3" transform="rotate(4.5 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="287" stroke-width="2.2" transform="rotate(9 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="287" stroke-width="1.3" transform="rotate(13.5 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="287" stroke-width="2.2" transform="rotate(18 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="287" stroke-width="1.3" transform="rotate(22.5 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="287" stroke-width="2.2" transform="rotate(27 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="287" stroke-width="1.3" transform="rotate(31.5 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="287" stroke-width="2.2" transform="rotate(36 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="287" stroke-width="1.3" transform="rotate(40.5 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="287" stroke-width="2.2" transform="rotate(45 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="287" stroke-width="1.3" transform="rotate(49.5 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="287" stroke-width="2.2" transform="rotate(54 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="287" stroke-width="1.3" transform="rotate(58.5 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="287" stroke-width="2.2" transform="rotate(63 200 200)" />
+
+      <!-- Left side fan rays -->
+      <line x1="200" y1="233" x2="200" y2="287" stroke-width="1.3" transform="rotate(-4.5 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="287" stroke-width="2.2" transform="rotate(-9 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="287" stroke-width="1.3" transform="rotate(-13.5 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="287" stroke-width="2.2" transform="rotate(-18 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="287" stroke-width="1.3" transform="rotate(-22.5 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="287" stroke-width="2.2" transform="rotate(-27 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="287" stroke-width="1.3" transform="rotate(-31.5 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="287" stroke-width="2.2" transform="rotate(-36 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="287" stroke-width="1.3" transform="rotate(-40.5 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="287" stroke-width="2.2" transform="rotate(-45 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="287" stroke-width="1.3" transform="rotate(-49.5 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="287" stroke-width="2.2" transform="rotate(-54 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="287" stroke-width="1.3" transform="rotate(-58.5 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="287" stroke-width="2.2" transform="rotate(-63 200 200)" />
+    </g>
+
+    <!-- ================================================================= -->
+    <!-- CIRCULAR TEXT ON TRACKS (Perimeter LK & 2024 - 2027) -->
+    <!-- ================================================================= -->
+
+    <!-- Outer Upper Arc Text -->
+    <text class="bw-text" font-size="12" font-weight="900" letter-spacing="2.2">
+      <textPath href="#bwOuterUpper" startOffset="50%" text-anchor="middle">
+        OBSCURA REC LLC • LIMITED LIABILITY COMPANY
+      </textPath>
+    </text>
+
+    <!-- Outer Lower Arc Text: 2024 - 2027 & LK -->
+    <text class="bw-text" font-size="11" font-weight="900" letter-spacing="2">
+      <textPath href="#bwOuterLower" startOffset="50%" text-anchor="middle">
+        ★ EST. 2024 - 2027 • OFFICIAL SEAL ★
+      </textPath>
+    </text>
+
+    <!-- Inner Upper Arc Text -->
+    <text class="bw-text" font-size="10.5" font-weight="800" letter-spacing="1.8">
+      <textPath href="#bwInnerUpper" startOffset="50%" text-anchor="middle">
+        RECORD LABEL &amp; MUSIC PUBLISHING
+      </textPath>
+    </text>
+
+    <!-- Inner Lower Arc Text: LK on perimeter (never in center) -->
+    <text class="bw-text" font-size="10" font-weight="800" letter-spacing="2">
+      <textPath href="#bwInnerLower" startOffset="50%" text-anchor="middle">
+        REGISTERED LABEL CATALOGUE • LK
+      </textPath>
+    </text>
+
+    <!-- Left & Right Separator Dots -->
+    <circle cx="28" cy="200" r="3.2" fill="#000000" />
+    <circle cx="372" cy="200" r="3.2" fill="#000000" />
+    <circle cx="64" cy="200" r="2.2" fill="#000000" />
+    <circle cx="336" cy="200" r="2.2" fill="#000000" />
+
+    <!-- ================================================================= -->
+    <!-- CENTER HORIZONTAL LABEL TITLE (Pure Brand - NO LK in Center) -->
+    <!-- ================================================================= -->
+    <g text-anchor="middle">
+      <text x="200" y="193" fill="#000000" font-family="'Inter', -apple-system, sans-serif" font-size="22" font-weight="900" letter-spacing="1.8">
+        OBSCURA REC
+      </text>
+      <text x="200" y="215" fill="#000000" font-family="'Inter', -apple-system, sans-serif" font-size="15.5" font-weight="800" letter-spacing="1.2">
+        Obscura Music
+      </text>
+
+      <line x1="106" y1="223" x2="294" y2="223" stroke="#000000" stroke-width="2.4" />
+      <line x1="126" y1="227" x2="274" y2="227" stroke="#000000" stroke-width="1.2" />
+    </g>
+
+  </g>
+</svg>

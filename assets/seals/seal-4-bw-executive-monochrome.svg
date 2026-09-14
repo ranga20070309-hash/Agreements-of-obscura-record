@@ -1,0 +1,137 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%">
+  <defs>
+    <!-- Text Paths -->
+    <path id="bw4OuterUpper" d="M 36 200 A 164 164 0 1 1 364 200" fill="none" />
+    <path id="bw4OuterLower" d="M 364 200 A 164 164 0 0 1 36 200" fill="none" />
+
+    <path id="bw4InnerUpper" d="M 72 200 A 128 128 0 1 1 328 200" fill="none" />
+    <path id="bw4InnerLower" d="M 328 200 A 128 128 0 0 1 72 200" fill="none" />
+  </defs>
+
+  <style>
+    .bw4-text {
+      fill: #000000;
+      font-family: 'Inter', -apple-system, sans-serif;
+    }
+  </style>
+
+  <g transform="rotate(1.4 200 200)">
+    
+    <!-- Outer Double Border -->
+    <circle cx="200" cy="200" r="186" fill="none" stroke="#000000" stroke-width="1.8" />
+    <circle cx="200" cy="200" r="180" fill="none" stroke="#000000" stroke-width="3.5" />
+
+    <!-- Intermediate Track Rings -->
+    <circle cx="200" cy="200" r="148" fill="none" stroke="#000000" stroke-width="1.8" />
+    <circle cx="200" cy="200" r="144" fill="none" stroke="#000000" stroke-width="1" />
+
+    <!-- Center Border -->
+    <circle cx="200" cy="200" r="110" fill="none" stroke="#000000" stroke-width="2.2" />
+
+    <!-- TOP SUNBURST RAYS -->
+    <g stroke="#000000">
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2.2" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.2" transform="rotate(5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2" transform="rotate(10 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.2" transform="rotate(15 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2" transform="rotate(20 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.2" transform="rotate(25 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2" transform="rotate(30 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.2" transform="rotate(35 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2" transform="rotate(40 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.2" transform="rotate(45 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2" transform="rotate(50 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.2" transform="rotate(55 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2" transform="rotate(60 200 200)" />
+
+      <!-- Left -->
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.2" transform="rotate(-5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2" transform="rotate(-10 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.2" transform="rotate(-15 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2" transform="rotate(-20 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.2" transform="rotate(-25 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2" transform="rotate(-30 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.2" transform="rotate(-35 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2" transform="rotate(-40 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.2" transform="rotate(-45 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2" transform="rotate(-50 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.2" transform="rotate(-55 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2" transform="rotate(-60 200 200)" />
+    </g>
+
+    <!-- BOTTOM SUNBURST RAYS -->
+    <g stroke="#000000">
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2.2" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1.2" transform="rotate(5 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2" transform="rotate(10 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1.2" transform="rotate(15 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2" transform="rotate(20 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1.2" transform="rotate(25 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2" transform="rotate(30 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1.2" transform="rotate(35 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2" transform="rotate(40 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1.2" transform="rotate(45 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2" transform="rotate(50 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1.2" transform="rotate(55 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2" transform="rotate(60 200 200)" />
+
+      <!-- Left -->
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1.2" transform="rotate(-5 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2" transform="rotate(-10 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1.2" transform="rotate(-15 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2" transform="rotate(-20 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1.2" transform="rotate(-25 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2" transform="rotate(-30 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1.2" transform="rotate(-35 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2" transform="rotate(-40 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1.2" transform="rotate(-45 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2" transform="rotate(-50 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1.2" transform="rotate(-55 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2" transform="rotate(-60 200 200)" />
+    </g>
+
+    <!-- Circular Track Inscriptions (EST. 2024 - 2027 & LK on perimeter) -->
+    <text class="bw4-text" font-size="12" font-weight="900" letter-spacing="2.2">
+      <textPath href="#bw4OuterUpper" startOffset="50%" text-anchor="middle">
+        OBSCURA REC LLC • INTELLECTUAL PROPERTY &amp; MASTERS
+      </textPath>
+    </text>
+
+    <text class="bw4-text" font-size="11" font-weight="900" letter-spacing="2.2">
+      <textPath href="#bw4OuterLower" startOffset="50%" text-anchor="middle">
+        ★ EST. 2024 - 2027 • OFFICIAL SEAL ★
+      </textPath>
+    </text>
+
+    <text class="bw4-text" font-size="10.5" font-weight="800" letter-spacing="1.8">
+      <textPath href="#bw4InnerUpper" startOffset="50%" text-anchor="middle">
+        RECORD LABEL &amp; MUSIC PUBLISHING
+      </textPath>
+    </text>
+
+    <text class="bw4-text" font-size="10" font-weight="800" letter-spacing="2">
+      <textPath href="#bw4InnerLower" startOffset="50%" text-anchor="middle">
+        AUTHORIZED SIGNATURE VERIFIED • LK
+      </textPath>
+    </text>
+
+    <!-- Side Star Embellishments -->
+    <polygon points="30,200 32,203 36,203 33,205 34,209 30,207 26,209 27,205 24,203 28,203" fill="#000000" />
+    <polygon points="370,200 372,203 376,203 373,205 374,209 370,207 366,209 367,205 364,203 368,203" fill="#000000" />
+
+    <!-- Center Typography (NO LK in Center) -->
+    <g text-anchor="middle">
+      <text x="200" y="193" fill="#000000" font-family="'Inter', -apple-system, sans-serif" font-size="22" font-weight="900" letter-spacing="1.6">
+        OBSCURA REC
+      </text>
+      <text x="200" y="215" fill="#000000" font-family="'Inter', -apple-system, sans-serif" font-size="15" font-weight="800" letter-spacing="1.2">
+        Sound Recordings
+      </text>
+
+      <line x1="108" y1="223" x2="190" y2="223" stroke="#000000" stroke-width="2.2" />
+      <polygon points="200,220 203,223 200,226 197,223" fill="#000000" />
+      <line x1="210" y1="223" x2="292" y2="223" stroke="#000000" stroke-width="2.2" />
+    </g>
+
+  </g>
+</svg>

@@ -9,6 +9,7 @@ import { exportToPdf, triggerPrint } from './pdf-export.js';
 import { EmailSender } from './email-sender.js';
 import { VaultManager } from './vault-manager.js';
 import { AuthManager } from './auth-manager.js';
+import { SealManager } from './seal-manager.js';
 import { saveAgreementToVault } from './firebase-config.js';
 import { showToast } from './toast.js';
 
@@ -28,6 +29,7 @@ class AgreementApp {
     this.sigEngine = new SignatureEngine(this.store, (party) => this.onSignatureUpdated(party));
     this.emailSender = new EmailSender(this.store);
     this.vaultManager = new VaultManager(this.store, (archived) => this.loadArchivedContract(archived));
+    this.sealManager = new SealManager(this.store);
 
     this.init();
   }
@@ -560,6 +562,9 @@ class AgreementApp {
     setVal('input-renewal-years', state.terms.renewalYears);
     setVal('input-notice-days', state.terms.noticeDays);
 
+    // Sync Corporate Seal Station Controls
+    this.sealManager?.updateSidebarControls(state);
+
     // Update sidebar signature indicators
     this.updateSidebarSignatures(state);
   }
@@ -958,6 +963,9 @@ class AgreementApp {
 
     this.pagesWrapper = document.getElementById('printable-document');
     this.applyZoom();
+
+    // Attach interactive drag & resize events to placed corporate seal
+    this.sealManager?.attachDraggableEvents();
 
     const loader = document.getElementById('artist-initial-loader');
     if (loader && this.store.getLinkStatus() === 'active' && !loader.classList.contains('fade-out')) {

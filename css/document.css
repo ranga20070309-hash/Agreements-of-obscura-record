@@ -581,6 +581,124 @@
   width: 100%;
 }
 
+/* ================= INTERACTIVE DRAGGABLE & RESIZABLE CORPORATE SEAL ================= */
+.page-signatures {
+  position: relative !important;
+}
+
+.draggable-corporate-seal {
+  position: absolute;
+  z-index: 20;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  transition: box-shadow 0.15s ease, outline 0.15s ease;
+}
+
+.draggable-corporate-seal:hover:not(.locked-seal) {
+  outline: 2px dashed #c5a059;
+  outline-offset: 4px;
+  border-radius: 50%;
+}
+
+.draggable-corporate-seal.is-dragging {
+  cursor: grabbing !important;
+  outline: 2px solid #c5a059 !important;
+  outline-offset: 4px;
+  filter: drop-shadow(0 12px 24px rgba(0,0,0,0.35)) !important;
+  z-index: 30 !important;
+}
+
+.draggable-corporate-seal.is-resizing {
+  cursor: nwse-resize !important;
+  outline: 2px solid #3b82f6 !important;
+}
+
+.draggable-corporate-seal.locked-seal {
+  cursor: default !important;
+  pointer-events: none !important;
+  outline: none !important;
+}
+
+.draggable-corporate-seal img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.18));
+}
+
+.seal-drag-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.seal-drag-badge {
+  position: absolute;
+  top: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #000000;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 12px;
+  letter-spacing: 0.5px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  pointer-events: none;
+  white-space: nowrap;
+  border: 1px solid #c5a059;
+}
+
+.draggable-corporate-seal:hover:not(.locked-seal) .seal-drag-badge,
+.draggable-corporate-seal.is-dragging .seal-drag-badge {
+  opacity: 0.95;
+}
+
+.seal-resize-handle {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  width: 18px;
+  height: 18px;
+  background: #c5a059;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  cursor: nwse-resize;
+  pointer-events: auto;
+  opacity: 0;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+.draggable-corporate-seal:hover:not(.locked-seal) .seal-resize-handle,
+.draggable-corporate-seal.is-resizing .seal-resize-handle {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+@media print {
+  .draggable-corporate-seal {
+    cursor: default !important;
+    outline: none !important;
+    border: none !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .draggable-corporate-seal img {
+    filter: none !important;
+  }
+  .seal-drag-overlay,
+  .seal-drag-badge,
+  .seal-resize-handle {
+    display: none !important;
+  }
+}
+
 /* ================= EXACT PROPORTIONAL SIGNATURE BOX ================= */
 .doc-signature-box,
 .sig-row-sign-col .doc-signature-box {
@@ -1061,3 +1179,103 @@ body.artist-locked .doc-signature-box,
   font-size: 8.5px !important;
   margin-top: 3px !important;
 }
+
+/* ================= SEAL VAULT MODAL STYLING ================= */
+.seal-filter-btn {
+  background: #161b27;
+  border: 1px solid #28334a;
+  color: #94a3b8;
+  padding: 7px 16px;
+  border-radius: 20px;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.seal-filter-btn:hover {
+  color: #ffffff;
+  border-color: #3b82f6;
+}
+
+.seal-filter-btn.active {
+  background: #c5a059;
+  color: #000000;
+  border-color: #c5a059;
+  font-weight: 800;
+}
+
+.seal-vault-card {
+  background: #111520;
+  border: 1px solid #232b3d;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.seal-vault-card:hover {
+  transform: translateY(-4px);
+  border-color: #c5a059;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+}
+
+.seal-vault-card.selected {
+  border: 2px solid #10b981;
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+}
+
+.seal-vault-preview {
+  background: #ffffff;
+  height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+}
+
+.seal-vault-preview img {
+  max-width: 130px;
+  max-height: 130px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 5px rgba(0,0,0,0.15));
+  transition: transform 0.2s ease;
+}
+
+.seal-vault-card:hover .seal-vault-preview img {
+  transform: scale(1.05);
+}
+
+.seal-vault-info {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.seal-vault-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #f1f5f9;
+  margin-bottom: 3px;
+}
+
+.seal-vault-cat {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #c5a059;
+  margin-bottom: 6px;
+}
+
+.seal-vault-desc {
+  font-size: 11px;
+  color: #94a3b8;
+  line-height: 1.4;
+  flex: 1;
+}
+

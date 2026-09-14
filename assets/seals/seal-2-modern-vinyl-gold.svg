@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%">
+  <defs>
+    <!-- Metallic Platinum-Gold Gradient -->
+    <linearGradient id="vinylGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff4c2" />
+      <stop offset="25%" stop-color="#d4af37" />
+      <stop offset="50%" stop-color="#aa8024" />
+      <stop offset="75%" stop-color="#e6ca65" />
+      <stop offset="100%" stop-color="#8a6414" />
+    </linearGradient>
+
+    <!-- Circular Text Paths -->
+    <path id="vinylTopArc" d="M 52 200 A 148 148 0 0 1 348 200" fill="none" />
+    <path id="vinylBottomArc" d="M 348 200 A 148 148 0 0 1 52 200" fill="none" />
+  </defs>
+
+  <!-- Outer Double Track Rings -->
+  <circle cx="200" cy="200" r="190" fill="none" stroke="url(#vinylGold)" stroke-width="1.5" />
+  <circle cx="200" cy="200" r="182" fill="none" stroke="url(#vinylGold)" stroke-width="3" />
+  <circle cx="200" cy="200" r="174" fill="none" stroke="url(#vinylGold)" stroke-width="1" stroke-dasharray="4 2" />
+
+  <!-- Inner Rings around Text Band -->
+  <circle cx="200" cy="200" r="120" fill="none" stroke="url(#vinylGold)" stroke-width="1" stroke-dasharray="4 2" />
+  <circle cx="200" cy="200" r="114" fill="none" stroke="url(#vinylGold)" stroke-width="2.5" />
+
+  <!-- Top Text: OBSCURA REC LLC • RECORDINGS -->
+  <text fill="url(#vinylGold)" font-family="'Cinzel', 'Trajan Pro', 'Georgia', serif" font-size="17" font-weight="900" letter-spacing="3.8">
+    <textPath href="#vinylTopArc" startOffset="50%" text-anchor="middle">
+      OBSCURA REC LLC • LK
+    </textPath>
+  </text>
+
+  <!-- Bottom Text: MASTER RIGHTS & LICENSING -->
+  <text fill="url(#vinylGold)" font-family="'Cinzel', 'Trajan Pro', 'Georgia', serif" font-size="11.5" font-weight="800" letter-spacing="2.6">
+    <textPath href="#vinylBottomArc" startOffset="50%" text-anchor="middle">
+      ★ EST. 2024 - 2027 • MASTER RIGHTS ★
+    </textPath>
+  </text>
+
+  <!-- CENTER: Stylized Vinyl Record & Soundwave Grooves -->
+  <!-- Vinyl Outer Rim -->
+  <circle cx="200" cy="200" r="102" fill="none" stroke="url(#vinylGold)" stroke-width="1" />
+  
+  <!-- Soundwave Grooves -->
+  <circle cx="200" cy="200" r="94" fill="none" stroke="url(#vinylGold)" stroke-width="0.8" stroke-dasharray="14 3 6 3 20 4" opacity="0.85" />
+  <circle cx="200" cy="200" r="86" fill="none" stroke="url(#vinylGold)" stroke-width="0.8" stroke-dasharray="8 4 18 3" opacity="0.7" />
+  <circle cx="200" cy="200" r="78" fill="none" stroke="url(#vinylGold)" stroke-width="0.8" stroke-dasharray="12 4 4 4" opacity="0.85" />
+  <circle cx="200" cy="200" r="70" fill="none" stroke="url(#vinylGold)" stroke-width="0.8" stroke-dasharray="16 5 8 3" opacity="0.75" />
+
+  <!-- Vinyl Center Label Medallion -->
+  <circle cx="200" cy="200" r="58" fill="none" stroke="url(#vinylGold)" stroke-width="2" />
+  <circle cx="200" cy="200" r="53" fill="none" stroke="url(#vinylGold)" stroke-width="0.75" />
+
+  <!-- Spindle Hole Center -->
+  <circle cx="200" cy="200" r="11" fill="none" stroke="url(#vinylGold)" stroke-width="2" />
+  <circle cx="200" cy="200" r="4" fill="url(#vinylGold)" />
+
+  <!-- Center Label Typography -->
+  <text x="200" y="176" fill="url(#vinylGold)" font-family="'Cinzel', 'Georgia', serif" font-size="14" font-weight="900" letter-spacing="2" text-anchor="middle">
+    OCR
+  </text>
+
+  <text x="200" y="226" fill="url(#vinylGold)" font-family="'Inter', -apple-system, sans-serif" font-size="8.5" font-weight="800" letter-spacing="2" text-anchor="middle">
+    AUTHENTIC
+  </text>
+
+  <text x="200" y="238" fill="url(#vinylGold)" font-family="'Cinzel', serif" font-size="8.5" font-weight="700" letter-spacing="1.2" text-anchor="middle">
+    2024 - 2027
+  </text>
+</svg>

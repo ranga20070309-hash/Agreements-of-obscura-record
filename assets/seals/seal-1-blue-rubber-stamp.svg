@@ -1,0 +1,136 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%">
+  <defs>
+    <path id="outerUpperArc" d="M 36 200 A 164 164 0 1 1 364 200" fill="none" />
+    <path id="outerLowerArc" d="M 364 200 A 164 164 0 0 1 36 200" fill="none" />
+    <path id="innerUpperArc" d="M 72 200 A 128 128 0 1 1 328 200" fill="none" />
+    <path id="innerLowerArc" d="M 328 200 A 128 128 0 0 1 72 200" fill="none" />
+  </defs>
+
+  <style>
+    .stamp-text {
+      fill: #0c67ba;
+      font-family: 'Inter', -apple-system, sans-serif;
+    }
+    .stamp-bold {
+      font-weight: 900;
+      letter-spacing: 1.5px;
+    }
+  </style>
+
+  <g transform="rotate(-1.5 200 200)" opacity="0.94">
+    <!-- Outer Double Border -->
+    <circle cx="200" cy="200" r="186" fill="none" stroke="#0c67ba" stroke-width="1.8" />
+    <circle cx="200" cy="200" r="181" fill="none" stroke="#0c67ba" stroke-width="3.5" />
+
+    <!-- Middle Concentric Rings -->
+    <circle cx="200" cy="200" r="148" fill="none" stroke="#0c67ba" stroke-width="2" />
+    <circle cx="200" cy="200" r="143" fill="none" stroke="#0c67ba" stroke-width="1" />
+
+    <!-- Inner Core Ring -->
+    <circle cx="200" cy="200" r="110" fill="none" stroke="#0c67ba" stroke-width="2.2" />
+
+    <!-- TOP RAYS -->
+    <g stroke="#0c67ba" opacity="0.85">
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2.2" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.5" transform="rotate(5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2.2" transform="rotate(10 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.5" transform="rotate(15 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2.2" transform="rotate(20 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.5" transform="rotate(25 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2.2" transform="rotate(30 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.5" transform="rotate(35 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2.2" transform="rotate(40 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.5" transform="rotate(45 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2.2" transform="rotate(50 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.5" transform="rotate(55 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2.2" transform="rotate(60 200 200)" />
+
+      <!-- Left -->
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.5" transform="rotate(-5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2.2" transform="rotate(-10 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.5" transform="rotate(-15 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2.2" transform="rotate(-20 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.5" transform="rotate(-25 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2.2" transform="rotate(-30 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.5" transform="rotate(-35 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2.2" transform="rotate(-40 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.5" transform="rotate(-45 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2.2" transform="rotate(-50 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.5" transform="rotate(-55 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2.2" transform="rotate(-60 200 200)" />
+    </g>
+
+    <!-- BOTTOM RAYS -->
+    <g stroke="#0c67ba" opacity="0.85">
+      <line x1="200" y1="234" x2="200" y2="286" stroke-width="2.2" />
+      <line x1="200" y1="234" x2="200" y2="286" stroke-width="1.5" transform="rotate(5 200 200)" />
+      <line x1="200" y1="234" x2="200" y2="286" stroke-width="2.2" transform="rotate(10 200 200)" />
+      <line x1="200" y1="234" x2="200" y2="286" stroke-width="1.5" transform="rotate(15 200 200)" />
+      <line x1="200" y1="234" x2="200" y2="286" stroke-width="2.2" transform="rotate(20 200 200)" />
+      <line x1="200" y1="234" x2="200" y2="286" stroke-width="1.5" transform="rotate(25 200 200)" />
+      <line x1="200" y1="234" x2="200" y2="286" stroke-width="2.2" transform="rotate(30 200 200)" />
+      <line x1="200" y1="234" x2="200" y2="286" stroke-width="1.5" transform="rotate(35 200 200)" />
+      <line x1="200" y1="234" x2="200" y2="286" stroke-width="2.2" transform="rotate(40 200 200)" />
+      <line x1="200" y1="234" x2="200" y2="286" stroke-width="1.5" transform="rotate(45 200 200)" />
+      <line x1="200" y1="234" x2="200" y2="286" stroke-width="2.2" transform="rotate(50 200 200)" />
+      <line x1="200" y1="234" x2="200" y2="286" stroke-width="1.5" transform="rotate(55 200 200)" />
+      <line x1="200" y1="234" x2="200" y2="286" stroke-width="2.2" transform="rotate(60 200 200)" />
+
+      <!-- Left -->
+      <line x1="200" y1="234" x2="200" y2="286" stroke-width="1.5" transform="rotate(-5 200 200)" />
+      <line x1="200" y1="234" x2="200" y2="286" stroke-width="2.2" transform="rotate(-10 200 200)" />
+      <line x1="200" y1="234" x2="200" y2="286" stroke-width="1.5" transform="rotate(-15 200 200)" />
+      <line x1="200" y1="234" x2="200" y2="286" stroke-width="2.2" transform="rotate(-20 200 200)" />
+      <line x1="200" y1="234" x2="200" y2="286" stroke-width="1.5" transform="rotate(-25 200 200)" />
+      <line x1="200" y1="234" x2="200" y2="286" stroke-width="2.2" transform="rotate(-30 200 200)" />
+      <line x1="200" y1="234" x2="200" y2="286" stroke-width="1.5" transform="rotate(-35 200 200)" />
+      <line x1="200" y1="234" x2="200" y2="286" stroke-width="2.2" transform="rotate(-40 200 200)" />
+      <line x1="200" y1="234" x2="200" y2="286" stroke-width="1.5" transform="rotate(-45 200 200)" />
+      <line x1="200" y1="234" x2="200" y2="286" stroke-width="2.2" transform="rotate(-50 200 200)" />
+      <line x1="200" y1="234" x2="200" y2="286" stroke-width="1.5" transform="rotate(-55 200 200)" />
+      <line x1="200" y1="234" x2="200" y2="286" stroke-width="2.2" transform="rotate(-60 200 200)" />
+    </g>
+
+    <!-- Circular Inscriptions: EST. 2024 - 2027 & LK on perimeter -->
+    <text class="stamp-text stamp-bold" font-size="12" letter-spacing="2.2">
+      <textPath href="#outerUpperArc" startOffset="50%" text-anchor="middle">
+        OBSCURA REC LLC • LIMITED LIABILITY COMPANY
+      </textPath>
+    </text>
+
+    <text class="stamp-text stamp-bold" font-size="11" letter-spacing="2">
+      <textPath href="#outerLowerArc" startOffset="50%" text-anchor="middle">
+        ★ EST. 2024 - 2027 • OFFICIAL SEAL ★
+      </textPath>
+    </text>
+
+    <text class="stamp-text stamp-bold" font-size="10.5" letter-spacing="1.8">
+      <textPath href="#innerUpperArc" startOffset="50%" text-anchor="middle">
+        RECORD LABEL &amp; MUSIC PUBLISHING
+      </textPath>
+    </text>
+
+    <text class="stamp-text stamp-bold" font-size="10" letter-spacing="1.8">
+      <textPath href="#innerLowerArc" startOffset="50%" text-anchor="middle">
+        REGISTERED LABEL CATALOGUE • LK
+      </textPath>
+    </text>
+
+    <circle cx="28" cy="200" r="3.2" fill="#0c67ba" />
+    <circle cx="372" cy="200" r="3.2" fill="#0c67ba" />
+
+    <!-- Center Typography (NO LK in Center) -->
+    <g text-anchor="middle">
+      <text x="200" y="193" fill="#0c67ba" font-family="'Inter', -apple-system, sans-serif" font-size="22" font-weight="900" letter-spacing="1.5">
+        OBSCURA REC
+      </text>
+      <text x="200" y="215" fill="#0c67ba" font-family="'Inter', -apple-system, sans-serif" font-size="15.5" font-weight="700" letter-spacing="1">
+        Obscura Music
+      </text>
+
+      <line x1="108" y1="223" x2="292" y2="223" stroke="#0c67ba" stroke-width="2.2" />
+      <line x1="126" y1="227" x2="274" y2="227" stroke="#0c67ba" stroke-width="1.2" />
+    </g>
+
+  </g>
+</svg>

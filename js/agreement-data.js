@@ -34,7 +34,14 @@ export function getDefaultAgreementState() {
       representative: '', // when empty, displays [Your Legal Name]
       representativeTitle: 'Director / Founder, Obscura Rec LLC',
       signature: null,
-      date: today
+      date: today,
+      sealApplied: false, // Default is NOT stamped/applied until manually picked
+      sealFile: 'seal-1-bw-classic-stamp.svg',
+      sealSize: 135,
+      sealOpacity: 90,
+      sealRotation: -2,
+      sealX: 430,
+      sealY: 560
     },
     artist: {
       legalName: '', // when empty, displays [Artist Legal Name]

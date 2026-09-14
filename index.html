@@ -490,6 +490,95 @@
           </div>
         </div>
 
+        <!-- ============================================================= -->
+        <!-- CATEGORY 5: OFFICIAL CORPORATE SEAL STATION (SEAL VAULT)       -->
+        <!-- ============================================================= -->
+        <div class="accordion-item" id="accordion-seal">
+          <div class="accordion-header">
+            <div class="accordion-header-title">
+              <span class="icon">🛡️</span>
+              <span>5. Official Corporate Seal Station</span>
+            </div>
+            <span class="accordion-toggle-icon">▼</span>
+          </div>
+          <div class="accordion-body">
+            <p style="font-size: 12px; color: #9ca3af; margin-bottom: 12px; line-height: 1.5;">
+              Select an authentic official corporate seal from the <strong>Seal Vault</strong> to stamp on the agreement. Once placed, you can <strong>drag it anywhere</strong> on Page 2 and <strong>resize it</strong> dynamically.
+            </p>
+
+            <!-- State 1: No Seal Placed Yet (Default) -->
+            <div id="sidebar-no-seal-notice" style="background: rgba(255, 255, 255, 0.03); border: 1px dashed rgba(255, 255, 255, 0.15); border-radius: 8px; padding: 14px; text-align: center;">
+              <div style="font-size: 26px; margin-bottom: 6px;">🛡️</div>
+              <div style="font-size: 12.5px; font-weight: 700; color: #e5e7eb; margin-bottom: 4px;">No Seal Placed Yet</div>
+              <div style="font-size: 11px; color: #9ca3af; margin-bottom: 14px;">
+                (Default: Not stamped. You choose when and which seal to apply)
+              </div>
+              <button type="button" class="btn btn-gold" id="btn-open-seal-vault" style="width: 100%; justify-content: center; font-weight: 800; font-size: 12px; padding: 10px 14px; box-shadow: 0 4px 15px rgba(212,175,55,0.25);">
+                ✨ Open Seal Vault &amp; Pick Seal
+              </button>
+            </div>
+
+            <!-- State 2: Seal Active & Placed on Agreement -->
+            <div id="sidebar-seal-active-box" style="display: none; background: rgba(16, 185, 129, 0.06); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 8px; padding: 12px;">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                <span style="font-size: 11px; font-weight: 800; color: #10b981; text-transform: uppercase; letter-spacing: 0.5px;">
+                  ✓ Seal Placed on Agreement
+                </span>
+                <button type="button" class="btn btn-outline-gold btn-sm" id="btn-change-seal" onclick="document.getElementById('btn-open-seal-vault').click()" style="font-size: 10.5px; padding: 3px 8px;">
+                  Change
+                </button>
+              </div>
+
+              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px;">
+                <img id="sidebar-active-seal-thumb" src="./assets/seals/seal-1-bw-classic-stamp.svg" alt="Active Seal" style="width: 44px; height: 44px; object-fit: contain; background: #ffffff; border-radius: 4px; padding: 2px;" />
+                <div style="overflow: hidden; flex: 1;">
+                  <div id="sidebar-active-seal-title" style="font-size: 12px; font-weight: 700; color: #ffffff; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">
+                    1. Classic B&amp;W Rubber Stamp
+                  </div>
+                  <div style="font-size: 10.5px; color: #9ca3af;">Drag anywhere on Page 2</div>
+                </div>
+              </div>
+
+              <!-- Live Size Adjuster -->
+              <div style="margin-bottom: 10px;">
+                <div style="display: flex; justify-content: space-between; font-size: 11px; color: #cbd5e1; margin-bottom: 4px;">
+                  <span>Seal Size:</span>
+                  <strong id="seal-size-val" style="color: #c5a059;">135px</strong>
+                </div>
+                <input type="range" id="seal-size-slider" min="80" max="230" value="135" style="width: 100%; accent-color: #c5a059; cursor: pointer;" />
+              </div>
+
+              <!-- Live Opacity Adjuster -->
+              <div style="margin-bottom: 10px;">
+                <div style="display: flex; justify-content: space-between; font-size: 11px; color: #cbd5e1; margin-bottom: 4px;">
+                  <span>Ink Opacity:</span>
+                  <strong id="seal-opacity-val" style="color: #c5a059;">90%</strong>
+                </div>
+                <input type="range" id="seal-opacity-slider" min="30" max="100" value="90" style="width: 100%; accent-color: #c5a059; cursor: pointer;" />
+              </div>
+
+              <!-- Live Rotation Angle -->
+              <div style="margin-bottom: 12px;">
+                <div style="display: flex; justify-content: space-between; font-size: 11px; color: #cbd5e1; margin-bottom: 4px;">
+                  <span>Stamp Angle:</span>
+                  <strong id="seal-rotation-val" style="color: #c5a059;">-2°</strong>
+                </div>
+                <input type="range" id="seal-rotation-slider" min="-30" max="30" value="-2" style="width: 100%; accent-color: #c5a059; cursor: pointer;" />
+              </div>
+
+              <!-- Action buttons -->
+              <div style="display: flex; gap: 8px;">
+                <button type="button" class="btn btn-secondary btn-sm" id="btn-reset-seal-pos" style="flex: 1; font-size: 10.5px; padding: 6px 8px;" title="Reset position over signature block">
+                  ↺ Signature Position
+                </button>
+                <button type="button" class="btn btn-danger-ghost btn-sm" id="btn-remove-placed-seal" style="flex: 1; font-size: 10.5px; padding: 6px 8px;">
+                  🗑️ Remove Seal
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </aside>
 
@@ -890,6 +979,59 @@
       <div class="auth-card-footer">
         Protected by Firebase Cloud Authentication • Obscura Rec LLC
       </div>
+    </div>
+  </div>
+
+  <!-- ============================================================= -->
+  <!-- OFFICIAL CORPORATE SEAL VAULT MODAL (POPUP DIALOG)            -->
+  <!-- ============================================================= -->
+  <div class="modal-backdrop" id="seal-vault-modal" style="display:none; position:fixed; inset:0; background:rgba(4,6,10,0.85); backdrop-filter:blur(8px); z-index:100000; align-items:center; justify-content:center; padding:20px;">
+    <div class="modal-dialog" style="max-width:980px; width:100%; max-height:90vh; background:#0c0f17; border:1px solid #272f42; border-radius:16px; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 25px 60px rgba(0,0,0,0.85);">
+      
+      <!-- Modal Header -->
+      <div class="modal-header" style="padding:18px 24px; border-bottom:1px solid #1c2333; display:flex; justify-content:space-between; align-items:center; background:#090c14;">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div style="width:36px; height:36px; border-radius:10px; background:rgba(197,160,89,0.15); border:1px solid rgba(197,160,89,0.3); display:flex; align-items:center; justify-content:center; font-size:18px;">
+            🛡️
+          </div>
+          <div>
+            <div style="font-size:17px; font-weight:900; color:#ffffff; letter-spacing:0.5px;">
+              Official Corporate Seal Vault
+            </div>
+            <div style="font-size:11.5px; color:#9ca3af;">
+              Select an official record seal to stamp on Page 2 of the agreement. You can drag and resize it anytime.
+            </div>
+          </div>
+        </div>
+        <button type="button" class="modal-close-btn" id="btn-close-seal-vault" style="background:transparent; border:none; color:#9ca3af; font-size:22px; cursor:pointer; padding:4px 8px;">✕</button>
+      </div>
+
+      <!-- Category Filter Tabs -->
+      <div style="display:flex; gap:10px; padding:12px 24px; background:#10141f; border-bottom:1px solid #1c2333; overflow-x:auto;">
+        <button type="button" class="seal-filter-btn active" data-cat="all">All Seals (20)</button>
+        <button type="button" class="seal-filter-btn" data-cat="Monochrome Black & White">★ Pure Black &amp; White (6)</button>
+        <button type="button" class="seal-filter-btn" data-cat="Official Logo Emblem">Official Logo Seals (5)</button>
+        <button type="button" class="seal-filter-btn" data-cat="Authentic Colored Ink">Colored Ink Stamps (4)</button>
+        <button type="button" class="seal-filter-btn" data-cat="Gold & Metallic Medallions">Executive Gold (4)</button>
+      </div>
+
+      <!-- Modal Body (Grid of Seals) -->
+      <div class="modal-body" style="padding:22px 24px; overflow-y:auto; flex:1;">
+        <div class="seal-vault-grid" id="seal-vault-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(210px, 1fr)); gap:18px;">
+          <!-- Injected dynamically by SealManager.renderCatalogGrid() -->
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer" style="padding:14px 24px; border-top:1px solid #1c2333; display:flex; justify-content:space-between; align-items:center; background:#090c14;">
+        <div style="font-size:11.5px; color:#9ca3af;">
+          💡 <strong>Tip:</strong> Click any seal card to immediately apply it. You can move it or remove it at any time.
+        </div>
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('seal-vault-modal').style.display='none'; document.body.style.overflow='';" style="padding:8px 18px; font-weight:700;">
+          Close Vault
+        </button>
+      </div>
+
     </div>
   </div>
 

@@ -1,0 +1,142 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%">
+  <defs>
+    <!-- Organic Rubber Stamp Edge Filter -->
+    <filter id="distressedFilter" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="4" result="noise" />
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.8" xChannelSelector="R" yChannelSelector="G" />
+    </filter>
+
+    <!-- Text Paths -->
+    <path id="dtOuterUpper" d="M 36 200 A 164 164 0 1 1 364 200" fill="none" />
+    <path id="dtOuterLower" d="M 364 200 A 164 164 0 0 1 36 200" fill="none" />
+    <path id="dtInnerUpper" d="M 72 200 A 128 128 0 1 1 328 200" fill="none" />
+    <path id="dtInnerLower" d="M 328 200 A 128 128 0 0 1 72 200" fill="none" />
+  </defs>
+
+  <style>
+    .dt-text {
+      fill: #111111;
+      font-family: 'Inter', -apple-system, sans-serif;
+    }
+  </style>
+
+  <!-- Slight rotation + Stamp filter -->
+  <g transform="rotate(-2 200 200)" filter="url(#distressedFilter)" opacity="0.94">
+    
+    <!-- Outer Double Border -->
+    <circle cx="200" cy="200" r="186" fill="none" stroke="#111111" stroke-width="2" />
+    <circle cx="200" cy="200" r="180" fill="none" stroke="#111111" stroke-width="3.8" />
+
+    <!-- Intermediate Track Rings -->
+    <circle cx="200" cy="200" r="147" fill="none" stroke="#111111" stroke-width="1.8" />
+    <circle cx="200" cy="200" r="143" fill="none" stroke="#111111" stroke-width="1" />
+
+    <!-- Center Border -->
+    <circle cx="200" cy="200" r="111" fill="none" stroke="#111111" stroke-width="2.4" />
+
+    <!-- TOP SUNBURST RAYS -->
+    <g stroke="#111111">
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2.4" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.4" transform="rotate(5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2.2" transform="rotate(10 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.4" transform="rotate(15 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2.4" transform="rotate(20 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.4" transform="rotate(25 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2.2" transform="rotate(30 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.4" transform="rotate(35 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2.4" transform="rotate(40 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.4" transform="rotate(45 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2.2" transform="rotate(50 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.4" transform="rotate(55 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2.4" transform="rotate(60 200 200)" />
+
+      <!-- Left -->
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.4" transform="rotate(-5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2.2" transform="rotate(-10 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.4" transform="rotate(-15 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2.4" transform="rotate(-20 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.4" transform="rotate(-25 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2.2" transform="rotate(-30 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.4" transform="rotate(-35 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2.4" transform="rotate(-40 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.4" transform="rotate(-45 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2.2" transform="rotate(-50 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.4" transform="rotate(-55 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2.4" transform="rotate(-60 200 200)" />
+    </g>
+
+    <!-- BOTTOM SUNBURST RAYS -->
+    <g stroke="#111111">
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2.4" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1.4" transform="rotate(5 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2.2" transform="rotate(10 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1.4" transform="rotate(15 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2.4" transform="rotate(20 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1.4" transform="rotate(25 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2.2" transform="rotate(30 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1.4" transform="rotate(35 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2.4" transform="rotate(40 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1.4" transform="rotate(45 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2.2" transform="rotate(50 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1.4" transform="rotate(55 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2.4" transform="rotate(60 200 200)" />
+
+      <!-- Left -->
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1.4" transform="rotate(-5 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2.2" transform="rotate(-10 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1.4" transform="rotate(-15 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2.4" transform="rotate(-20 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1.4" transform="rotate(-25 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2.2" transform="rotate(-30 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1.4" transform="rotate(-35 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2.4" transform="rotate(-40 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1.4" transform="rotate(-45 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2.2" transform="rotate(-50 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1.4" transform="rotate(-55 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2.4" transform="rotate(-60 200 200)" />
+    </g>
+
+    <!-- Circular Track Inscriptions (EST. 2024 - 2027 & LK on perimeter) -->
+    <text class="dt-text" font-size="12" font-weight="900" letter-spacing="2.2">
+      <textPath href="#dtOuterUpper" startOffset="50%" text-anchor="middle">
+        OBSCURA REC LLC • RECORD LABEL
+      </textPath>
+    </text>
+
+    <text class="dt-text" font-size="11" font-weight="900" letter-spacing="2">
+      <textPath href="#dtOuterLower" startOffset="50%" text-anchor="middle">
+        ★ EST. 2024 - 2027 • CORPORATE SEAL ★
+      </textPath>
+    </text>
+
+    <text class="dt-text" font-size="10.5" font-weight="800" letter-spacing="1.8">
+      <textPath href="#dtInnerUpper" startOffset="50%" text-anchor="middle">
+        MUSIC PUBLISHING &amp; LICENSING
+      </textPath>
+    </text>
+
+    <text class="dt-text" font-size="10" font-weight="800" letter-spacing="1.6">
+      <textPath href="#dtInnerLower" startOffset="50%" text-anchor="middle">
+        OFFICIAL CORPORATE IMPRESSION • LK
+      </textPath>
+    </text>
+
+    <!-- Flanking Dots -->
+    <circle cx="28" cy="200" r="3.4" fill="#111111" />
+    <circle cx="372" cy="200" r="3.4" fill="#111111" />
+
+    <!-- Center Typography (NO LK in Center) -->
+    <g text-anchor="middle">
+      <text x="200" y="193" fill="#111111" font-family="'Inter', -apple-system, sans-serif" font-size="23" font-weight="900" letter-spacing="2">
+        OBSCURA REC
+      </text>
+      <text x="200" y="215" fill="#111111" font-family="'Inter', -apple-system, sans-serif" font-size="15" font-weight="800" letter-spacing="1.5">
+        Recordings LLC
+      </text>
+
+      <line x1="106" y1="223" x2="294" y2="223" stroke="#111111" stroke-width="2.6" />
+      <line x1="130" y1="227" x2="270" y2="227" stroke="#111111" stroke-width="1.2" />
+    </g>
+
+  </g>
+</svg>

@@ -1,0 +1,136 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%">
+  <defs>
+    <path id="crOuterUpper" d="M 36 200 A 164 164 0 1 1 364 200" fill="none" />
+    <path id="crOuterLower" d="M 364 200 A 164 164 0 0 1 36 200" fill="none" />
+    <path id="crInnerUpper" d="M 72 200 A 128 128 0 1 1 328 200" fill="none" />
+    <path id="crInnerLower" d="M 328 200 A 128 128 0 0 1 72 200" fill="none" />
+  </defs>
+
+  <style>
+    .cr-text {
+      fill: #c92a2a;
+      font-family: 'Inter', -apple-system, sans-serif;
+    }
+  </style>
+
+  <g transform="rotate(-0.8 200 200)" opacity="0.94">
+    <circle cx="200" cy="200" r="188" fill="none" stroke="#c92a2a" stroke-width="2" stroke-dasharray="2 3" />
+    <circle cx="200" cy="200" r="182" fill="none" stroke="#c92a2a" stroke-width="3.5" />
+    <circle cx="200" cy="200" r="176" fill="none" stroke="#c92a2a" stroke-width="1.2" />
+    <circle cx="200" cy="200" r="147" fill="none" stroke="#c92a2a" stroke-width="1.5" />
+    <circle cx="200" cy="200" r="143" fill="none" stroke="#c92a2a" stroke-width="2" />
+    <circle cx="200" cy="200" r="110" fill="none" stroke="#c92a2a" stroke-width="2.2" />
+
+    <!-- TOP RAYS -->
+    <g stroke="#c92a2a" opacity="0.8">
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1" transform="rotate(4.5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2" transform="rotate(9 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1" transform="rotate(13.5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2" transform="rotate(18 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1" transform="rotate(22.5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2" transform="rotate(27 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1" transform="rotate(31.5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2" transform="rotate(36 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1" transform="rotate(40.5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2" transform="rotate(45 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1" transform="rotate(49.5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2" transform="rotate(54 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1" transform="rotate(58.5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2" transform="rotate(63 200 200)" />
+
+      <!-- Left -->
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1" transform="rotate(-4.5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2" transform="rotate(-9 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1" transform="rotate(-13.5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2" transform="rotate(-18 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1" transform="rotate(-22.5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2" transform="rotate(-27 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1" transform="rotate(-31.5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2" transform="rotate(-36 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1" transform="rotate(-40.5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2" transform="rotate(-45 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1" transform="rotate(-49.5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2" transform="rotate(-54 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1" transform="rotate(-58.5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2" transform="rotate(-63 200 200)" />
+    </g>
+
+    <!-- BOTTOM RAYS -->
+    <g stroke="#c92a2a" opacity="0.8">
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1" transform="rotate(4.5 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2" transform="rotate(9 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1" transform="rotate(13.5 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2" transform="rotate(18 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1" transform="rotate(22.5 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2" transform="rotate(27 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1" transform="rotate(31.5 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2" transform="rotate(36 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1" transform="rotate(40.5 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2" transform="rotate(45 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1" transform="rotate(49.5 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2" transform="rotate(54 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1" transform="rotate(58.5 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2" transform="rotate(63 200 200)" />
+
+      <!-- Left -->
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1" transform="rotate(-4.5 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2" transform="rotate(-9 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1" transform="rotate(-13.5 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2" transform="rotate(-18 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1" transform="rotate(-22.5 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2" transform="rotate(-27 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1" transform="rotate(-31.5 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2" transform="rotate(-36 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1" transform="rotate(-40.5 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2" transform="rotate(-45 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1" transform="rotate(-49.5 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2" transform="rotate(-54 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1" transform="rotate(-58.5 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2" transform="rotate(-63 200 200)" />
+    </g>
+
+    <!-- Circular Track Inscriptions (EST. 2024 - 2027 & LK) -->
+    <text class="cr-text" font-size="12" font-weight="900" letter-spacing="2.2">
+      <textPath href="#crOuterUpper" startOffset="50%" text-anchor="middle">
+        OBSCURA REC LLC • LEGAL CONTRACT &amp; LICENSING
+      </textPath>
+    </text>
+
+    <text class="cr-text" font-size="11" font-weight="800" letter-spacing="2">
+      <textPath href="#crOuterLower" startOffset="50%" text-anchor="middle">
+        ★ EST. 2024 - 2027 • CORPORATE SEAL ★
+      </textPath>
+    </text>
+
+    <text class="cr-text" font-size="10.5" font-weight="800" letter-spacing="1.8">
+      <textPath href="#crInnerUpper" startOffset="50%" text-anchor="middle">
+        LIMITED LIABILITY COMPANY
+      </textPath>
+    </text>
+
+    <text class="cr-text" font-size="10" font-weight="800" letter-spacing="1.8">
+      <textPath href="#crInnerLower" startOffset="50%" text-anchor="middle">
+        AUTHENTICATED &amp; EXECUTED • LK
+      </textPath>
+    </text>
+
+    <polygon points="30,200 35,195 40,200 35,205" fill="#c92a2a" />
+    <polygon points="370,200 365,195 360,200 365,205" fill="#c92a2a" />
+
+    <!-- Center Typography (NO LK in Center) -->
+    <g text-anchor="middle">
+      <text x="200" y="193" fill="#c92a2a" font-family="'Inter', -apple-system, sans-serif" font-size="22" font-weight="900" letter-spacing="1.8">
+        OBSCURA REC
+      </text>
+      <text x="200" y="215" fill="#c92a2a" font-family="'Inter', -apple-system, sans-serif" font-size="15" font-weight="700" letter-spacing="1.2">
+        Legal Affairs
+      </text>
+
+      <line x1="108" y1="223" x2="292" y2="223" stroke="#c92a2a" stroke-width="2.2" />
+      <line x1="130" y1="227" x2="270" y2="227" stroke="#c92a2a" stroke-width="1.2" />
+    </g>
+
+  </g>
+</svg>
