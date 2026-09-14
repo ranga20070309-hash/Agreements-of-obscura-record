@@ -163,7 +163,7 @@ app.get('/api/agreements/:id', async (req, res) => {
     }
     const fbVault = await firebaseGet(`vault/${id}`);
     if (fbVault && fbVault.id) {
-      return res.json({ ...fbVault, isArchivedInVault: true, isLockedForArtist: true });
+      return res.json({ ...fbVault, isArchivedInVault: true, isLockedForArtist: Boolean(fbVault.status === 'fully_executed') });
     }
   } catch (e) {}
 
@@ -189,7 +189,7 @@ app.get('/api/agreements/:id', async (req, res) => {
   if (targetVault) {
     try {
       const data = JSON.parse(fs.readFileSync(targetVault, 'utf8'));
-      return res.json({ ...data, isArchivedInVault: true, isLockedForArtist: true });
+      return res.json({ ...data, isArchivedInVault: true, isLockedForArtist: Boolean(data.status === 'fully_executed') });
     } catch (e) {
       return res.status(500).json({ error: 'Failed to read vault data.' });
     }
@@ -213,6 +213,21 @@ app.post('/api/agreements', async (req, res) => {
   } catch (e) {}
   const file = path.join(AGREEMENTS_DIR, `${state.id}.json`);
   fs.writeFileSync(file, JSON.stringify(state, null, 2), 'utf8');
+
+  // 3. Auto-sync into Vault if this agreement is archived in Vault
+  try {
+    const vaultFile = path.join(VAULT_DIR, `${state.id}.json`);
+    const inVault = state.isArchivedInVault || (await firebaseGet(`vault/${state.id}`)) || fs.existsSync(vaultFile);
+    if (inVault) {
+      await firebaseSet(`vault/${state.id}`, state);
+      try {
+        fs.mkdirSync(VAULT_DIR, { recursive: true });
+        fs.writeFileSync(vaultFile, JSON.stringify(state, null, 2), 'utf8');
+      } catch (e) {}
+      console.log(`[Auto-Sync] Synced agreement ${state.id} with latest signatures to Vault`);
+    }
+  } catch (e) {}
+
   res.json({ success: true, id: state.id });
 });
 
@@ -352,12 +367,8 @@ app.post('/api/vault/save', async (req, res) => {
 // List all agreements in the Vault for search & management
 app.get('/api/vault', async (req, res) => {
   try {
-    // 1. Try Firebase Realtime Database first - check lightweight vault_meta index
-    let fbVault = await firebaseGet('vault_meta');
-    if (!fbVault || typeof fbVault !== 'object' || Object.keys(fbVault).length === 0) {
-      // Fallback for legacy vault records
-      fbVault = await firebaseGet('vault');
-    }
+    // 1. Fetch from Firebase Realtime Database vault directly
+    let fbVault = await firebaseGet('vault');
 
     if (fbVault && typeof fbVault === 'object') {
       const records = [];
@@ -366,7 +377,7 @@ app.get('/api/vault', async (req, res) => {
         if (c && typeof c === 'object') {
           records.push({
             id: c.id || key,
-            finalizedAt: c.finalizedAt || c.createdAt || new Date().toISOString(),
+            finalizedAt: c.finalizedAt || c.savedToVaultAt || c.createdAt || new Date().toISOString(),
             artistLegalName: c.artistLegalName || c.artist?.legalName || '',
             artistStageName: c.artistStageName || c.artist?.stageName || '',
             artistEmail: c.artistEmail || c.artist?.email || '',
@@ -379,7 +390,16 @@ app.get('/api/vault', async (req, res) => {
             artistSigHash: c.artistSigHash || c.artist?.signature?.hash || 'Verified',
             artistSigTimestamp: c.artistSigTimestamp || c.artist?.signature?.timestamp || '',
             labelSigTimestamp: c.labelSigTimestamp || c.label?.signature?.timestamp || '',
-            artists: Array.isArray(c.artists) ? c.artists : []
+            artists: Array.isArray(c.artists) ? c.artists.map(a => ({
+              id: a.id,
+              role: a.role || 'Recording Artist',
+              legalName: a.legalName || '',
+              stageName: a.stageName || '',
+              email: a.email || '',
+              hasSignature: Boolean(a.signature),
+              sigHash: a.signature?.hash || 'Verified',
+              sigTimestamp: a.signature?.timestamp || a.date || ''
+            })) : []
           });
         }
       });
@@ -438,7 +458,7 @@ app.get('/api/vault', async (req, res) => {
 app.get('/api/vault/:id', async (req, res) => {
   const id = req.params.id;
 
-  // 1. Check Firebase Realtime Database
+  // 1. Check Firebase Realtime Database Vault
   try {
     const fbRecord = await firebaseGet(`vault/${id}`);
     if (fbRecord && fbRecord.id) {
@@ -446,16 +466,30 @@ app.get('/api/vault/:id', async (req, res) => {
     }
   } catch (e) {}
 
+  // 1b. Check Firebase Realtime Database Agreements queue
+  try {
+    const fbAgr = await firebaseGet(`agreements/${id}`);
+    if (fbAgr && fbAgr.id) {
+      return res.json(fbAgr);
+    }
+  } catch (e) {}
+
   const file = path.join(VAULT_DIR, `${id}.json`);
   const bundleVaultFile = path.join(BUNDLE_DATA_DIR, 'vault', `${id}.json`);
-  const targetFile = fs.existsSync(file) ? file : (fs.existsSync(bundleVaultFile) ? bundleVaultFile : null);
+  const activeFile = path.join(AGREEMENTS_DIR, `${id}.json`);
+  const bundleActiveFile = path.join(BUNDLE_DATA_DIR, 'agreements', `${id}.json`);
+
+  const targetFile = fs.existsSync(file) ? file 
+    : (fs.existsSync(bundleVaultFile) ? bundleVaultFile 
+    : (fs.existsSync(activeFile) ? activeFile 
+    : (fs.existsSync(bundleActiveFile) ? bundleActiveFile : null)));
 
   if (targetFile) {
     try {
       const data = JSON.parse(fs.readFileSync(targetFile, 'utf8'));
       return res.json(data);
     } catch (e) {
-      return res.status(500).json({ error: 'Failed to read vault file.' });
+      return res.status(500).json({ error: 'Failed to read agreement file.' });
     }
   }
   res.status(404).json({ error: 'Record not found in vault.' });
@@ -485,7 +519,7 @@ const emailRateLimits = new Map();
 
 // 3. Send Branded Email to Artist from ocr.agreements@gmail.com
 app.post('/api/send-artist-email', async (req, res) => {
-  const { state, recipientEmail, signingUrl } = req.body;
+  const { state, recipientEmail, signingUrl, artistName: clientArtistName, signerId } = req.body;
 
   if (!state || !recipientEmail) {
     return res.status(400).json({ error: 'Missing agreement state or recipient email.' });
@@ -502,22 +536,13 @@ app.post('/api/send-artist-email', async (req, res) => {
     });
   }
 
-  // Ensure clean agreement state for artist: clear any prior artist signature and unlock
-  const cleanState = JSON.parse(JSON.stringify(state));
-  if (cleanState.artist) {
-    cleanState.artist.signature = null;
-    cleanState.artist.date = new Date().toISOString().split('T')[0];
-  }
-  cleanState.isLockedForArtist = false;
-  cleanState.status = 'awaiting_artist_signature';
-
-  // Persist clean agreement on server and Firebase
-  await firebaseSet(`agreements/${cleanState.id}`, cleanState);
+  // Persist current agreement state on server and Firebase without wiping existing signatures
+  await firebaseSet(`agreements/${state.id}`, state);
   try {
     fs.mkdirSync(AGREEMENTS_DIR, { recursive: true });
   } catch (e) {}
-  const file = path.join(AGREEMENTS_DIR, `${cleanState.id}.json`);
-  fs.writeFileSync(file, JSON.stringify(cleanState, null, 2), 'utf8');
+  const file = path.join(AGREEMENTS_DIR, `${state.id}.json`);
+  fs.writeFileSync(file, JSON.stringify(state, null, 2), 'utf8');
 
   const transporter = getTransporter();
   if (!transporter) {
@@ -526,9 +551,62 @@ app.post('/api/send-artist-email', async (req, res) => {
     });
   }
 
-  const artistName = (state.artist?.legalName && state.artist.legalName.trim())
-    ? `${state.artist.legalName.trim()}${state.artist.stageName ? ` (${state.artist.stageName.trim()})` : ''}`
-    : (state.artist?.stageName || 'Artist');
+  const artistsList = (Array.isArray(state.artists) && state.artists.length > 0)
+    ? state.artists
+    : (state.artist ? [state.artist] : []);
+
+  // 1. Identify recipient artist
+  let recipientArtist = null;
+  if (signerId) {
+    recipientArtist = artistsList.find(a => a.id === signerId);
+  }
+  if (!recipientArtist && recipientEmail) {
+    recipientArtist = artistsList.find(a => a.email && a.email.toLowerCase().trim() === recipientEmail.toLowerCase().trim());
+  }
+  if (!recipientArtist && (!signerId || signerId === 'art-1')) {
+    recipientArtist = artistsList[0] || state.artist;
+  }
+
+  // Resolve recipient's display greeting name without falling back to Artist 1's details
+  let recipientGreetingName = '';
+  if (recipientArtist) {
+    const hasLegal = Boolean(recipientArtist.legalName && recipientArtist.legalName.trim());
+    const hasStage = Boolean(recipientArtist.stageName && recipientArtist.stageName.trim());
+    if (hasLegal && hasStage) {
+      recipientGreetingName = `${recipientArtist.legalName.trim()} (${recipientArtist.stageName.trim()})`;
+    } else if (hasStage) {
+      recipientGreetingName = recipientArtist.stageName.trim();
+    } else if (hasLegal) {
+      recipientGreetingName = recipientArtist.legalName.trim();
+    } else {
+      // Empty collaborator fields: NEVER substitute Artist 1!
+      const artIdx = artistsList.findIndex(a => a.id === recipientArtist.id);
+      recipientGreetingName = artIdx > 0 ? `Artist ${artIdx + 1}` : (recipientArtist.role || 'Artist / Collaborator');
+    }
+  } else {
+    recipientGreetingName = clientArtistName || 'Artist / Collaborator';
+  }
+
+  // 2. Track / Song Name
+  const songTitle = (state.tracks && state.tracks[0]?.title && state.tracks[0].title.trim())
+    ? state.tracks[0].title.trim()
+    : 'Music Release';
+
+  // 3. All Artists' Names on the Agreement
+  const allArtistNames = artistsList.map((a, idx) => {
+    const hasLegal = Boolean(a.legalName && a.legalName.trim());
+    const hasStage = Boolean(a.stageName && a.stageName.trim());
+    if (hasStage && hasLegal) {
+      return `${a.stageName.trim()} (${a.legalName.trim()})`;
+    } else if (hasStage) {
+      return a.stageName.trim();
+    } else if (hasLegal) {
+      return a.legalName.trim();
+    } else {
+      return idx === 0 ? 'Primary Artist' : `Artist ${idx + 1}`;
+    }
+  }).filter(Boolean).join(', ') || 'All Artists';
+
   const labelRep = state.label?.representative || 'Director / Founder';
   
   // Generate dynamic track list for email
@@ -585,10 +663,10 @@ app.post('/api/send-artist-email', async (req, res) => {
           <tr>
             <td style="padding: 32px 30px; color: #d1d5db; font-size: 14px; line-height: 1.6;">
               <div style="font-size: 16px; color: #ffffff; margin-bottom: 16px;">
-                Dear <strong>${artistName}</strong>,
+                Dear <strong>${escapeHtml(recipientGreetingName)}</strong>,
               </div>
               <p style="margin: 0 0 18px 0; color: #d1d5db; font-size: 14px;">
-                Obscura Rec LLC has prepared the official <strong>Act of Acceptance and Transfer of Objects</strong> agreement for your upcoming music release.
+                Obscura Rec LLC has prepared the official <strong>Act of Acceptance and Transfer of Objects</strong> agreement for the upcoming release of <strong>"${escapeHtml(songTitle)}"</strong>.
               </p>
               <p style="margin: 0 0 20px 0; color: #9ca3af; font-size: 13px;">
                 All terms have been prepared and locked by the record label. Please review the track allocation schedule below and apply your digital signature via the secure portal:
@@ -658,7 +736,7 @@ app.post('/api/send-artist-email', async (req, res) => {
       from: '"Obscura Rec LLC" <ocr.agreements@gmail.com>',
       to: recipientEmail,
       replyTo: 'ocr.agreements@gmail.com',
-      subject: `[ACTION REQUIRED] Obscura Rec LLC: Agreement Ready for Signature (${artistName}) [Ref: ${state.id}]`,
+      subject: `[ACTION REQUIRED] Obscura Rec LLC: Agreement Ready for Signature - "${songTitle}" (${recipientGreetingName}) [Ref: ${state.id}]`,
       html: htmlContent
     });
 
@@ -674,7 +752,7 @@ app.post('/api/send-artist-email', async (req, res) => {
 
 // 4. Artist Submits Signed Agreement -> Delivered directly to ocr.agreements@gmail.com
 app.post('/api/submit-signed-agreement', async (req, res) => {
-  const { state, hostUrl } = req.body;
+  const { state, hostUrl, signerId } = req.body;
 
   if (!state || !state.id) {
     return res.status(400).json({ error: 'Missing agreement state.' });
@@ -682,15 +760,17 @@ app.post('/api/submit-signed-agreement', async (req, res) => {
 
   const file = path.join(AGREEMENTS_DIR, `${state.id}.json`);
 
-  // Check if agreement is already locked/expired
+  // Check if agreement is already fully executed and closed
   if (fs.existsSync(file)) {
     try {
       const existing = JSON.parse(fs.readFileSync(file, 'utf8'));
-      if (existing && existing.isLockedForArtist) {
-        return res.status(403).json({
-          error: 'This signing link has expired. The agreement has already been digitally executed and sealed. No further changes can be submitted.',
-          isLocked: true
-        });
+      if (existing) {
+        if (existing.status === 'fully_executed') {
+          return res.status(403).json({
+            error: 'This agreement has already been fully executed and closed by Obscura Rec LLC.',
+            isLocked: true
+          });
+        }
       }
     } catch (e) {
       console.warn('Error reading existing contract during submit check:', e);
@@ -713,39 +793,12 @@ app.post('/api/submit-signed-agreement', async (req, res) => {
 
   // Keep Vault 100% up to date with the latest signatures if this agreement was saved in the Vault
   const vaultFile = path.join(VAULT_DIR, `${state.id}.json`);
-  if (fs.existsSync(vaultFile) || state.isArchivedInVault) {
+  const existingInVault = await firebaseGet(`vault/${state.id}`);
+  if (existingInVault || fs.existsSync(vaultFile) || state.isArchivedInVault) {
     try {
+      fs.mkdirSync(VAULT_DIR, { recursive: true });
       fs.writeFileSync(vaultFile, JSON.stringify(state, null, 2), 'utf8');
       await firebaseSet(`vault/${state.id}`, state);
-      const metaRecord = {
-        id: state.id,
-        finalizedAt: state.finalizedAt || state.savedToVaultAt || new Date().toISOString(),
-        artistLegalName: state.artist?.legalName || '',
-        artistStageName: state.artist?.stageName || '',
-        artistEmail: state.artist?.email || '',
-        labelRepresentative: state.label?.representative || '',
-        labelTitle: state.label?.representativeTitle || 'Director / Founder',
-        trackCount: Array.isArray(state.tracks) ? state.tracks.length : 0,
-        firstTrackTitle: state.tracks?.[0]?.title || '',
-        tracksList: Array.isArray(state.tracks) ? state.tracks.map(t => t.title).filter(Boolean) : [],
-        hasArtistSignature: Boolean(state.artist?.signature),
-        hasLabelSignature: Boolean(state.label?.signature),
-        artistSigHash: state.artist?.signature?.hash || 'Verified',
-        artistSigTimestamp: state.artist?.signature?.timestamp || '',
-        labelSigTimestamp: state.label?.signature?.timestamp || '',
-        labelSigHash: state.label?.signature?.hash || 'OBS-LABEL-SEALED',
-        artists: Array.isArray(state.artists) ? state.artists.map(a => ({
-          id: a.id,
-          role: a.role || 'Recording Artist',
-          legalName: a.legalName || '',
-          stageName: a.stageName || '',
-          email: a.email || '',
-          hasSignature: Boolean(a.signature),
-          sigHash: a.signature?.hash || 'Verified',
-          sigTimestamp: a.signature?.timestamp || a.date || ''
-        })) : []
-      };
-      await firebaseSet(`vault_meta/${state.id}`, metaRecord);
       console.log(`[Vault Auto-Synced] Updated vault record with latest signatures for ${state.id}`);
     } catch (ve) {
       console.warn('Vault auto-sync error on submit:', ve);
@@ -753,26 +806,58 @@ app.post('/api/submit-signed-agreement', async (req, res) => {
   }
 
   const transporter = getTransporter();
-  const artistName = (state.artist?.legalName && state.artist.legalName.trim())
-    ? `${state.artist.legalName.trim()}${state.artist.stageName ? ` (${state.artist.stageName.trim()})` : ''}`
-    : (state.artist?.stageName || 'Artist');
+  let submittingArtist = null;
+  if (signerId) {
+    submittingArtist = allArtists.find(a => a.id === signerId);
+  }
+  if (!submittingArtist) {
+    submittingArtist = allArtists.find(a => a.submitted || (a.status === 'signed' && a.signedAt)) || allArtists[0];
+  }
+
+  // Resolve artist name cleanly without defaulting to generic role string
+  let artistName = '';
+  if (submittingArtist) {
+    const hasLegal = Boolean(submittingArtist.legalName && submittingArtist.legalName.trim());
+    const hasStage = Boolean(submittingArtist.stageName && submittingArtist.stageName.trim());
+    if (hasStage && hasLegal) {
+      artistName = `${submittingArtist.stageName.trim()} (${submittingArtist.legalName.trim()})`;
+    } else if (hasStage) {
+      artistName = submittingArtist.stageName.trim();
+    } else if (hasLegal) {
+      artistName = submittingArtist.legalName.trim();
+    } else {
+      const artIdx = allArtists.findIndex(a => a.id === submittingArtist.id);
+      artistName = artIdx > 0 ? `Artist ${artIdx + 1}` : 'Primary Artist';
+    }
+  } else {
+    artistName = 'Artist';
+  }
+
+  const songTitle = (state.tracks && state.tracks[0]?.title && state.tracks[0].title.trim())
+    ? state.tracks[0].title.trim()
+    : 'Music Release';
+
+  const artistSigHash = submittingArtist?.signature?.hash || state.artist?.signature?.hash || 'Verified';
+  const artistSigTimestamp = submittingArtist?.signature?.timestamp || submittingArtist?.signedAt || new Date().toISOString();
+
   const counterSignUrl = `${hostUrl || 'http://localhost:3000'}/?mode=counter-sign&id=${state.id}`;
 
   if (transporter) {
     const notifyHtml = `
       <div style="font-family: sans-serif; background: #0c0f17; color: #ffffff; padding: 24px; border-radius: 10px; border: 1px solid #10b981;">
         <div style="font-size: 20px; font-weight: bold; color: #10b981; margin-bottom: 8px;">
-          ✓ Agreement Digitally Signed by ${artistName}
+          ✓ Agreement Digitally Signed by ${escapeHtml(artistName)}
         </div>
         <p style="color: #d1d5db; font-size: 14px;">
-          The artist has reviewed and applied their digital signature to the Act of Acceptance and Transfer of Objects (Ref: <strong>${state.id}</strong>).
+          The artist has reviewed and applied their digital signature to the Act of Acceptance and Transfer of Objects for <strong>"${escapeHtml(songTitle)}"</strong> (Ref: <strong>${state.id}</strong>).
         </p>
         <div style="background: #131722; padding: 14px; border-radius: 8px; margin: 16px 0; border: 1px solid #252c3d;">
           <div style="color: #9ca3af; font-size: 12px; margin-bottom: 4px;">DIGITAL VERIFICATION RECORD:</div>
           <div style="color: #ffffff; font-size: 13px;"><strong>Agreement Ref ID:</strong> ${state.id}</div>
-          <div style="color: #ffffff; font-size: 13px;"><strong>Signer:</strong> ${artistName}</div>
-          <div style="color: #ffffff; font-size: 13px;"><strong>Timestamp:</strong> ${state.artist.signature?.timestamp || new Date().toISOString()}</div>
-          <div style="color: #ffffff; font-size: 13px;"><strong>Digital Seal Hash:</strong> ${state.artist.signature?.hash || 'Verified'}</div>
+          <div style="color: #ffffff; font-size: 13px;"><strong>Track / Release:</strong> "${escapeHtml(songTitle)}"</div>
+          <div style="color: #ffffff; font-size: 13px;"><strong>Signer:</strong> ${escapeHtml(artistName)}</div>
+          <div style="color: #ffffff; font-size: 13px;"><strong>Timestamp:</strong> ${escapeHtml(artistSigTimestamp)}</div>
+          <div style="color: #ffffff; font-size: 13px;"><strong>Digital Seal Hash:</strong> ${escapeHtml(artistSigHash)}</div>
           <div style="color: #10b981; font-size: 12px; margin-top: 4px;">🔒 Status: Sealed & Link Expired for Artist</div>
         </div>
         <div style="font-size: 11px; color: #6b7280; margin-top: 14px;">
@@ -785,7 +870,7 @@ app.post('/api/submit-signed-agreement', async (req, res) => {
       await transporter.sendMail({
         from: '"Obscura Rec Agreements Portal" <ocr.agreements@gmail.com>',
         to: 'ocr.agreements@gmail.com',
-        subject: `[SIGNED BY ARTIST] Obscura Rec LLC Agreement - ${artistName} (Ref: ${state.id})`,
+        subject: `[SIGNED BY ARTIST] Obscura Rec LLC Agreement - "${songTitle}" (${artistName}) [Ref: ${state.id}]`,
         html: notifyHtml
       });
       console.log(`Signed notification sent to ocr.agreements@gmail.com for agreement ${state.id}`);

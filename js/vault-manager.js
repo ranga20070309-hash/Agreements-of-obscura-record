@@ -9,7 +9,9 @@ import {
   finalizeToFirebaseVault,
   getVaultFromFirebase,
   getAgreementFromFirebase,
-  deleteFromFirebaseVault
+  saveAgreementToVault,
+  deleteFromFirebaseVault,
+  getDatabaseInstance
 } from './firebase-config.js';
 
 export class VaultManager {
@@ -97,14 +99,14 @@ export class VaultManager {
     if (this.searchInput) {
       this.searchInput.value = '';
     }
-    this.loadRecords(false);
+    this.loadRecords(true);
   }
 
   close() {
     this.modal?.classList.remove('active');
   }
 
-  async loadRecords(force = false) {
+  async loadRecords(force = true) {
     if (!force && this.records && this.records.length > 0) {
       this.filteredRecords = [...this.records];
       this.render();
@@ -122,22 +124,45 @@ export class VaultManager {
 
     try {
       // 1. Fetch from Firebase Realtime Database
-      let records = await getVaultFromFirebase();
-
-      // 2. Fallback to server API if needed
-      if (!records || records.length === 0) {
-        try {
-          const res = await fetch('/api/vault');
-          if (res.ok) {
-            const data = await res.json();
-            records = data.records || [];
-          }
-        } catch (serverErr) {
-          console.warn('Vault server fetch fallback note:', serverErr);
-        }
+      let fbRecords = [];
+      try {
+        fbRecords = await getVaultFromFirebase();
+      } catch (fbErr) {
+        console.warn('Firebase vault fetch note:', fbErr);
       }
 
-      this.records = records || [];
+      // 2. Fetch from server API
+      let srvRecords = [];
+      try {
+        const res = await fetch('/api/vault');
+        if (res.ok) {
+          const data = await res.json();
+          srvRecords = data.records || [];
+        }
+      } catch (serverErr) {
+        console.warn('Vault server fetch fallback note:', serverErr);
+      }
+
+      // 3. Merge without duplicates, keeping most up-to-date entries
+      const recordMap = new Map();
+      (fbRecords || []).forEach(r => { if (r && r.id) recordMap.set(r.id, r); });
+      (srvRecords || []).forEach(r => {
+        if (r && r.id) {
+          if (!recordMap.has(r.id)) {
+            recordMap.set(r.id, r);
+          } else {
+            const existing = recordMap.get(r.id);
+            const rTime = new Date(r.finalizedAt || 0).getTime();
+            const eTime = new Date(existing.finalizedAt || 0).getTime();
+            if (rTime >= eTime) {
+              recordMap.set(r.id, { ...existing, ...r });
+            }
+          }
+        }
+      });
+
+      this.records = Array.from(recordMap.values());
+      this.records.sort((a, b) => new Date(b.finalizedAt || 0) - new Date(a.finalizedAt || 0));
       this.filteredRecords = [...this.records];
       this.render();
       this.updateStats();
@@ -283,21 +308,97 @@ export class VaultManager {
 
   async showProfile(id) {
     try {
-      let data = await getAgreementFromFirebase(id);
-      if (!data) {
-        const res = await fetch(`/api/vault/${encodeURIComponent(id)}`);
-        if (res.ok) data = await res.json();
+      // 1. Fetch from Firebase Realtime Database
+      let activeData = null;
+      let vaultData = null;
+      const database = getDatabaseInstance();
+      if (database) {
+        try {
+          const [aSnap, vSnap] = await Promise.all([
+            database.ref(`agreements/${id}`).once('value').catch(() => null),
+            database.ref(`vault/${id}`).once('value').catch(() => null)
+          ]);
+          if (aSnap && aSnap.exists()) activeData = aSnap.val();
+          if (vSnap && vSnap.exists()) vaultData = vSnap.val();
+        } catch (e) {}
       }
+
+      // 2. Fetch from backend API
+      if (!activeData || !vaultData) {
+        try {
+          const [aRes, vRes] = await Promise.all([
+            fetch(`/api/agreements/${encodeURIComponent(id)}`).catch(() => null),
+            fetch(`/api/vault/${encodeURIComponent(id)}`).catch(() => null)
+          ]);
+          if (aRes && aRes.ok && !activeData) activeData = await aRes.json();
+          if (vRes && vRes.ok && !vaultData) vaultData = await vRes.json();
+        } catch (e) {}
+      }
+
+      // Check current in-memory store state
+      let storeData = null;
+      if (this.store && typeof this.store.getState === 'function') {
+        const current = this.store.getState();
+        if (current && current.id === id) {
+          storeData = current;
+        }
+      }
+
+      let data = vaultData || activeData || storeData;
       if (!data) throw new Error('Could not find agreement profile in Vault.');
+
+      // Deep merge artists and signatures across all available sources
+      const sources = [vaultData, activeData, storeData].filter(Boolean);
+      let mergedArtists = (Array.isArray(data.artists) && data.artists.length > 0)
+        ? data.artists.map(a => ({ ...a }))
+        : [{ id: 'art-1', role: 'Recording Artist', ...(data.artist || {}) }];
+
+      let hasNewSignaturesMerged = false;
+
+      sources.forEach(src => {
+        const srcArtists = Array.isArray(src.artists) ? src.artists : (src.artist ? [{ id: 'art-1', ...src.artist }] : []);
+        srcArtists.forEach(srcArt => {
+          let target = mergedArtists.find(a => a.id === srcArt.id);
+          if (!target && srcArt.id) {
+            mergedArtists.push({ ...srcArt });
+            target = mergedArtists[mergedArtists.length - 1];
+          }
+          if (target) {
+            if (srcArt.signature && !target.signature) {
+              target.signature = srcArt.signature;
+              target.status = 'signed';
+              target.submitted = true;
+              target.signedAt = srcArt.signedAt || srcArt.signature.timestamp || new Date().toISOString();
+              hasNewSignaturesMerged = true;
+            }
+            if (srcArt.legalName && !target.legalName) target.legalName = srcArt.legalName;
+            if (srcArt.stageName && !target.stageName) target.stageName = srcArt.stageName;
+            if (srcArt.email && !target.email) target.email = srcArt.email;
+          }
+        });
+
+        // Label signature merge
+        if (src.label?.signature && !data.label?.signature) {
+          if (!data.label) data.label = {};
+          data.label.signature = src.label.signature;
+          hasNewSignaturesMerged = true;
+        }
+      });
+
+      data.artists = mergedArtists;
+
+      // Auto-heal: If vault was out-of-sync or missing signatures, push merged state back to Vault!
+      if (hasNewSignaturesMerged || !vaultData) {
+        try {
+          saveAgreementToVault(data);
+        } catch (e) {}
+      }
 
       const modal = document.getElementById('vault-profile-modal');
       const content = document.getElementById('vault-profile-content');
       if (!modal || !content) return;
 
-      const artists = (Array.isArray(data.artists) && data.artists.length > 0)
-        ? data.artists
-        : [{ id: 'art-1', role: 'Recording Artist', ...(data.artist || {}) }];
-
+      const artists = mergedArtists;
       const tracks = Array.isArray(data.tracks) ? data.tracks : [];
       const trackTitles = tracks.map(t => t.title ? `${t.title} ${t.versionTag || ''}`.trim() : 'Track').join(', ');
       const totalSigners = 1 + artists.length;
@@ -376,8 +477,12 @@ export class VaultManager {
                   const displayName = a.stageName || a.legalName || `Artist ${idx + 1}`;
                   const legalName = a.legalName ? `(${a.legalName})` : '';
                   const roleTag = a.role || (idx === 0 ? 'Primary Recording Artist' : 'Collaborator / Featured');
-                  const dateStr = a.signature?.timestamp || a.date || 'Pending';
-                  const hashStr = a.signature?.hash || (hasSig ? 'VERIFIED' : 'AWAITING-SIGNATURE');
+                  const dateStr = hasSig 
+                    ? escapeHtml(a.signature?.timestamp || a.signedAt || a.date || 'Digitally Sealed')
+                    : '<span style="color:#6b7280; font-style:italic;">⏳ Awaiting Signature</span>';
+                  const hashStr = hasSig 
+                    ? escapeHtml(a.signature?.hash || 'OBS-DIGITALLY-VERIFIED')
+                    : '<span style="color:#f59e0b; opacity:0.85; font-size:11px;">AWAITING-SIGNATURE</span>';
 
                   return `
                     <tr style="border-bottom:1px solid #1f2434; background:#0c0f17;">
@@ -395,10 +500,10 @@ export class VaultManager {
                         }
                       </td>
                       <td style="padding:10px 12px; color:#9ca3af;">
-                        ${escapeHtml(dateStr)}
+                        ${dateStr}
                       </td>
                       <td style="padding:10px 12px; font-family:monospace; color:#c9a050;">
-                        ${escapeHtml(hashStr)}
+                        ${hashStr}
                       </td>
                     </tr>
                   `;

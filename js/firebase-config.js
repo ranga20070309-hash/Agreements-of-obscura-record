@@ -136,7 +136,7 @@ export async function getAgreementFromFirebase(id) {
     const vaultSnap = await database.ref(`vault/${id}`).once('value');
     if (vaultSnap.exists()) {
       const data = vaultSnap.val();
-      return { ...data, isArchivedInVault: true, isLockedForArtist: true };
+      return { ...data, isArchivedInVault: true, isLockedForArtist: Boolean(data.status === 'fully_executed') };
     }
   } catch (err) {
     console.error('[Firebase RTDB] Fetch error:', err);
@@ -298,12 +298,27 @@ export async function saveAgreementToVault(state) {
 export async function updateVaultIfArchived(state) {
   if (!state || !state.id) return false;
   const database = getDatabaseInstance();
-  if (!database) return false;
 
   try {
-    const checkSnap = await database.ref(`vault/${state.id}`).once('value');
-    if (checkSnap.exists()) {
-      await saveAgreementToVault(state);
+    let isInVault = Boolean(state.isArchivedInVault);
+    if (!isInVault && database) {
+      const checkSnap = await database.ref(`vault/${state.id}`).once('value');
+      if (checkSnap.exists()) isInVault = true;
+    }
+
+    if (isInVault) {
+      if (database) {
+        await saveAgreementToVault(state);
+      }
+      if (typeof window !== 'undefined' && window.location) {
+        try {
+          fetch('/api/vault/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(state)
+          }).catch(() => {});
+        } catch (srvErr) {}
+      }
       return true;
     }
   } catch (e) {
@@ -321,14 +336,19 @@ export async function getVaultFromFirebase() {
   if (!database) return [];
 
   try {
-    // 1. Try lightweight vault_meta index first (saves >95% bandwidth!)
-    let snap = await database.ref('vault_meta').once('value');
+    // 1. Try lightweight vault_meta index if available
     let raw = null;
+    try {
+      const snap = await database.ref('vault_meta').once('value');
+      if (snap.exists() && snap.hasChildren()) {
+        raw = snap.val();
+      }
+    } catch (metaErr) {
+      // Ignore permission or index warning, seamlessly fallback to full vault
+    }
 
-    if (snap.exists() && snap.hasChildren()) {
-      raw = snap.val();
-    } else {
-      // Fallback for legacy vault records
+    // 2. Fetch full vault documents
+    if (!raw) {
       const fullSnap = await database.ref('vault').once('value');
       if (fullSnap.exists()) {
         raw = fullSnap.val();

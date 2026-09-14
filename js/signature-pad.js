@@ -60,7 +60,7 @@ export class SignatureEngine {
     if (mode === 'artist-sign' && party === 'artist') {
       const targetId = artistId || this.store.getCurrentSignerId?.() || 'art-1';
       const artistObj = this.store.getArtist?.(targetId);
-      if (this.store.isArtistLocked?.() || (artistObj && (artistObj.submitted === true || (artistObj.status === 'signed' && artistObj.signedAt)))) {
+      if (state.status === 'fully_executed' || (artistObj && (artistObj.submitted === true || (artistObj.status === 'signed' && artistObj.signedAt)))) {
         return;
       }
     }

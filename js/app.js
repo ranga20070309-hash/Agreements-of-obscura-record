@@ -934,11 +934,15 @@ class AgreementApp {
     if (!container) return;
 
     renderDocument(state, container, (party, artistId) => {
-      // In artist mode, if agreement or this specific signer is locked/submitted, block clicking
+      // In artist mode, artist can only sign their own slot, and only if not yet submitted or fully executed
       if (this.store.getMode() === 'artist-sign' && party === 'artist') {
-        const targetId = artistId || this.store.getCurrentSignerId();
+        const currentSignerId = this.store.getCurrentSignerId();
+        const targetId = artistId || currentSignerId;
+        if (targetId !== currentSignerId) {
+          return;
+        }
         const artistObj = this.store.getArtist(targetId);
-        if (this.store.isArtistLocked() || (artistObj && (artistObj.submitted === true || (artistObj.status === 'signed' && artistObj.signedAt)))) {
+        if (state.status === 'fully_executed' || (artistObj && (artistObj.submitted === true || (artistObj.status === 'signed' && artistObj.signedAt)))) {
           return;
         }
       }
@@ -970,11 +974,16 @@ class AgreementApp {
     const mode = this.store.getMode();
 
     if (mode === 'artist-sign') {
-      if (this.store.isArtistLocked()) {
-        badge.innerHTML = '<span class="status-dot"></span> 🔒 Sealed & Executed (Link Expired)';
+      const currentSignerId = this.store.getCurrentSignerId();
+      const currentArtist = this.store.getArtist(currentSignerId);
+      const isLocked = this.store.isArtistLocked();
+      const hasSig = Boolean(currentArtist?.signature);
+
+      if (isLocked) {
+        badge.innerHTML = '<span class="status-dot"></span> 🔒 Signature Sealed & Delivered';
         badge.className = 'doc-status-badge status-executed';
-      } else if (state.artist.signature) {
-        badge.innerHTML = '<span class="status-dot"></span> Artist Signed ✓ (Ready to Submit)';
+      } else if (hasSig) {
+        badge.innerHTML = '<span class="status-dot"></span> Signature Placed ✓ (Ready to Submit)';
         badge.className = 'doc-status-badge status-executed';
       } else {
         badge.innerHTML = '<span class="status-dot"></span> Action Required: Artist Signature';

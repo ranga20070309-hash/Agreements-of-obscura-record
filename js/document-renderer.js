@@ -128,10 +128,7 @@ export function renderDocument(state, container, onSignClick, mode = 'label') {
     return state.artists?.[0]?.id || 'art-1';
   })();
 
-  const isGlobalLocked = Boolean(
-    state.isArchivedInVault ||
-    state.status === 'fully_executed'
-  );
+  const isGlobalLocked = Boolean(state.status === 'fully_executed');
 
   const renderArtistSigRow = (artist, index) => {
     const isThisSigner = (mode !== 'artist-sign') || (currentSignerId === artist.id);

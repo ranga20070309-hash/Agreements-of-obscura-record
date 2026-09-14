@@ -423,10 +423,34 @@ export class EmailSender {
     const container = document.getElementById('email-template-preview-box');
     if (!container) return;
 
-    const artistName = (state.artist.legalName && state.artist.legalName.trim())
-      ? `${state.artist.legalName.trim()}${state.artist.stageName ? ` (${state.artist.stageName.trim()})` : ''}`
-      : (state.artist.stageName || 'Artist');
-    const tracksList = state.tracks.map((t, idx) => `
+    const artistsList = (Array.isArray(state.artists) && state.artists.length > 0)
+      ? state.artists
+      : (state.artist ? [state.artist] : []);
+
+    const allArtistNames = artistsList.map((a, idx) => {
+      const legal = a.legalName ? a.legalName.trim() : '';
+      const stage = a.stageName ? a.stageName.trim() : '';
+      if (stage && legal) {
+        return `${stage} (${legal})`;
+      } else if (stage) {
+        return stage;
+      } else if (legal) {
+        return legal;
+      } else {
+        return idx === 0 ? 'Primary Artist' : `Artist ${idx + 1}`;
+      }
+    }).filter(Boolean).join(', ') || 'All Artists';
+
+    const songTitle = (state.tracks && state.tracks[0]?.title && state.tracks[0].title.trim())
+      ? state.tracks[0].title.trim()
+      : 'Music Release';
+
+    const primaryArtist = artistsList[0] || state.artist || {};
+    const primaryDisplayName = (primaryArtist.legalName && primaryArtist.legalName.trim() && primaryArtist.stageName && primaryArtist.stageName.trim())
+      ? `${primaryArtist.legalName.trim()} (${primaryArtist.stageName.trim()})`
+      : ((primaryArtist.stageName && primaryArtist.stageName.trim()) || (primaryArtist.legalName && primaryArtist.legalName.trim()) || 'Artist');
+
+    const tracksList = (state.tracks || []).map((t, idx) => `
       <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #1f2434; font-size:12px;">
         <span style="color:#ffffff; font-weight:600;">${idx + 1}. ${escapeHtml(t.title || '[Track Name]')} ${escapeHtml(t.versionTag || '')} (${escapeHtml(t.year || '2026')})</span>
         <span style="color:#c9a050; font-weight:700;">${t.royaltyShare || 50}% Net Royalty</span>
@@ -452,10 +476,10 @@ export class EmailSender {
         <!-- Email Body -->
         <div style="padding:22px; color:#d1d5db; line-height:1.6; font-size:13px;">
           <p style="margin:0 0 12px 0; font-size:14px; color:#ffffff;">
-            Dear <strong>${escapeHtml(artistName)}</strong>,
+            Dear <strong>${escapeHtml(primaryDisplayName)}</strong>,
           </p>
           <p style="margin:0 0 14px 0;">
-            Obscura Rec LLC has prepared the official <strong>Act of Acceptance and Transfer of Objects</strong> agreement for your upcoming music release(s).
+            Obscura Rec LLC has prepared the official <strong>Act of Acceptance and Transfer of Objects</strong> agreement for the upcoming release of <strong>"${escapeHtml(songTitle)}"</strong>.
           </p>
 
           <!-- Tracks Schedule Box -->
@@ -465,7 +489,7 @@ export class EmailSender {
             </div>
             ${tracksList}
             <div style="margin-top:10px; font-size:11.5px; color:#9ca3af;">
-              • License Term: <strong>${state.terms.termYears || 10} Years Exclusive</strong> (30-day renewal notice)
+              • License Term: <strong>${state.terms?.termYears || 10} Years Exclusive</strong> (30-day renewal notice)
             </div>
           </div>
 
@@ -497,7 +521,10 @@ export class EmailSender {
   async sendArtistEmail(targetArtistId = null, recipientEmail = '', btnElement = null) {
     const state = this.store.getState();
     const targetId = targetArtistId || this.store.getCurrentSignerId() || 'art-1';
-    const artist = this.store.getArtist(targetId) || state.artist;
+    let artist = this.store.getArtist(targetId);
+    if (!artist) {
+      artist = state.artists?.find(a => a.id === targetId) || state.artist;
+    }
 
     // 0. Check Cooldown to prevent spam
     const activeCd = this.getCooldown(targetId);
@@ -513,19 +540,32 @@ export class EmailSender {
         recipient = rowInput.value.trim();
       } else {
         const emailInput = document.getElementById('send-artist-email-input');
-        recipient = emailInput ? emailInput.value.trim() : (artist.email || '');
+        recipient = emailInput ? emailInput.value.trim() : (artist?.email || '');
       }
     }
 
-    const artLabel = (artist.legalName && artist.legalName.trim()) || artist.stageName || 'Artist';
+    let artLabel = '';
+    if (artist?.legalName && artist.legalName.trim() && artist.stageName && artist.stageName.trim()) {
+      artLabel = `${artist.legalName.trim()} (${artist.stageName.trim()})`;
+    } else if (artist?.stageName && artist.stageName.trim()) {
+      artLabel = artist.stageName.trim();
+    } else if (artist?.legalName && artist.legalName.trim()) {
+      artLabel = artist.legalName.trim();
+    } else {
+      const artIdx = Array.isArray(state.artists) ? state.artists.findIndex(a => a.id === targetId) : -1;
+      artLabel = artIdx > 0 ? `Artist ${artIdx + 1}` : (artist?.role || 'Artist / Collaborator');
+    }
+
     if (!recipient || !recipient.includes('@')) {
       alert(`Please enter a valid email address for ${artLabel}.`);
       return;
     }
 
     // Save recipient to state
-    artist.email = recipient;
-    if (this.store.state.artists?.[0]?.id === targetId) {
+    if (artist) {
+      artist.email = recipient;
+    }
+    if (this.store.state.artists?.[0]?.id === targetId && this.store.state.artist) {
       this.store.state.artist.email = recipient;
     }
     this.store.save({ syncInputs: false });
@@ -552,7 +592,8 @@ export class EmailSender {
           state: this.store.getState(),
           recipientEmail: recipient,
           signingUrl: cleanSigningUrl,
-          artistName: artLabel
+          artistName: artLabel,
+          signerId: targetId
         })
       });
 
@@ -602,14 +643,14 @@ export class EmailSender {
       : [state.artist];
 
     const sendAllBtn = document.getElementById('btn-send-direct-email');
-    const originalBtnText = sendAllBtn ? sendAllBtn.innerHTML : '';
     if (sendAllBtn) {
       sendAllBtn.disabled = true;
-      sendAllBtn.innerHTML = '⏳ Dispatching all artist emails...';
+      sendAllBtn.innerHTML = '⏳ Sending Invitations...';
     }
 
     let successCount = 0;
-    for (const a of artistsList) {
+    for (let idx = 0; idx < artistsList.length; idx++) {
+      const a = artistsList[idx];
       if (a.signature) continue; // skip already signed
       const rowInput = document.querySelector(`.artist-invite-email-input[data-artist-id="${a.id}"]`);
       const email = rowInput ? rowInput.value.trim() : (a.email || '');
@@ -618,6 +659,10 @@ export class EmailSender {
           const baseUrl = window.location.origin + window.location.pathname;
           const url = `${baseUrl}?mode=artist-sign&id=${state.id}&signer=${a.id}`;
           a.email = email;
+          const artLabel = (a.legalName && a.legalName.trim() && a.stageName && a.stageName.trim())
+            ? `${a.legalName.trim()} (${a.stageName.trim()})`
+            : ((a.stageName && a.stageName.trim()) || (a.legalName && a.legalName.trim()) || (idx > 0 ? `Artist ${idx + 1}` : (a.role || 'Artist')));
+
           const res = await fetch('/api/send-artist-email', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -625,7 +670,8 @@ export class EmailSender {
               state: this.store.getState(),
               recipientEmail: email,
               signingUrl: url,
-              artistName: (a.legalName && a.legalName.trim()) || a.stageName || 'Artist'
+              artistName: artLabel,
+              signerId: a.id
             })
           });
           if (res.ok) {

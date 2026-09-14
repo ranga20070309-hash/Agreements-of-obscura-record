@@ -431,8 +431,8 @@ class AgreementStore {
           return;
         }
 
-        // Case 1: Agreement already finalized and archived in Vault!
-        if (serverState.isArchivedInVault === true || serverState.status === 'fully_executed') {
+        // Case 1: Agreement permanently finalized and closed by Obscura Rec LLC!
+        if (serverState.status === 'fully_executed') {
           this.linkStatus = 'already_finalized';
           this.invalidReason = `Agreement ${id} has been fully executed by both parties and archived into the Obscura Rec LLC Vault.`;
           this.state = this.normalizeArtistsState({ ...getDefaultAgreementState(), ...serverState });
@@ -583,11 +583,14 @@ class AgreementStore {
   }
 
   getArtist(artistId = null) {
-    const targetId = artistId || this.getCurrentSignerId();
     if (!Array.isArray(this.state?.artists) || this.state.artists.length === 0) {
       return this.state?.artist;
     }
-    return this.state.artists.find(a => a.id === targetId) || this.state.artists[0];
+    if (artistId) {
+      return this.state.artists.find(a => a.id === artistId) || null;
+    }
+    const currentId = this.getCurrentSignerId();
+    return this.state.artists.find(a => a.id === currentId) || this.state.artists[0];
   }
 
   isArtistSigned(artistId = null) {
@@ -597,10 +600,10 @@ class AgreementStore {
 
   isCurrentSignerLocked() {
     if (this.mode !== 'artist-sign') return false;
-    if (this.state.isArchivedInVault || this.state.status === 'fully_executed') return true;
+    if (this.state.status === 'fully_executed') return true;
     const currentId = this.getCurrentSignerId();
     const artist = this.getArtist(currentId);
-    // Signer is ONLY locked if they have officially submitted the agreement!
+    // Signer is ONLY locked if THIS specific artist has officially submitted their signature!
     return Boolean(artist && artist.signature && (artist.submitted === true || (artist.status === 'signed' && artist.signedAt)));
   }
 
@@ -705,9 +708,12 @@ class AgreementStore {
       }
     } catch (e) {}
 
-    // Instantly sync draft to Firebase RTDB & local server so remote always matches local signature state!
+    // Instantly sync draft to Firebase RTDB, Vault & local server so remote always matches local signature state!
     try {
       saveAgreementToFirebase(this.state);
+    } catch (e) {}
+    try {
+      updateVaultIfArchived(this.state);
     } catch (e) {}
     if (typeof window !== 'undefined' && window.location) {
       try {
@@ -913,6 +919,14 @@ class AgreementStore {
     }
 
     this.save({ syncInputs: false, rebuildTracks: false });
+    if (path.includes('signature')) {
+      try {
+        saveAgreementToFirebase(this.state);
+      } catch (e) {}
+      try {
+        updateVaultIfArchived(this.state);
+      } catch (e) {}
+    }
   }
 
   addTrack(track = null) {
