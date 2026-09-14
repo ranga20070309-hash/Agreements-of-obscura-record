@@ -463,16 +463,16 @@ class AgreementApp {
     });
 
     // Remove all extra collaborators button (keeps only 1 primary artist)
-    document.getElementById('btn-remove-all-extra')?.addEventListener('click', () => {
-      if (confirm('Remove all additional signing collaborators and keep only 1 Primary Artist?')) {
-        this.store.removeAllExtraArtists();
-        showToast('All additional collaborators removed. 1 Primary Artist retained.', 'info');
-      }
+    document.getElementById('btn-remove-all-extra')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.store.removeAllExtraArtists();
+      showToast('All additional collaborators removed. 1 Primary Artist retained.', 'info');
     });
   }
 
   // Render Additional Artists in Section 1
-  renderAdditionalArtists(state) {
+  renderAdditionalArtists(state, forceRebuild = false) {
     const container = document.getElementById('additional-artists-container');
     const badge = document.getElementById('artists-count-badge');
     const removeAllBtn = document.getElementById('btn-remove-all-extra');
@@ -497,14 +497,18 @@ class AgreementApp {
       removeAllBtn.style.display = totalArtists > 1 ? 'inline-flex' : 'none';
     }
 
-    // Never wipe focus while user is actively typing inside an additional artist input
-    const active = document.activeElement;
-    if (active && container.contains(active)) {
+    if (additionalArtists.length === 0) {
+      container.innerHTML = '';
       return;
     }
 
-    if (additionalArtists.length === 0) {
-      container.innerHTML = '';
+    // Only skip rebuild if user is actively typing in an input field AND the artist count has NOT changed
+    const active = document.activeElement;
+    const isTypingInside = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA') && container.contains(active);
+    const existingCards = container.querySelectorAll('.additional-artist-card').length;
+    const countChanged = additionalArtists.length !== existingCards;
+
+    if (isTypingInside && !countChanged && !forceRebuild) {
       return;
     }
 
@@ -548,8 +552,11 @@ class AgreementApp {
 
     // Bind remove buttons
     container.querySelectorAll('.btn-remove-artist').forEach(btn => {
-      btn.onclick = () => {
-        this.store.removeArtist(btn.dataset.artistId);
+      btn.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const artId = btn.dataset.artistId;
+        this.store.removeArtist(artId);
       };
     });
 
@@ -593,7 +600,7 @@ class AgreementApp {
     setVal('input-artist-date', state.artist.date);
 
     // Render any additional collaborators
-    this.renderAdditionalArtists(state);
+    this.renderAdditionalArtists(state, true);
 
     setVal('input-term-years', state.terms.termYears);
     setVal('input-renewal-years', state.terms.renewalYears);

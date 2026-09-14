@@ -697,8 +697,8 @@ class AgreementStore {
       alert('At least one primary artist is required.');
       return false;
     }
-    this.state.artists = this.state.artists.filter(a => a.id !== artistId);
-    // Keep state.artist in sync with new primary
+    this.state.artists = this.state.artists.filter(a => String(a.id) !== String(artistId));
+    // Keep state.artist in sync with primary
     if (this.state.artists[0]) {
       this.state.artist = {
         legalName: this.state.artists[0].legalName || '',
@@ -708,7 +708,12 @@ class AgreementStore {
         date: this.state.artists[0].date || this.state.createdAt
       };
     }
-    this.save({ syncInputs: true });
+    try {
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.removeItem(`obscura_draft_sig_${this.state.id}_${artistId}`);
+      }
+    } catch (e) {}
+    this.save({ syncInputs: true, rebuildTracks: false, forceRebuildTracks: false });
     return true;
   }
 
