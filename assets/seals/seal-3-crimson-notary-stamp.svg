@@ -8,87 +8,87 @@
 
   <style>
     .cr-text {
-      fill: #c92a2a;
+      fill: #d90429;
       font-family: 'Inter', -apple-system, sans-serif;
     }
   </style>
 
-  <g transform="rotate(-0.8 200 200)" opacity="0.94">
-    <circle cx="200" cy="200" r="188" fill="none" stroke="#c92a2a" stroke-width="2" stroke-dasharray="2 3" />
-    <circle cx="200" cy="200" r="182" fill="none" stroke="#c92a2a" stroke-width="3.5" />
-    <circle cx="200" cy="200" r="176" fill="none" stroke="#c92a2a" stroke-width="1.2" />
-    <circle cx="200" cy="200" r="147" fill="none" stroke="#c92a2a" stroke-width="1.5" />
-    <circle cx="200" cy="200" r="143" fill="none" stroke="#c92a2a" stroke-width="2" />
-    <circle cx="200" cy="200" r="110" fill="none" stroke="#c92a2a" stroke-width="2.2" />
+  <g transform="rotate(-0.8 200 200)" opacity="1.0">
+    <circle cx="200" cy="200" r="188" fill="none" stroke="#d90429" stroke-width="2.4" stroke-dasharray="2 3" />
+    <circle cx="200" cy="200" r="182" fill="none" stroke="#d90429" stroke-width="4.0" />
+    <circle cx="200" cy="200" r="176" fill="none" stroke="#d90429" stroke-width="1.8" />
+    <circle cx="200" cy="200" r="147" fill="none" stroke="#d90429" stroke-width="1.8" />
+    <circle cx="200" cy="200" r="143" fill="none" stroke="#d90429" stroke-width="2.5" />
+    <circle cx="200" cy="200" r="110" fill="none" stroke="#d90429" stroke-width="2.6" />
 
     <!-- TOP RAYS -->
-    <g stroke="#c92a2a" opacity="0.8">
-      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2" />
-      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1" transform="rotate(4.5 200 200)" />
-      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2" transform="rotate(9 200 200)" />
-      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1" transform="rotate(13.5 200 200)" />
-      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2" transform="rotate(18 200 200)" />
-      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1" transform="rotate(22.5 200 200)" />
-      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2" transform="rotate(27 200 200)" />
-      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1" transform="rotate(31.5 200 200)" />
-      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2" transform="rotate(36 200 200)" />
-      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1" transform="rotate(40.5 200 200)" />
-      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2" transform="rotate(45 200 200)" />
-      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1" transform="rotate(49.5 200 200)" />
-      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2" transform="rotate(54 200 200)" />
-      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1" transform="rotate(58.5 200 200)" />
-      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2" transform="rotate(63 200 200)" />
+    <g stroke="#d90429" opacity="0.92">
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2.2" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.2" transform="rotate(4.5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2.2" transform="rotate(9 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.2" transform="rotate(13.5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2.2" transform="rotate(18 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.2" transform="rotate(22.5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2.2" transform="rotate(27 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.2" transform="rotate(31.5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2.2" transform="rotate(36 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.2" transform="rotate(40.5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2.2" transform="rotate(45 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.2" transform="rotate(49.5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2.2" transform="rotate(54 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.2" transform="rotate(58.5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2.2" transform="rotate(63 200 200)" />
 
       <!-- Left -->
-      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1" transform="rotate(-4.5 200 200)" />
-      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2" transform="rotate(-9 200 200)" />
-      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1" transform="rotate(-13.5 200 200)" />
-      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2" transform="rotate(-18 200 200)" />
-      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1" transform="rotate(-22.5 200 200)" />
-      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2" transform="rotate(-27 200 200)" />
-      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1" transform="rotate(-31.5 200 200)" />
-      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2" transform="rotate(-36 200 200)" />
-      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1" transform="rotate(-40.5 200 200)" />
-      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2" transform="rotate(-45 200 200)" />
-      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1" transform="rotate(-49.5 200 200)" />
-      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2" transform="rotate(-54 200 200)" />
-      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1" transform="rotate(-58.5 200 200)" />
-      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2" transform="rotate(-63 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.2" transform="rotate(-4.5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2.2" transform="rotate(-9 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.2" transform="rotate(-13.5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2.2" transform="rotate(-18 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.2" transform="rotate(-22.5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2.2" transform="rotate(-27 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.2" transform="rotate(-31.5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2.2" transform="rotate(-36 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.2" transform="rotate(-40.5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2.2" transform="rotate(-45 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.2" transform="rotate(-49.5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2.2" transform="rotate(-54 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="1.2" transform="rotate(-58.5 200 200)" />
+      <line x1="200" y1="168" x2="200" y2="114" stroke-width="2.2" transform="rotate(-63 200 200)" />
     </g>
 
     <!-- BOTTOM RAYS -->
-    <g stroke="#c92a2a" opacity="0.8">
-      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2" />
-      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1" transform="rotate(4.5 200 200)" />
-      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2" transform="rotate(9 200 200)" />
-      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1" transform="rotate(13.5 200 200)" />
-      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2" transform="rotate(18 200 200)" />
-      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1" transform="rotate(22.5 200 200)" />
-      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2" transform="rotate(27 200 200)" />
-      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1" transform="rotate(31.5 200 200)" />
-      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2" transform="rotate(36 200 200)" />
-      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1" transform="rotate(40.5 200 200)" />
-      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2" transform="rotate(45 200 200)" />
-      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1" transform="rotate(49.5 200 200)" />
-      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2" transform="rotate(54 200 200)" />
-      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1" transform="rotate(58.5 200 200)" />
-      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2" transform="rotate(63 200 200)" />
+    <g stroke="#d90429" opacity="0.92">
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2.2" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1.2" transform="rotate(4.5 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2.2" transform="rotate(9 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1.2" transform="rotate(13.5 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2.2" transform="rotate(18 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1.2" transform="rotate(22.5 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2.2" transform="rotate(27 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1.2" transform="rotate(31.5 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2.2" transform="rotate(36 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1.2" transform="rotate(40.5 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2.2" transform="rotate(45 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1.2" transform="rotate(49.5 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2.2" transform="rotate(54 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1.2" transform="rotate(58.5 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2.2" transform="rotate(63 200 200)" />
 
       <!-- Left -->
-      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1" transform="rotate(-4.5 200 200)" />
-      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2" transform="rotate(-9 200 200)" />
-      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1" transform="rotate(-13.5 200 200)" />
-      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2" transform="rotate(-18 200 200)" />
-      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1" transform="rotate(-22.5 200 200)" />
-      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2" transform="rotate(-27 200 200)" />
-      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1" transform="rotate(-31.5 200 200)" />
-      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2" transform="rotate(-36 200 200)" />
-      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1" transform="rotate(-40.5 200 200)" />
-      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2" transform="rotate(-45 200 200)" />
-      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1" transform="rotate(-49.5 200 200)" />
-      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2" transform="rotate(-54 200 200)" />
-      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1" transform="rotate(-58.5 200 200)" />
-      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2" transform="rotate(-63 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1.2" transform="rotate(-4.5 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2.2" transform="rotate(-9 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1.2" transform="rotate(-13.5 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2.2" transform="rotate(-18 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1.2" transform="rotate(-22.5 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2.2" transform="rotate(-27 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1.2" transform="rotate(-31.5 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2.2" transform="rotate(-36 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1.2" transform="rotate(-40.5 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2.2" transform="rotate(-45 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1.2" transform="rotate(-49.5 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2.2" transform="rotate(-54 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="1.2" transform="rotate(-58.5 200 200)" />
+      <line x1="200" y1="233" x2="200" y2="286" stroke-width="2.2" transform="rotate(-63 200 200)" />
     </g>
 
     <!-- Circular Track Inscriptions (EST. 2024 - 2027 & LK) -->
@@ -116,20 +116,20 @@
       </textPath>
     </text>
 
-    <polygon points="30,200 35,195 40,200 35,205" fill="#c92a2a" />
-    <polygon points="370,200 365,195 360,200 365,205" fill="#c92a2a" />
+    <polygon points="30,200 35,195 40,200 35,205" fill="#d90429" />
+    <polygon points="370,200 365,195 360,200 365,205" fill="#d90429" />
 
     <!-- Center Typography (NO LK in Center) -->
     <g text-anchor="middle">
-      <text x="200" y="193" fill="#c92a2a" font-family="'Inter', -apple-system, sans-serif" font-size="22" font-weight="900" letter-spacing="1.8">
+      <text x="200" y="193" fill="#d90429" font-family="'Inter', -apple-system, sans-serif" font-size="22" font-weight="900" letter-spacing="1.8">
         OBSCURA REC
       </text>
-      <text x="200" y="215" fill="#c92a2a" font-family="'Inter', -apple-system, sans-serif" font-size="15" font-weight="700" letter-spacing="1.2">
+      <text x="200" y="215" fill="#d90429" font-family="'Inter', -apple-system, sans-serif" font-size="15" font-weight="700" letter-spacing="1.2">
         Legal Affairs
       </text>
 
-      <line x1="108" y1="223" x2="292" y2="223" stroke="#c92a2a" stroke-width="2.2" />
-      <line x1="130" y1="227" x2="270" y2="227" stroke="#c92a2a" stroke-width="1.2" />
+      <line x1="108" y1="223" x2="292" y2="223" stroke="#d90429" stroke-width="2.4" />
+      <line x1="130" y1="227" x2="270" y2="227" stroke="#d90429" stroke-width="1.4" />
     </g>
 
   </g>

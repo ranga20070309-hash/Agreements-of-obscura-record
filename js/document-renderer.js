@@ -449,11 +449,7 @@ export function renderDocument(state, container, onSignClick, mode = 'label') {
             top: ${state.label.sealY !== undefined ? state.label.sealY : 560}px;
             width: ${state.label.sealSize || 135}px;
             height: ${state.label.sealSize || 135}px;
-            opacity: ${(state.label.sealOpacity !== undefined ? state.label.sealOpacity : 100) / 100};
-            transform: rotate(${state.label.sealRotation !== undefined ? state.label.sealRotation : -2}deg);
-            z-index: 9999;
-          "
-        >
+
           <img src="./assets/seals/${escapeHtml(state.label.sealFile)}" alt="Official Corporate Seal" draggable="false" />
           <div class="seal-drag-overlay">
             <div class="seal-drag-badge no-print">✋ Drag</div>

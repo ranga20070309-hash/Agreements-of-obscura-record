@@ -333,7 +333,7 @@ export class SealManager {
     const sealEl = document.getElementById('draggable-corporate-seal');
     if (sealEl) {
       const sz = this.store.state.label.sealSize || 135;
-      const op = (this.store.state.label.sealOpacity !== undefined ? this.store.state.label.sealOpacity : 90) / 100;
+      const op = (this.store.state.label.sealOpacity !== undefined ? this.store.state.label.sealOpacity : 100) / 100;
       const rot = this.store.state.label.sealRotation || 0;
       const x = this.store.state.label.sealX !== undefined ? this.store.state.label.sealX : 430;
       const y = this.store.state.label.sealY !== undefined ? this.store.state.label.sealY : 560;
@@ -377,7 +377,7 @@ export class SealManager {
         if (activeThumb) activeThumb.src = `./assets/seals/${file}`;
 
         const sz = state.label.sealSize || 135;
-        const op = state.label.sealOpacity !== undefined ? state.label.sealOpacity : 90;
+        const op = state.label.sealOpacity !== undefined ? state.label.sealOpacity : 100;
         const rot = state.label.sealRotation !== undefined ? state.label.sealRotation : -2;
 
         if (sizeSlider) sizeSlider.value = sz;
