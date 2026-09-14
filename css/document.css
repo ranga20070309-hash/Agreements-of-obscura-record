@@ -39,7 +39,7 @@
   min-height: 297mm;
   max-height: 297mm;
   background-color: #ffffff;
-  color: #000000;
+  color: #1a202c;
   box-shadow: 
     0 25px 60px -15px rgba(0, 0, 0, 0.75), 
     0 0 0 1px rgba(255, 255, 255, 0.1),
@@ -304,6 +304,12 @@
 }
 
 /* ================= PAGE 2 & SIGNATURES CONTENT ================= */
+.page-1-content,
+.page-2-content {
+  color: #1a202c;
+  opacity: 0.90;
+}
+
 .page-2-content {
   padding: 38px 48px 18px;
   flex: 1;
@@ -712,8 +718,8 @@
   padding: 4px 8px !important;
   background: #ffffff !important;
   border-radius: 4px !important;
-  border: 1.5px solid #000000 !important;
-  border-bottom: 2px solid #000000 !important;
+  border: 1.5px solid rgba(26, 32, 44, 0.82) !important;
+  border-bottom: 2px solid rgba(26, 32, 44, 0.88) !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -756,7 +762,8 @@ body.artist-locked .doc-signature-box,
   object-fit: contain !important;
   display: block !important;
   margin: auto !important;
-  filter: contrast(1.1);
+  opacity: 0.88 !important;
+  filter: contrast(1.02);
 }
 
 /* ================= TYPED SIGNATURE ================= */
@@ -764,7 +771,8 @@ body.artist-locked .doc-signature-box,
 .doc-signature-box .rendered-typed-sig {
   font-size: 26px !important;
   line-height: 1.15 !important;
-  color: #000000 !important;
+  color: #1a202c !important;
+  opacity: 0.90 !important;
   text-align: center !important;
   user-select: none;
 }
@@ -1073,13 +1081,15 @@ body.artist-locked .doc-signature-box,
   max-height: 94px !important;
   padding: 6px 12px !important;
   border-radius: 5px !important;
-  border: 1.5px solid #000000 !important;
-  border-bottom: 2px solid #000000 !important;
+  border: 1.5px solid rgba(26, 32, 44, 0.82) !important;
+  border-bottom: 2px solid rgba(26, 32, 44, 0.88) !important;
 }
 
 .page-signatures .label-row .rendered-sig-img {
   max-height: 82px !important;
   max-width: 95% !important;
+  opacity: 0.88 !important;
+  filter: contrast(1.02);
 }
 
 .page-signatures .label-row .rendered-typed-sig {
@@ -1156,8 +1166,8 @@ body.artist-locked .doc-signature-box,
   max-height: 66px !important;
   padding: 5px 10px !important;
   border-radius: 4px !important;
-  border: 1.5px solid #000000 !important;
-  border-bottom: 2px solid #000000 !important;
+  border: 1.5px solid rgba(26, 32, 44, 0.82) !important;
+  border-bottom: 2px solid rgba(26, 32, 44, 0.88) !important;
 }
 
 .page-signatures .artist-row .rendered-sig-img {

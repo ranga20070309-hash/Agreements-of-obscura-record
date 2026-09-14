@@ -110,7 +110,7 @@
   }
 
   .draggable-corporate-seal {
-    z-index: 9999 !important;
+    z-index: 999999 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
