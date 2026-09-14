@@ -728,10 +728,10 @@ app.post('/api/send-artist-email', async (req, res) => {
 
   try {
     const info = await transporter.sendMail({
-      from: '"Obscura Rec LLC" <ocr.agreements@gmail.com>',
+      from: '"Obscura Rec Agreements" <ocr.agreements@gmail.com>',
       to: recipientEmail,
       replyTo: 'ocr.agreements@gmail.com',
-      subject: `[ACTION REQUIRED] Obscura Rec LLC: Agreement Ready for Signature - "${songTitle}" (${recipientGreetingName}) [Ref: ${state.id}]`,
+      subject: `[ACTION REQUIRED] Obscura Rec Agreements: Ready for Signature - "${songTitle}" (${recipientGreetingName}) [Ref: ${state.id}]`,
       html: htmlContent
     });
 
