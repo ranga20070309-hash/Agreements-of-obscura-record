@@ -159,6 +159,9 @@ export class SealManager {
         if (sizeVal) sizeVal.textContent = `${sz}px`;
         this.updateSealProp('size', sz);
       });
+      sizeSlider.addEventListener('change', () => {
+        this.persistSealState();
+      });
     }
 
     // Sidebar Opacity Slider
@@ -170,6 +173,9 @@ export class SealManager {
         if (opacityVal) opacityVal.textContent = `${op}%`;
         this.updateSealProp('opacity', op);
       });
+      opacitySlider.addEventListener('change', () => {
+        this.persistSealState();
+      });
     }
 
     // Sidebar Rotation Slider
@@ -180,6 +186,9 @@ export class SealManager {
         const deg = parseInt(e.target.value, 10);
         if (rotVal) rotVal.textContent = `${deg}°`;
         this.updateSealProp('rotation', deg);
+      });
+      rotSlider.addEventListener('change', () => {
+        this.persistSealState();
       });
     }
 
@@ -284,7 +293,7 @@ export class SealManager {
     this.store.state.label.sealApplied = true;
     this.store.state.label.sealFile = sealId;
     if (isFirstTime || !current.sealSize) this.store.state.label.sealSize = 135;
-    if (isFirstTime || current.sealOpacity === undefined) this.store.state.label.sealOpacity = 90;
+    if (isFirstTime || current.sealOpacity === undefined) this.store.state.label.sealOpacity = 100;
     if (isFirstTime || current.sealRotation === undefined) this.store.state.label.sealRotation = -2;
     if (isFirstTime || current.sealX === undefined) this.store.state.label.sealX = 430; // approx px from left on A4 page
     if (isFirstTime || current.sealY === undefined) this.store.state.label.sealY = 560; // approx px from top on A4 page
@@ -307,7 +316,7 @@ export class SealManager {
     this.store.state.label.sealY = 560;
     this.store.state.label.sealSize = 135;
     this.store.state.label.sealRotation = -2;
-    this.store.state.label.sealOpacity = 90;
+    this.store.state.label.sealOpacity = 100;
     this.store.save({ syncInputs: true });
     this.updateSidebarControls(this.store.state);
   }
@@ -337,8 +346,10 @@ export class SealManager {
       sealEl.style.transform = `rotate(${rot}deg)`;
       sealEl.style.zIndex = '9999';
     }
+  }
 
-    // Persist silently without rebuild
+  persistSealState() {
+    if (!this.store.state.label || !this.store.state.label.sealApplied) return;
     this.store.save({ syncInputs: false, rebuildTracks: false });
   }
 
@@ -463,6 +474,7 @@ export class SealManager {
         sealEl.classList.remove('is-dragging');
         document.removeEventListener('mousemove', onMouseMove);
         document.removeEventListener('mouseup', onMouseUp);
+        this.persistSealState();
       };
 
       document.addEventListener('mousemove', onMouseMove);
@@ -504,6 +516,7 @@ export class SealManager {
           sealEl.classList.remove('is-resizing');
           document.removeEventListener('mousemove', onMouseMove);
           document.removeEventListener('mouseup', onMouseUp);
+          this.persistSealState();
         };
 
         document.addEventListener('mousemove', onMouseMove);

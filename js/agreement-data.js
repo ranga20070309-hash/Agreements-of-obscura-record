@@ -38,7 +38,7 @@ export function getDefaultAgreementState() {
       sealApplied: false, // Default is NOT stamped/applied until manually picked
       sealFile: 'seal-1-bw-classic-stamp.svg',
       sealSize: 135,
-      sealOpacity: 90,
+      sealOpacity: 100,
       sealRotation: -2,
       sealX: 430,
       sealY: 560

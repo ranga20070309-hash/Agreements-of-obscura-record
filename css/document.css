@@ -628,7 +628,7 @@
   display: block;
   pointer-events: none;
   user-select: none;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.18));
+  filter: contrast(1.15) saturate(1.1) drop-shadow(0 2px 6px rgba(0, 0, 0, 0.22));
 }
 
 .seal-drag-overlay {
