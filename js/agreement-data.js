@@ -364,6 +364,19 @@ class AgreementStore {
       }
     }
 
+    // If in artist signing mode, check if the active signer has been submitted
+    if (this.mode === 'artist-sign') {
+      const currentId = this.getCurrentSignerId();
+      const currentArt = this.state.artists?.find(a => a.id === currentId);
+      if (currentArt && currentArt.signature && (currentArt.submitted === true || (currentArt.status === 'signed' && currentArt.signedAt))) {
+        if (this.linkStatus !== 'artist_already_signed' && this.linkStatus !== 'just_submitted') {
+          this.linkStatus = 'artist_already_signed';
+          this.invalidReason = `Your digital signature has already been securely submitted and recorded for Reference ID ${this.state.id}. This temporary signing link is now closed and expired.`;
+          changed = true;
+        }
+      }
+    }
+
     if (changed) {
       console.log('✅ [Live Sync] Agreement state updated with artist signatures:', this.state.id);
       if (this.mode === 'label') {
@@ -440,9 +453,29 @@ class AgreementStore {
           return;
         }
 
-        // Case 2: In artist mode, keep linkStatus as active so the document renders normally!
+        const normalized = this.normalizeArtistsState({ ...getDefaultAgreementState(), ...serverState });
+        this.state = normalized;
+
+        // Case 2: In artist mode, check if THIS specific artist has already submitted their signature!
+        if (mode === 'artist-sign') {
+          const signerId = params.get('signer') || normalized.artists?.[0]?.id || 'art-1';
+          const currentArtist = normalized.artists?.find(a => a.id === signerId) || normalized.artist;
+          const isSubmitted = Boolean(
+            currentArtist && 
+            currentArtist.signature && 
+            (currentArtist.submitted === true || (currentArtist.status === 'signed' && currentArtist.signedAt))
+          );
+
+          if (isSubmitted) {
+            this.linkStatus = 'artist_already_signed';
+            this.invalidReason = `Your digital signature has already been securely submitted and recorded for Reference ID ${id}. This temporary signing link is now closed and expired.`;
+            this.notify({ syncInputs: true, rebuildTracks: true, forceRebuildTracks: true });
+            return;
+          }
+        }
+
+        // Case 3: Link is active for signing
         this.linkStatus = 'active';
-        this.state = this.normalizeArtistsState({ ...getDefaultAgreementState(), ...serverState });
 
         // Restore local draft signature from sessionStorage if page was refreshed before submit
         if (mode === 'artist-sign') {

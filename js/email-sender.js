@@ -801,9 +801,10 @@ export class EmailSender {
       showToast('Your digital signature has been sealed and recorded!', 'success');
       this.closeArtistSubmitModal();
 
-      // Keep the page active, but the current signer is now locked!
-      // This displays the locked sealed banner and preserves normal document reading, PDF downloading, and printing!
-      this.store.notify();
+      // Transition smoothly to the locked confirmation box screen
+      setTimeout(() => {
+        this.store.setLinkStatus('artist_already_signed', 'Your digital signature has been securely recorded and your executed agreement has been delivered to Obscura Rec LLC.');
+      }, 700);
     } catch (err) {
       console.error('Submission error:', err);
       alert('Submission error: ' + err.message);
