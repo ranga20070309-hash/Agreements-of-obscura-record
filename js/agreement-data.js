@@ -5,7 +5,8 @@
 import {
   saveAgreementToFirebase,
   getAgreementFromFirebase,
-  listenToAgreement
+  listenToAgreement,
+  updateVaultIfArchived
 } from './firebase-config.js';
 
 const STORAGE_KEY = 'obscura_rec_agreement_data';
@@ -322,6 +323,13 @@ class AgreementStore {
           localArt.status = 'signed';
           localArt.submitted = true;
           changed = true;
+        } else if (!remoteHasSig && localHasSig && remoteArt.status === 'pending') {
+          // Remotely removed signature
+          localArt.signature = null;
+          localArt.status = 'pending';
+          localArt.submitted = false;
+          delete localArt.signedAt;
+          changed = true;
         }
       } else if (remoteArt.id) {
         this.state.artists.push({ ...remoteArt });
@@ -329,11 +337,24 @@ class AgreementStore {
       }
     });
 
+    // Also sync label signature if updated or removed remotely
+    if (remoteState.label) {
+      if (remoteState.label.signature && !this.state.label?.signature) {
+        if (this.state.label) this.state.label.signature = remoteState.label.signature;
+        changed = true;
+      } else if (!remoteState.label.signature && this.state.label?.signature) {
+        this.state.label.signature = null;
+        changed = true;
+      }
+    }
+
     // Synchronize primary artist
     if (this.state.artists?.[0]) {
-      if (JSON.stringify(this.state.artist?.signature) !== JSON.stringify(this.state.artists[0].signature)) {
+      if (JSON.stringify(this.state.artist?.signature) !== JSON.stringify(this.state.artists[0].signature) ||
+          this.state.artist?.status !== this.state.artists[0].status) {
         this.state.artist.signature = this.state.artists[0].signature;
         this.state.artist.status = this.state.artists[0].status;
+        this.state.artist.submitted = this.state.artists[0].submitted;
         changed = true;
       }
     }
@@ -646,6 +667,130 @@ class AgreementStore {
 
     // Do NOT lock or mark all_artists_signed here! That happens only on final submission!
     this.save({ syncInputs: false });
+  }
+
+  async removeArtistSignature(artistId) {
+    const targetId = artistId || this.getCurrentSignerId();
+    if (!Array.isArray(this.state.artists)) {
+      this.normalizeArtistsState(this.state);
+    }
+    const artist = this.state.artists.find(a => a.id === targetId);
+    const artName = artist?.legalName || artist?.stageName || 'Artist';
+
+    if (typeof window !== 'undefined' && window.confirm) {
+      if (!confirm(`Are you sure you want to remove the signature for ${artName}? This will reset their status to Pending and allow them to re-sign.`)) {
+        return false;
+      }
+    }
+
+    if (artist) {
+      artist.signature = null;
+      artist.status = 'pending';
+      artist.submitted = false;
+      delete artist.signedAt;
+    }
+
+    // Sync primary artist
+    if (this.state.artists[0]?.id === targetId) {
+      if (this.state.artist) {
+        this.state.artist.signature = null;
+        this.state.artist.status = 'pending';
+        this.state.artist.submitted = false;
+        delete this.state.artist.signedAt;
+      }
+    }
+
+    // Unlock signing state
+    this.state.isLockedForArtist = false;
+    if (this.state.status === 'fully_executed') {
+      this.state.status = 'draft';
+    }
+
+    // Save and notify locally
+    this.save({ syncInputs: false, rebuildTracks: false });
+
+    // Sync to Firebase RTDB
+    try {
+      await saveAgreementToFirebase(this.state);
+    } catch (e) {
+      console.warn('Firebase sync error on removeArtistSignature:', e);
+    }
+
+    // Sync to server
+    try {
+      await fetch('/api/agreements', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(this.state)
+      });
+    } catch (e) {
+      console.warn('Server sync error on removeArtistSignature:', e);
+    }
+
+    // Sync to Vault if archived
+    try {
+      await updateVaultIfArchived(this.state);
+    } catch (e) {
+      console.warn('Vault update error on removeArtistSignature:', e);
+    }
+
+    // Broadcast across tabs
+    try {
+      if (this.syncChannel) {
+        this.syncChannel.postMessage({
+          type: 'ARTIST_SIGNED',
+          id: this.state.id,
+          state: this.state
+        });
+      }
+    } catch (e) {}
+
+    return true;
+  }
+
+  async removeLabelSignature() {
+    if (typeof window !== 'undefined' && window.confirm) {
+      if (!confirm('Are you sure you want to remove the Record Label signature?')) {
+        return false;
+      }
+    }
+
+    if (this.state.label) {
+      this.state.label.signature = null;
+    }
+    if (this.state.status === 'fully_executed') {
+      this.state.status = 'draft';
+    }
+
+    this.save({ syncInputs: false, rebuildTracks: false });
+
+    try {
+      await saveAgreementToFirebase(this.state);
+    } catch (e) {}
+
+    try {
+      await fetch('/api/agreements', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(this.state)
+      });
+    } catch (e) {}
+
+    try {
+      await updateVaultIfArchived(this.state);
+    } catch (e) {}
+
+    try {
+      if (this.syncChannel) {
+        this.syncChannel.postMessage({
+          type: 'ARTIST_SIGNED',
+          id: this.state.id,
+          state: this.state
+        });
+      }
+    } catch (e) {}
+
+    return true;
   }
 
   generateArtistSigningUrl(artistId = null) {

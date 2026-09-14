@@ -59,6 +59,7 @@ class AgreementApp {
       const initialState = this.store.getState();
       this.syncInputsFromState(initialState);
       this.renderTracksList(initialState, true);
+      this.updateSidebarSignatures(initialState);
       this.renderDocumentView(initialState);
       this.updateStatusBadge();
     }
@@ -81,6 +82,9 @@ class AgreementApp {
       if (options.rebuildTracks || options.syncInputs) {
         this.renderTracksList(state, options.forceRebuildTracks || false);
       }
+
+      // Always update sidebar signature indicators and badges in Section 4!
+      this.updateSidebarSignatures(state);
 
       this.renderDocumentView(state);
       this.updateStatusBadge();
@@ -550,20 +554,38 @@ class AgreementApp {
     setVal('input-notice-days', state.terms.noticeDays);
 
     // Update sidebar signature indicators
+    this.updateSidebarSignatures(state);
+  }
+
+  // Real-Time Sidebar Signatures Station Updater (Section 4)
+  updateSidebarSignatures(state) {
+    if (!state) return;
+
+    // 1. Update Record Label Execution signature indicators
     const labelSigPill = document.getElementById('sidebar-label-sig-pill');
     const labelSigThumb = document.getElementById('sidebar-label-sig-thumb');
     const labelClearBtn = document.getElementById('btn-clear-label-sig');
-    if (state.label.signature) {
+    const labelSignBtn = document.getElementById('btn-sidebar-sign-label');
+
+    const hasLabelSig = Boolean(state.label && state.label.signature);
+
+    if (hasLabelSig) {
       if (labelSigPill) {
         labelSigPill.textContent = '✓ Signed';
         labelSigPill.className = 'sig-status-pill signed';
       }
-      if (labelClearBtn) labelClearBtn.style.display = 'inline-flex';
+      if (labelClearBtn) {
+        labelClearBtn.style.display = 'inline-flex';
+        labelClearBtn.innerHTML = '🗑️ Remove';
+      }
+      if (labelSignBtn) {
+        labelSignBtn.textContent = '✍️ Re-sign as Label';
+      }
       if (labelSigThumb) {
         labelSigThumb.style.display = 'flex';
         labelSigThumb.innerHTML = state.label.signature.type === 'type'
-          ? `<span style="font-family:'${state.label.signature.font}', cursive; font-size:20px; color:#000;">${state.label.signature.data}</span>`
-          : `<img src="${state.label.signature.data}" style="max-height:40px; max-width:100%;" />`;
+          ? `<span style="font-family:'${state.label.signature.font}', cursive; font-size:20px; color:#000;">${escapeHtml(state.label.signature.data)}</span>`
+          : `<img src="${state.label.signature.data}" style="max-height:40px; max-width:100%;" onerror="this.style.display='none';" />`;
       }
     } else {
       if (labelSigPill) {
@@ -572,9 +594,12 @@ class AgreementApp {
       }
       if (labelClearBtn) labelClearBtn.style.display = 'none';
       if (labelSigThumb) labelSigThumb.style.display = 'none';
+      if (labelSignBtn) {
+        labelSignBtn.textContent = '✍️ Sign as Label';
+      }
     }
 
-    // Update dynamic artist signature cards for all collaborators in Section 4
+    // 2. Update dynamic artist signature cards for all collaborators in Section 4
     const artistsSigContainer = document.getElementById('sidebar-artists-sig-container');
     if (artistsSigContainer) {
       const artists = (Array.isArray(state.artists) && state.artists.length > 0)
@@ -582,39 +607,39 @@ class AgreementApp {
         : [{ id: 'art-1', role: 'Recording Artist', ...(state.artist || {}) }];
 
       artistsSigContainer.innerHTML = artists.map((art, idx) => {
-        const hasSig = Boolean(art.signature);
+        const hasSig = Boolean(art.signature || art.status === 'signed' || art.submitted);
         const artName = (art.legalName && art.legalName.trim())
           ? `${art.legalName.trim()}${art.stageName ? ` (${art.stageName.trim()})` : ''}`
           : (art.stageName || `Artist ${idx + 1}`);
-        const artRole = art.role || (idx === 0 ? 'Primary Artist' : 'Collaborator');
+        const artRole = art.role || (idx === 0 ? 'Recording Artist' : 'Featured Artist / Collaborator');
 
         let thumbHtml = '';
-        if (hasSig) {
+        if (hasSig && art.signature) {
           thumbHtml = art.signature.type === 'type'
-            ? `<span style="font-family:'${art.signature.font}', cursive; font-size:18px; color:#000;">${art.signature.data}</span>`
-            : `<img src="${art.signature.data}" style="max-height:36px; max-width:100%;" />`;
+            ? `<span style="font-family:'${art.signature.font}', cursive; font-size:18px; color:#000;">${escapeHtml(art.signature.data)}</span>`
+            : `<img src="${art.signature.data}" style="max-height:36px; max-width:100%;" onerror="this.style.display='none';" />`;
         }
 
         return `
           <div class="signing-party-card" data-artist-id="${art.id}" style="margin-top:6px;">
             <div class="signing-party-header">
               <div class="signing-party-name" style="display:flex; flex-direction:column; gap:2px;">
-                <span>${idx + 1}. ${artName}</span>
-                <span style="font-size:10px; color:#9ca3af; font-weight:normal;">Role: ${artRole}</span>
+                <span>${idx + 1}. ${escapeHtml(artName)}</span>
+                <span style="font-size:10px; color:#9ca3af; font-weight:normal;">Role: ${escapeHtml(artRole)}</span>
               </div>
-              <span class="sig-status-pill ${hasSig ? 'signed' : 'pending'}">
+              <span class="sig-status-pill ${hasSig ? 'signed' : 'pending'}" style="font-weight:800; font-size:10.5px;">
                 ${hasSig ? '✓ Signed' : 'Pending'}
               </span>
             </div>
-            <div class="sig-preview-thumb" style="display:${hasSig ? 'flex' : 'none'};">
+            <div class="sig-preview-thumb" style="display:${(hasSig && thumbHtml) ? 'flex' : 'none'};">
               ${thumbHtml}
             </div>
             <div style="display:flex; gap:8px; margin-top:6px;">
-              <button type="button" class="btn btn-emerald btn-sign-artist-target" data-artist-id="${art.id}" style="flex:1; font-size:11.5px; padding:6px 10px;">
-                ✍️ Sign as ${(art.legalName && art.legalName.trim()) || art.stageName || `Artist ${idx + 1}`}
+              <button type="button" class="btn ${hasSig ? 'btn-secondary' : 'btn-emerald'} btn-sign-artist-target" data-artist-id="${art.id}" style="flex:1; font-size:11.5px; padding:6px 10px;">
+                ${hasSig ? '✍️ Re-sign as ' : '✍️ Sign as '} ${escapeHtml((art.legalName && art.legalName.trim()) || art.stageName || `Artist ${idx + 1}`)}
               </button>
-              <button type="button" class="btn btn-danger-ghost btn-clear-artist-target" data-artist-id="${art.id}" style="display:${hasSig ? 'inline-flex' : 'none'}; font-size:11px; padding:4px 8px;">
-                Clear
+              <button type="button" class="btn btn-danger-ghost btn-remove-artist-target" data-artist-id="${art.id}" style="display:${hasSig ? 'inline-flex' : 'none'}; font-size:11px; padding:6px 10px; background:rgba(239,68,68,0.12); color:#ef4444; border:1px solid rgba(239,68,68,0.3); border-radius:6px; cursor:pointer;" title="Remove signature so artist can re-sign">
+                🗑️ Remove
               </button>
             </div>
           </div>
@@ -627,9 +652,9 @@ class AgreementApp {
         };
       });
 
-      artistsSigContainer.querySelectorAll('.btn-clear-artist-target').forEach(btn => {
-        btn.onclick = () => {
-          this.sigEngine.removeSignature('artist', btn.dataset.artistId);
+      artistsSigContainer.querySelectorAll('.btn-remove-artist-target').forEach(btn => {
+        btn.onclick = async () => {
+          await this.store.removeArtistSignature(btn.dataset.artistId);
         };
       });
     }
@@ -1218,8 +1243,7 @@ class AgreementApp {
 
   onSignatureUpdated(party) {
     this.updateStatusBadge();
-    // Do NOT auto-popup submit modal! Artist can review and click "✓ Submit Signed Agreement" when ready.
-    // Do NOT auto-download PDF!
+    this.updateSidebarSignatures(this.store.getState());
   }
 
   // Template Manager (Save & Load)

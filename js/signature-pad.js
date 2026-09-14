@@ -388,19 +388,24 @@ export class SignatureEngine {
     }
   }
 
-  removeSignature(party, artistId = null) {
-    if (confirm(`Remove digital signature for ${party === 'label' ? 'Label' : 'Artist'}?`)) {
-      if (party === 'label') {
-        this.store.update('label.signature', null);
+  async removeSignature(party, artistId = null) {
+    if (party === 'label') {
+      if (typeof this.store.removeLabelSignature === 'function') {
+        await this.store.removeLabelSignature();
       } else {
-        const targetId = artistId || this.currentArtistId || 'art-1';
-        if (typeof this.store.applyArtistSignature === 'function') {
-          this.store.applyArtistSignature(targetId, null);
-        } else {
-          this.store.update('artist.signature', null);
-        }
+        this.store.update('label.signature', null);
+      }
+    } else {
+      const targetId = artistId || this.currentArtistId || 'art-1';
+      if (typeof this.store.removeArtistSignature === 'function') {
+        await this.store.removeArtistSignature(targetId);
+      } else if (typeof this.store.applyArtistSignature === 'function') {
+        this.store.applyArtistSignature(targetId, null);
+      } else {
+        this.store.update('artist.signature', null);
       }
     }
+    if (this.onApplied) this.onApplied(party, null, artistId);
   }
 }
 

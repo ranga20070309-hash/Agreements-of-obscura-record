@@ -241,7 +241,10 @@ export class EmailSender {
 
               let sendBtnHtml = '';
               if (isSigned) {
-                sendBtnHtml = `<button type="button" class="btn btn-emerald btn-sm btn-send-single-artist" data-artist-id="${a.id}" disabled style="white-space:nowrap; font-size:11px; padding:6px 12px; opacity:0.7;">✓ Signed</button>`;
+                sendBtnHtml = `
+                  <button type="button" class="btn btn-emerald btn-sm" disabled style="white-space:nowrap; font-size:11px; padding:6px 12px; opacity:0.75;">✓ Signed</button>
+                  <button type="button" class="btn btn-danger-ghost btn-sm btn-modal-remove-artist" data-artist-id="${a.id}" style="white-space:nowrap; font-size:11px; padding:6px 10px; background:rgba(239,68,68,0.12); color:#ef4444; border:1px solid rgba(239,68,68,0.3); border-radius:6px; cursor:pointer;" title="Remove signature to unlock signing link">🗑️ Remove</button>
+                `;
               } else if (cd > 0) {
                 sendBtnHtml = `<button type="button" class="btn btn-secondary btn-sm btn-send-single-artist" data-artist-id="${a.id}" disabled style="white-space:nowrap; font-size:11px; padding:6px 12px; background:#374151;">⏳ Wait ${cd}s</button>`;
               } else {
@@ -333,10 +336,13 @@ export class EmailSender {
           <div style="background:#11141e; padding:14px; border-radius:8px; border:1px solid #24293c;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
               <span style="font-size:12px; font-weight:700; color:#c9a050;">Primary Recording Artist</span>
-              ${isSigned 
-                ? '<span style="font-size:11px; font-weight:700; color:#10b981; background:rgba(16,185,129,0.12); padding:2px 8px; border-radius:10px;">✓ Signed</span>' 
-                : '<span style="font-size:11px; font-weight:700; color:#f59e0b; background:rgba(245,158,11,0.12); padding:2px 8px; border-radius:10px;">⏳ Pending</span>'
-              }
+              <div style="display:flex; align-items:center; gap:8px;">
+                ${isSigned 
+                  ? `<span style="font-size:11px; font-weight:700; color:#10b981; background:rgba(16,185,129,0.12); padding:2px 8px; border-radius:10px;">✓ Signed</span>
+                     <button type="button" class="btn btn-danger-ghost btn-sm btn-modal-remove-artist" data-artist-id="${primaryArtist.id}" style="font-size:11px; padding:2px 8px; background:rgba(239,68,68,0.12); color:#ef4444; border:1px solid rgba(239,68,68,0.3); border-radius:6px; cursor:pointer;" title="Remove signature to unlock signing link">🗑️ Remove</button>` 
+                  : '<span style="font-size:11px; font-weight:700; color:#f59e0b; background:rgba(245,158,11,0.12); padding:2px 8px; border-radius:10px;">⏳ Pending</span>'
+                }
+              </div>
             </div>
             <div class="form-row">
               <div class="form-group" style="flex:1;">
@@ -391,6 +397,14 @@ export class EmailSender {
           }
         }
       }
+
+      // Bind Remove Signature buttons inside email modal
+      container.querySelectorAll('.btn-modal-remove-artist').forEach(btn => {
+        btn.onclick = async () => {
+          const artId = btn.dataset.artistId;
+          await this.store.removeArtistSignature(artId);
+        };
+      });
 
       // Start ticker if any cooldown is running
       this.startCooldownTicker();
