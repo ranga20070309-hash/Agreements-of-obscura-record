@@ -145,22 +145,45 @@ export async function exportToPdf(state) {
       if (isSignaturesPage && state?.label?.sealApplied && sealDrawableImg) {
         try {
           const ctx = canvas.getContext('2d');
+          // CRITICAL: Reset any transform left on ctx by html2canvas so we draw in true canvas pixel space!
+          ctx.setTransform(1, 0, 0, 1, 0, 0);
+
           const pageWidth = pageEl.clientWidth || 794;
           const canvasScale = canvas.width / pageWidth;
 
-          const sealX = (state.label.sealX !== undefined ? state.label.sealX : 460) * canvasScale;
-          const sealY = (state.label.sealY !== undefined ? state.label.sealY : 290) * canvasScale;
-          const sealSize = (state.label.sealSize || 135) * canvasScale;
+          const sealDom = pageEl.querySelector('#draggable-corporate-seal');
+          let sealX = state.label.sealX !== undefined ? state.label.sealX : 460;
+          let sealY = state.label.sealY !== undefined ? state.label.sealY : 290;
+          let sealSize = state.label.sealSize || 135;
           const rotationDeg = state.label.sealRotation !== undefined ? state.label.sealRotation : -2;
           const opacity = (state.label.sealOpacity !== undefined ? state.label.sealOpacity : 100) / 100;
 
+          if (sealDom) {
+            const domLeft = parseFloat(sealDom.style.left);
+            const domTop = parseFloat(sealDom.style.top);
+            const domSize = parseFloat(sealDom.style.width);
+            if (!isNaN(domLeft)) sealX = domLeft;
+            else if (sealDom.offsetLeft > 0) sealX = sealDom.offsetLeft;
+
+            if (!isNaN(domTop)) sealY = domTop;
+            else if (sealDom.offsetTop > 0) sealY = sealDom.offsetTop;
+
+            if (!isNaN(domSize)) sealSize = domSize;
+            else if (sealDom.offsetWidth > 0) sealSize = sealDom.offsetWidth;
+          }
+
+          // Exact coordinates in high-res canvas space
+          const targetX = sealX * canvasScale;
+          const targetY = sealY * canvasScale;
+          const targetSize = sealSize * canvasScale;
+
           ctx.save();
           ctx.globalAlpha = opacity;
-          ctx.translate(sealX + sealSize / 2, sealY + sealSize / 2);
+          ctx.translate(targetX + targetSize / 2, targetY + targetSize / 2);
           ctx.rotate((rotationDeg * Math.PI) / 180);
-          ctx.drawImage(sealDrawableImg, -sealSize / 2, -sealSize / 2, sealSize, sealSize);
+          ctx.drawImage(sealDrawableImg, -targetSize / 2, -targetSize / 2, targetSize, targetSize);
           ctx.restore();
-          console.log(`✓ [PDF Canvas Engine] Corporate Seal directly stamped on page canvas (${sealX.toFixed(0)}, ${sealY.toFixed(0)}) size ${sealSize.toFixed(0)}px`);
+          console.log(`✓ [PDF Canvas Engine] Corporate Seal directly stamped on page canvas (${targetX.toFixed(0)}, ${targetY.toFixed(0)}) size ${targetSize.toFixed(0)}px (base: ${sealX}, ${sealY}, ${sealSize})`);
         } catch (stampErr) {
           console.warn('[PDF Canvas Engine] Canvas direct seal stamp warning:', stampErr);
         }

@@ -930,7 +930,7 @@ body.artist-locked .doc-signature-box,
 .exporting-pdf .draggable-corporate-seal {
   opacity: 0 !important;
   visibility: hidden !important;
-  display: none !important;
+  display: block !important;
 }
 
 .exporting-pdf .seal-drag-overlay,
