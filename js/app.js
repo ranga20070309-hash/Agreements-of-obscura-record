@@ -118,7 +118,7 @@ class AgreementApp {
     const titleEl = document.getElementById('invalid-screen-title');
     const refEl = document.getElementById('invalid-screen-ref');
     const descEl = document.getElementById('invalid-screen-desc');
-    const detailText = document.getElementById('invalid-detail-text');
+    const warningBox = document.getElementById('invalid-warning-box');
     const actions = document.querySelector('.invalid-actions');
 
     if (refEl) refEl.textContent = refId || 'OBS-AGR-UNKNOWN';
@@ -161,11 +161,12 @@ class AgreementApp {
       }
       if (titleEl) titleEl.textContent = 'Verifying Agreement Session...';
       if (descEl) descEl.textContent = 'Connecting to Obscura Rec LLC legal server to verify contract status...';
-      if (detailText) detailText.textContent = 'Please wait while we verify your digital signing session.';
+      if (warningBox) warningBox.style.display = 'none';
       if (actions) actions.style.display = 'none';
       return;
     }
 
+    if (warningBox) warningBox.style.display = 'flex';
     if (actions) actions.style.display = 'flex';
 
     if (status === 'just_submitted' || status === 'artist_already_signed') {
@@ -176,8 +177,10 @@ class AgreementApp {
         pillEl.textContent = 'AGREEMENT SIGNED & EXPIRED';
       }
       if (titleEl) titleEl.textContent = 'Agreement Digitally Executed & Delivered!';
-      if (descEl) descEl.textContent = reason || 'Your signature has been securely recorded and your executed agreement has been securely delivered to Obscura Rec LLC for counter-signature.';
-      if (detailText) detailText.textContent = 'This temporary signing link is now closed and terminated. No further changes can be made.';
+      if (descEl) descEl.textContent = reason || 'Your digital signature has been securely recorded and your executed agreement has been delivered to Obscura Rec LLC.';
+      if (warningBox) {
+        warningBox.innerHTML = '<span>⚠️</span> <span><strong>You cannot use this link to sign again.</strong> This signing session is closed.</span>';
+      }
     } else if (status === 'already_finalized') {
       if (iconWrap) iconWrap.className = 'invalid-icon-wrap vault';
       if (iconEl) iconEl.textContent = '🏛️';
@@ -186,18 +189,22 @@ class AgreementApp {
         pillEl.textContent = 'FINALIZED & ARCHIVED TO VAULT';
       }
       if (titleEl) titleEl.textContent = 'Agreement Fully Executed & Archived';
-      if (descEl) descEl.textContent = reason || `Agreement ${refId} has been fully counter-signed by Obscura Rec LLC and permanently stored in the Agreement Vault. The temporary signing link has been purged to optimize hosting storage.`;
-      if (detailText) detailText.textContent = 'Label managers can examine this contract and download the official PDF from the Agreement Vault on the main creator dashboard.';
+      if (descEl) descEl.textContent = reason || `Agreement ${refId} has been fully executed by both parties and archived in the Agreement Vault.`;
+      if (warningBox) {
+        warningBox.innerHTML = '<span>🔒</span> <span><strong>This agreement is sealed & archived.</strong> Signing link is no longer active.</span>';
+      }
     } else {
       if (iconWrap) iconWrap.className = 'invalid-icon-wrap';
       if (iconEl) iconEl.textContent = '🚫';
       if (pillEl) {
         pillEl.className = 'invalid-pill';
-        pillEl.textContent = 'URL INVALID / LINK EXPIRED';
+        pillEl.textContent = 'LINK EXPIRED / INVALID';
       }
-      if (titleEl) titleEl.textContent = 'Signing Link Expired or URL Invalid';
-      if (descEl) descEl.textContent = reason || `The agreement link for Reference ID ${refId} does not exist or has been permanently deleted from the server.`;
-      if (detailText) detailText.textContent = 'This link cannot be loaded. Please ensure the reference ID is correct or request a new agreement link from Obscura Rec LLC.';
+      if (titleEl) titleEl.textContent = 'Signing Link Expired or Invalid';
+      if (descEl) descEl.textContent = reason || `This agreement link does not exist or has been permanently purged from the server.`;
+      if (warningBox) {
+        warningBox.innerHTML = '<span>⚠️</span> <span><strong>You cannot use this link to sign.</strong> Please request a new link if needed.</span>';
+      }
     }
   }
 

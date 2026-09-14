@@ -281,15 +281,27 @@ class AgreementStore {
     const currentId = this.state?.id;
     if (!currentId) return;
 
+    // If agreement is fully executed, stop polling to save all resources
+    if (this.state.status === 'fully_executed') {
+      if (this.pollInterval) {
+        clearInterval(this.pollInterval);
+        this.pollInterval = null;
+      }
+      return;
+    }
+
     try {
-      // 1. Try Firebase first
-      const fbState = await getAgreementFromFirebase(currentId);
-      if (fbState && fbState.id === currentId) {
-        this.mergeIncomingState(fbState);
-        return;
+      // 1. If Firebase live listener is NOT active (e.g. connection dropped or SDK blocked),
+      // only then query Firebase as an emergency fallback
+      if (!this.unsubFirebase) {
+        const fbState = await getAgreementFromFirebase(currentId);
+        if (fbState && fbState.id === currentId) {
+          this.mergeIncomingState(fbState);
+          return;
+        }
       }
 
-      // 2. Fallback to local server API
+      // 2. Poll local Express server API (Zero Firebase cost/bandwidth)
       const res = await fetch(`/api/agreements/${encodeURIComponent(currentId)}`);
       if (res.ok) {
         const serverData = await res.json();

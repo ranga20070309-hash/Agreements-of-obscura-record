@@ -262,32 +262,33 @@
       </div>
       
       <p class="invalid-desc" id="invalid-screen-desc">
-        This temporary agreement link does not exist, has already been executed, or was permanently purged from the server to protect privacy and optimize storage quotas.
+        Your digital signature has been securely recorded and your executed agreement has been delivered to Obscura Rec LLC.
       </p>
 
-      <div class="invalid-details-list">
-        <div class="invalid-detail-item">
-          <span class="detail-dot"></span>
-          <span id="invalid-detail-text">The agreement session is no longer active.</span>
-        </div>
-        <div class="invalid-detail-item">
-          <span class="detail-dot"></span>
-          <span>If you are the artist and already submitted your signature, Obscura Rec LLC has safely received your agreement for counter-signature.</span>
-        </div>
-        <div class="invalid-detail-item">
-          <span class="detail-dot"></span>
-          <span>For support or assistance, please contact Obscura Rec LLC Management.</span>
-        </div>
+      <!-- Warning Box: Cannot Sign Again -->
+      <div class="invalid-warning-box" id="invalid-warning-box">
+        <span>⚠️</span>
+        <span><strong>You cannot use this link to sign again.</strong> This signing session is closed.</span>
+      </div>
+
+      <!-- Customer Support Box for Any Inquiries -->
+      <div class="invalid-support-box">
+        <div class="support-box-label">For any inquiries or assistance, please contact Customer Support:</div>
+        <a href="mailto:obscurallc.support@gmail.com" class="support-email-link" title="Click to email Customer Support">
+          <span>✉️</span>
+          <span>obscurallc.support@gmail.com</span>
+        </a>
+        <div class="support-subtext">Obscura Rec LLC • Artist & Client Support</div>
       </div>
 
       <div class="invalid-actions">
-        <button class="btn btn-outline-gold" id="btn-invalid-download-pdf" style="display:none; align-items:center; gap:8px; padding:12px 24px; font-weight:700;">
+        <button class="btn btn-outline-gold" id="btn-invalid-download-pdf" style="display:none; align-items:center; gap:8px; padding:10px 20px; font-weight:700;">
           <span>⬇️ Download Executed PDF</span>
         </button>
-        <a href="/" class="btn btn-gold" id="btn-invalid-return-home" style="text-decoration:none; display:inline-flex; align-items:center; gap:8px; padding:12px 24px; font-weight:700;">
+        <a href="/" class="btn btn-gold" id="btn-invalid-return-home" style="text-decoration:none; display:inline-flex; align-items:center; gap:8px; padding:10px 20px; font-weight:700;">
           <span>🏛️ Return to Agreement Creator</span>
         </a>
-        <div id="artist-safe-close-notice" style="display:none; text-align:center; color:#94a3b8; font-size:14px; padding:14px 24px; background:rgba(255,255,255,0.04); border-radius:8px; border:1px solid rgba(255,255,255,0.08); width:100%;">
+        <div id="artist-safe-close-notice" style="display:none; text-align:center; color:#94a3b8; font-size:12.5px; padding:10px 18px; background:rgba(255,255,255,0.04); border-radius:8px; border:1px solid rgba(255,255,255,0.08); width:100%;">
           🔒 <strong>You may safely close this browser window or tab now.</strong>
         </div>
       </div>

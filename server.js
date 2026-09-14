@@ -592,36 +592,10 @@ app.post('/api/send-artist-email', async (req, res) => {
     ? state.tracks[0].title.trim()
     : 'Music Release';
 
-  // 3. All Artists' Names on the Agreement
-  const allArtistNames = artistsList.map((a, idx) => {
-    const hasLegal = Boolean(a.legalName && a.legalName.trim());
-    const hasStage = Boolean(a.stageName && a.stageName.trim());
-    if (hasStage && hasLegal) {
-      return `${a.stageName.trim()} (${a.legalName.trim()})`;
-    } else if (hasStage) {
-      return a.stageName.trim();
-    } else if (hasLegal) {
-      return a.legalName.trim();
-    } else {
-      return idx === 0 ? 'Primary Artist' : `Artist ${idx + 1}`;
-    }
-  }).filter(Boolean).join(', ') || 'All Artists';
+  const trackCount = Array.isArray(state.tracks) ? state.tracks.length : 1;
+  const trackDisplay = trackCount > 1 ? `${songTitle} (${trackCount} Versions)` : songTitle;
 
-  const labelRep = state.label?.representative || 'Director / Founder';
-  
-  // Generate dynamic track list for email
-  const tracksHtml = (state.tracks || []).map((t, idx) => `
-    <tr>
-      <td style="padding: 8px 12px; border-bottom: 1px solid #232a3d; color: #ffffff; font-size: 13px;">
-        <strong>${idx + 1}. ${escapeHtml(t.title || 'Untitled Track')}</strong> ${escapeHtml(t.versionTag || '')} (${escapeHtml(t.year || '2026')})
-      </td>
-      <td style="padding: 8px 12px; border-bottom: 1px solid #232a3d; color: #c9a050; font-weight: bold; text-align: right; font-size: 13px;">
-        ${t.royaltyShare || 50}% Net Royalty
-      </td>
-    </tr>
-  `).join('');
-
-  // Luxury HTML Email Template
+  // Luxury Compact HTML Email Template
   const htmlContent = `
 <!DOCTYPE html>
 <html>
@@ -630,19 +604,19 @@ app.post('/api/send-artist-email', async (req, res) => {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body style="margin: 0; padding: 0; background-color: #080a0f; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
-  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #080a0f; padding: 40px 20px;">
+  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #080a0f; padding: 32px 16px;">
     <tr>
       <td align="center">
         <!-- Main Card Wrapper -->
-        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 620px; background-color: #0e111a; border: 1px solid #252b3d; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 580px; background-color: #0e111a; border: 1px solid #252b3d; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
           
           <!-- Header Banner -->
           <tr>
-            <td style="background-color: #07090e; padding: 24px 30px; border-bottom: 2px solid #c9a050;">
+            <td style="background-color: #07090e; padding: 20px 26px; border-bottom: 2px solid #c9a050;">
               <table width="100%" border="0" cellspacing="0" cellpadding="0">
                 <tr>
                   <td>
-                    <div style="font-size: 19px; font-weight: 800; letter-spacing: 1.5px; color: #ffffff;">
+                    <div style="font-size: 18px; font-weight: 800; letter-spacing: 1.5px; color: #ffffff;">
                       OBSCURA REC LLC
                     </div>
                     <div style="font-size: 11px; color: #c9a050; letter-spacing: 0.8px; text-transform: uppercase; margin-top: 3px;">
@@ -650,7 +624,7 @@ app.post('/api/send-artist-email', async (req, res) => {
                     </div>
                   </td>
                   <td align="right">
-                    <span style="display: inline-block; background: #1a202c; color: #c9a050; border: 1px solid #c9a050; padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 700; letter-spacing: 0.5px;">
+                    <span style="display: inline-block; background: #141824; color: #c9a050; border: 1px solid #c9a050; padding: 4px 10px; border-radius: 16px; font-size: 10.5px; font-weight: 700;">
                       ocr.agreements@gmail.com
                     </span>
                   </td>
@@ -661,37 +635,58 @@ app.post('/api/send-artist-email', async (req, res) => {
 
           <!-- Email Content Body -->
           <tr>
-            <td style="padding: 32px 30px; color: #d1d5db; font-size: 14px; line-height: 1.6;">
-              <div style="font-size: 16px; color: #ffffff; margin-bottom: 16px;">
+            <td style="padding: 26px 26px 22px 26px; color: #d1d5db; font-size: 14px; line-height: 1.6;">
+              <div style="font-size: 16px; color: #ffffff; margin-bottom: 12px;">
                 Dear <strong>${escapeHtml(recipientGreetingName)}</strong>,
               </div>
-              <p style="margin: 0 0 18px 0; color: #d1d5db; font-size: 14px;">
-                Obscura Rec LLC has prepared the official <strong>Act of Acceptance and Transfer of Objects</strong> agreement for the upcoming release of <strong>"${escapeHtml(songTitle)}"</strong>.
-              </p>
-              <p style="margin: 0 0 20px 0; color: #9ca3af; font-size: 13px;">
-                All terms have been prepared and locked by the record label. Please review the track allocation schedule below and apply your digital signature via the secure portal:
+              <p style="margin: 0 0 16px 0; color: #d1d5db; font-size: 13.5px;">
+                Obscura Rec LLC has prepared your official music release agreement for digital signature. All terms are prepared and locked for your review:
               </p>
 
-              <!-- Track Allocation Schedule Table -->
-              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #121622; border: 1px solid #232a3d; border-radius: 8px; margin-bottom: 24px;">
+              <!-- Compact Agreement Details Box -->
+              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #121622; border: 1px solid #232a3d; border-radius: 10px; overflow: hidden; margin: 18px 0 22px 0;">
                 <tr>
-                  <td colspan="2" style="background-color: #181d2c; padding: 10px 12px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #c9a050; border-bottom: 1px solid #232a3d;">
-                    DELIVERED SOUND RECORDINGS & ROYALTY SPLIT
+                  <td style="background-color: #181d2c; padding: 10px 14px; border-bottom: 1px solid #232a3d; font-size: 10.5px; font-weight: 800; color: #c9a050; letter-spacing: 1px; text-transform: uppercase;">
+                    AGREEMENT OVERVIEW
                   </td>
                 </tr>
-                ${tracksHtml}
                 <tr>
-                  <td colspan="2" style="padding: 10px 12px; font-size: 12px; color: #9ca3af; background-color: #0e121c;">
-                    • Term of Exclusive License: <strong style="color: #ffffff;">${state.terms?.termYears || 10} Years</strong> (30-day notice prior to renewal)
+                  <td style="padding: 12px 14px;">
+                    <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td style="padding: 6px 0; font-size: 12px; color: #9ca3af; width: 36%;">🎵 Track / Release:</td>
+                        <td style="padding: 6px 0; font-size: 13px; color: #ffffff; font-weight: 700;">${escapeHtml(trackDisplay)}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 6px 0; font-size: 12px; color: #9ca3af; border-top: 1px solid #1a202e;">👤 Artist / Signer:</td>
+                        <td style="padding: 6px 0; font-size: 13px; color: #ffffff; font-weight: 600; border-top: 1px solid #1a202e;">${escapeHtml(recipientGreetingName)}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 6px 0; font-size: 12px; color: #9ca3af; border-top: 1px solid #1a202e;">🏛️ Record Label:</td>
+                        <td style="padding: 6px 0; font-size: 13px; color: #ffffff; font-weight: 600; border-top: 1px solid #1a202e;">Obscura Rec LLC</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 6px 0; font-size: 12px; color: #9ca3af; border-top: 1px solid #1a202e;">🔑 Reference ID:</td>
+                        <td style="padding: 6px 0; font-size: 13px; color: #c9a050; font-family: monospace; font-weight: 700; border-top: 1px solid #1a202e;">${escapeHtml(state.id)}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 6px 0; font-size: 12px; color: #9ca3af; border-top: 1px solid #1a202e;">✍️ Action Required:</td>
+                        <td style="padding: 6px 0; font-size: 12px; border-top: 1px solid #1a202e;">
+                          <span style="display: inline-block; background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.35); padding: 3px 8px; border-radius: 4px; font-weight: 700;">
+                            Digital Signature Required
+                          </span>
+                        </td>
+                      </tr>
+                    </table>
                   </td>
                 </tr>
               </table>
 
               <!-- Big Gold Call to Action Button -->
-              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin: 28px 0 24px 0;">
+              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin: 22px 0 18px 0;">
                 <tr>
                   <td align="center">
-                    <a href="${signingUrl}" target="_blank" style="display: inline-block; background: #c9a050; background: linear-gradient(135deg, #dfb461 0%, #b38b38 100%); color: #000000; font-weight: 800; font-size: 15px; letter-spacing: 0.5px; text-decoration: none; padding: 14px 34px; border-radius: 30px; box-shadow: 0 6px 20px rgba(201,160,80,0.35);">
+                    <a href="${signingUrl}" target="_blank" style="display: inline-block; background: #c9a050; background: linear-gradient(135deg, #dfb461 0%, #b38b38 100%); color: #000000; font-weight: 800; font-size: 14.5px; letter-spacing: 0.5px; text-decoration: none; padding: 13px 32px; border-radius: 30px; box-shadow: 0 4px 18px rgba(201,160,80,0.35);">
                       ✍️ Review & Sign Agreement
                     </a>
                   </td>
@@ -708,12 +703,12 @@ app.post('/api/send-artist-email', async (req, res) => {
 
           <!-- Footer -->
           <tr>
-            <td style="background-color: #07090e; padding: 18px 30px; border-top: 1px solid #1a202c; color: #6b7280; font-size: 11.5px; line-height: 1.5;">
+            <td style="background-color: #07090e; padding: 16px 26px; border-top: 1px solid #1a202c; color: #6b7280; font-size: 11px; line-height: 1.5;">
               <table width="100%" border="0" cellspacing="0" cellpadding="0">
                 <tr>
                   <td>
                     Sent from <strong>Obscura Rec LLC Legal Department</strong><br>
-                    Official Legal & Rights Management Portal • Ref ID: <strong>${state.id}</strong>
+                    Official Portal • Ref ID: <strong>${state.id}</strong>
                   </td>
                   <td align="right" style="color: #4b5563;">
                     © 2026 Obscura Rec LLC<br>All rights reserved.

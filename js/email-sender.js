@@ -427,79 +427,77 @@ export class EmailSender {
       ? state.artists
       : (state.artist ? [state.artist] : []);
 
-    const allArtistNames = artistsList.map((a, idx) => {
-      const legal = a.legalName ? a.legalName.trim() : '';
-      const stage = a.stageName ? a.stageName.trim() : '';
-      if (stage && legal) {
-        return `${stage} (${legal})`;
-      } else if (stage) {
-        return stage;
-      } else if (legal) {
-        return legal;
-      } else {
-        return idx === 0 ? 'Primary Artist' : `Artist ${idx + 1}`;
-      }
-    }).filter(Boolean).join(', ') || 'All Artists';
-
     const songTitle = (state.tracks && state.tracks[0]?.title && state.tracks[0].title.trim())
       ? state.tracks[0].title.trim()
       : 'Music Release';
+
+    const trackCount = Array.isArray(state.tracks) ? state.tracks.length : 1;
+    const trackDisplay = trackCount > 1 ? `${songTitle} (${trackCount} Versions)` : songTitle;
 
     const primaryArtist = artistsList[0] || state.artist || {};
     const primaryDisplayName = (primaryArtist.legalName && primaryArtist.legalName.trim() && primaryArtist.stageName && primaryArtist.stageName.trim())
       ? `${primaryArtist.legalName.trim()} (${primaryArtist.stageName.trim()})`
       : ((primaryArtist.stageName && primaryArtist.stageName.trim()) || (primaryArtist.legalName && primaryArtist.legalName.trim()) || 'Artist');
 
-    const tracksList = (state.tracks || []).map((t, idx) => `
-      <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #1f2434; font-size:12px;">
-        <span style="color:#ffffff; font-weight:600;">${idx + 1}. ${escapeHtml(t.title || '[Track Name]')} ${escapeHtml(t.versionTag || '')} (${escapeHtml(t.year || '2026')})</span>
-        <span style="color:#c9a050; font-weight:700;">${t.royaltyShare || 50}% Net Royalty</span>
-      </div>
-    `).join('');
-
     container.innerHTML = `
-      <div style="background:#090b10; border:1px solid #c9a050; border-radius:10px; overflow:hidden; font-family:'Inter',sans-serif; max-width:560px; margin:0 auto; box-shadow:0 12px 30px rgba(0,0,0,0.6);">
+      <div style="background:#090b10; border:1px solid #c9a050; border-radius:12px; overflow:hidden; font-family:'Inter',sans-serif; max-width:560px; margin:0 auto; box-shadow:0 12px 30px rgba(0,0,0,0.6);">
         <!-- Email Header Banner -->
         <div style="background:#000000; padding:18px 24px; border-bottom:2px solid #c9a050; display:flex; align-items:center; justify-content:space-between;">
           <div style="display:flex; align-items:center; gap:12px;">
             <img src="./assets/ocr-logo.jpeg" alt="CR" style="width:38px; height:38px; border-radius:50%; border:1px solid #c9a050;" />
             <div>
               <div style="font-size:15px; font-weight:900; letter-spacing:1.5px; color:#ffffff;">OBSCURA REC LLC</div>
-              <div style="font-size:10.5px; color:#9ca3af;">ACT OF ACCEPTANCE AND TRANSFER OF OBJECTS</div>
+              <div style="font-size:10.5px; color:#c9a050; text-transform:uppercase;">ACT OF ACCEPTANCE AND TRANSFER OF OBJECTS</div>
             </div>
           </div>
-          <span style="font-size:11px; color:#c9a050; background:#141722; padding:3px 8px; border-radius:12px; border:1px solid #c9a050;">
+          <span style="font-size:11px; color:#c9a050; background:#141824; padding:3px 10px; border-radius:12px; border:1px solid #c9a050; font-weight:700;">
             ocr.agreements@gmail.com
           </span>
         </div>
 
         <!-- Email Body -->
         <div style="padding:22px; color:#d1d5db; line-height:1.6; font-size:13px;">
-          <p style="margin:0 0 12px 0; font-size:14px; color:#ffffff;">
+          <p style="margin:0 0 10px 0; font-size:14px; color:#ffffff;">
             Dear <strong>${escapeHtml(primaryDisplayName)}</strong>,
           </p>
-          <p style="margin:0 0 14px 0;">
-            Obscura Rec LLC has prepared the official <strong>Act of Acceptance and Transfer of Objects</strong> agreement for the upcoming release of <strong>"${escapeHtml(songTitle)}"</strong>.
+          <p style="margin:0 0 14px 0; font-size:13px; color:#d1d5db;">
+            Obscura Rec LLC has prepared your official music release agreement for digital signature. All terms are prepared and locked for your review:
           </p>
 
-          <!-- Tracks Schedule Box -->
-          <div style="background:#11141e; border:1px solid #24293c; border-radius:8px; padding:12px; margin:14px 0;">
-            <div style="font-size:10.5px; font-weight:800; text-transform:uppercase; letter-spacing:0.8px; color:#c9a050; margin-bottom:8px;">
-              DELIVERED SOUND RECORDINGS & ROYALTY ALLOCATION
+          <!-- Compact Agreement Details Box -->
+          <div style="background:#121622; border:1px solid #232a3d; border-radius:10px; overflow:hidden; margin:14px 0 18px 0;">
+            <div style="background:#181d2c; padding:8px 14px; border-bottom:1px solid #232a3d; font-size:10.5px; font-weight:800; color:#c9a050; letter-spacing:1px; text-transform:uppercase;">
+              AGREEMENT OVERVIEW
             </div>
-            ${tracksList}
-            <div style="margin-top:10px; font-size:11.5px; color:#9ca3af;">
-              • License Term: <strong>${state.terms?.termYears || 10} Years Exclusive</strong> (30-day renewal notice)
+            <div style="padding:10px 14px; display:flex; flex-direction:column; gap:8px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:6px; border-bottom:1px solid #1a202e; font-size:12px;">
+                <span style="color:#9ca3af;">🎵 Track / Release:</span>
+                <span style="color:#ffffff; font-weight:700;">${escapeHtml(trackDisplay)}</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:6px; border-bottom:1px solid #1a202e; font-size:12px;">
+                <span style="color:#9ca3af;">👤 Artist / Signer:</span>
+                <span style="color:#ffffff; font-weight:600;">${escapeHtml(primaryDisplayName)}</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:6px; border-bottom:1px solid #1a202e; font-size:12px;">
+                <span style="color:#9ca3af;">🏛️ Record Label:</span>
+                <span style="color:#ffffff; font-weight:600;">Obscura Rec LLC</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:6px; border-bottom:1px solid #1a202e; font-size:12px;">
+                <span style="color:#9ca3af;">🔑 Reference ID:</span>
+                <span style="color:#c9a050; font-family:monospace; font-weight:700;">${escapeHtml(state.id)}</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px;">
+                <span style="color:#9ca3af;">✍️ Action Required:</span>
+                <span style="background:rgba(245,158,11,0.15); color:#f59e0b; border:1px solid rgba(245,158,11,0.35); padding:2px 8px; border-radius:4px; font-weight:700; font-size:11px;">
+                  Digital Signature Required
+                </span>
+              </div>
             </div>
           </div>
 
-          <p style="margin:0 0 16px 0; font-size:12px; color:#9ca3af;">
-            Please click the button below to review your contract and apply your digital signature. All terms are locked for your review.
-          </p>
-
           <!-- Golden Call-to-Action Button -->
           <div style="text-align:center; margin:20px 0 14px;">
-            <span style="display:inline-block; background:linear-gradient(135deg, #c9a050 0%, #b38b38 100%); color:#000000; font-weight:800; font-size:13.5px; letter-spacing:0.5px; text-decoration:none; padding:12px 28px; border-radius:30px; box-shadow:0 4px 15px rgba(201,160,80,0.35);">
+            <span style="display:inline-block; background:linear-gradient(135deg, #dfb461 0%, #b38b38 100%); color:#000000; font-weight:800; font-size:14px; letter-spacing:0.5px; text-decoration:none; padding:12px 30px; border-radius:30px; box-shadow:0 4px 16px rgba(201,160,80,0.35);">
               ✍️ Review & Sign Agreement
             </span>
           </div>
