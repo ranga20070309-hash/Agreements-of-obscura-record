@@ -335,6 +335,7 @@ export class SealManager {
       sealEl.style.top = `${y}px`;
       sealEl.style.opacity = op;
       sealEl.style.transform = `rotate(${rot}deg)`;
+      sealEl.style.zIndex = '9999';
     }
 
     // Persist silently without rebuild
