@@ -42,6 +42,14 @@ export function getAuthInstance() {
         window.firebase.initializeApp(firebaseConfig);
       }
       auth = window.firebase.auth();
+      // Enforce SESSION persistence so credentials are NEVER saved permanently across browser sessions
+      try {
+        if (window.firebase.auth.Auth && window.firebase.auth.Auth.Persistence) {
+          auth.setPersistence(window.firebase.auth.Auth.Persistence.SESSION);
+        }
+      } catch (pErr) {
+        console.warn('Session persistence error:', pErr);
+      }
       return auth;
     }
   } catch (err) {
@@ -53,6 +61,13 @@ export function getAuthInstance() {
 export async function loginAdmin(email, password) {
   const authInstance = getAuthInstance();
   if (!authInstance) throw new Error('Firebase Authentication is not available.');
+  try {
+    if (window.firebase && window.firebase.auth && window.firebase.auth.Auth && window.firebase.auth.Auth.Persistence) {
+      await authInstance.setPersistence(window.firebase.auth.Auth.Persistence.SESSION);
+    }
+  } catch (pErr) {
+    console.warn('Could not set SESSION persistence:', pErr);
+  }
   return await authInstance.signInWithEmailAndPassword(email, password);
 }
 

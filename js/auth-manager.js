@@ -40,11 +40,23 @@ export class AuthManager {
       return;
     }
 
+    // Check if this browser tab has an active validated session
+    const hasActiveSession = typeof sessionStorage !== 'undefined' && sessionStorage.getItem('obscura_admin_session_active') === 'true';
+
+    if (!hasActiveSession) {
+      // Fresh visit or reopened tab: purge any persistent local credentials immediately
+      try {
+        logoutAdmin().catch(() => {});
+      } catch (e) {}
+      this.onUserLoggedOut();
+    }
+
     // Bind event listeners
     this.bindEvents();
 
     const safetyTimer = setTimeout(() => {
-      if (!this.currentUser) {
+      const isSessionActive = typeof sessionStorage !== 'undefined' && sessionStorage.getItem('obscura_admin_session_active') === 'true';
+      if (!this.currentUser || !isSessionActive) {
         this.onUserLoggedOut();
       }
     }, 1200);
@@ -52,9 +64,14 @@ export class AuthManager {
     // Listen to Firebase Auth state
     onAdminAuthStateChanged((user) => {
       clearTimeout(safetyTimer);
-      if (user) {
+      const isSessionActive = typeof sessionStorage !== 'undefined' && sessionStorage.getItem('obscura_admin_session_active') === 'true';
+      if (user && isSessionActive) {
         this.onUserLoggedIn(user);
       } else {
+        if (user && !isSessionActive) {
+          // Stale local credentials detected without an active session in this tab: sign out
+          logoutAdmin().catch(() => {});
+        }
         this.onUserLoggedOut();
       }
     });
@@ -137,6 +154,9 @@ export class AuthManager {
 
     try {
       const userCredential = await loginAdmin(email, password);
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.setItem('obscura_admin_session_active', 'true');
+      }
       showToast(`Welcome back, ${userCredential.user.email}!`, 'success');
       this.onUserLoggedIn(userCredential.user);
     } catch (err) {
@@ -171,6 +191,9 @@ export class AuthManager {
     }
 
     try {
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.removeItem('obscura_admin_session_active');
+      }
       await logoutAdmin();
       showToast('Signed out successfully.', 'info');
       this.onUserLoggedOut();
