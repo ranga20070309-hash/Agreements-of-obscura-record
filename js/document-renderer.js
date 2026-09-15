@@ -630,6 +630,18 @@ export function renderDocument(state, container, onSignClick, mode = 'label') {
           </table>
         </div>
 
+        <!-- End of Audits Marker -->
+        <div class="audit-end-marker">
+          <span class="audit-end-line"></span>
+          <div class="audit-end-badge">
+            <span class="audit-end-dot"></span>
+            <span class="audit-end-label">END OF AUDITS</span>
+            <span class="audit-end-sep">•</span>
+            <span class="audit-end-status">FINISHED</span>
+          </div>
+          <span class="audit-end-line"></span>
+        </div>
+
         <!-- Legal Compliance Notice (Sri Lanka Electronic Transactions Act, No. 19 of 2006) -->
         <div class="classic-legal-notice">
           <strong>LEGAL NOTICE:</strong> Conclusive electronic execution record pursuant to the Electronic Transactions Act, No. 19 of 2006 (Sri Lanka). All electronic signatures and corporate seals applied herein carry full legal validity and admissibility.
