@@ -134,39 +134,37 @@ export function formatAuditTimestamp(raw) {
 export function getOrSynthesizeAuditTrail(state) {
   if (!state) return [];
 
-  // Check if explicit auditTrail exists and does not contain legacy synthetic dummy timestamps
-  if (Array.isArray(state.auditTrail) && state.auditTrail.length > 0) {
-    const hasLegacyDummy = state.auditTrail.some(e => e.timestamp && (e.timestamp.endsWith('T09:00:00Z') || e.timestamp.endsWith('T09:15:00Z')));
-    if (!hasLegacyDummy) {
-      return state.auditTrail.map(evt => ({
-        ...evt,
-        displayTime: formatAuditTimestamp(evt.timestamp || evt.displayTime)
-      }));
-    }
-  }
-
-  const events = [];
   const refId = state.id || 'OBS-AGR';
   const createdDate = state.createdAt || state.label?.date || new Date().toISOString();
 
-  // 1. Initial Creation Event (Always accurate opening / creation time)
-  events.push({
-    id: `EVT-${refId}-01`,
-    timestamp: createdDate,
-    displayTime: formatAuditTimestamp(createdDate),
-    type: 'CREATED',
-    title: 'Agreement Draft Initialized',
-    actor: 'Obscura Rec LLC Portal',
-    role: 'Originating System',
-    status: 'Initialized'
-  });
+  // Start with existing real events, ignoring any legacy hardcoded 09:00/09:15 presets
+  let events = [];
+  if (Array.isArray(state.auditTrail) && state.auditTrail.length > 0) {
+    events = state.auditTrail.filter(e => {
+      if (!e || !e.timestamp) return false;
+      const isLegacyDummy = e.timestamp.endsWith('T09:00:00Z') || e.timestamp.endsWith('T09:15:00Z');
+      return !isLegacyDummy;
+    }).map(e => ({ ...e }));
+  }
 
-  // 2. Terms & Objects Configured (ONLY when explicitly saved via Category 2)
-  if (state.termsSavedAt) {
+  // 1. Ensure Initial Creation Event is always present
+  if (!events.some(e => e.type === 'CREATED')) {
+    events.push({
+      id: `EVT-${refId}-01`,
+      timestamp: createdDate,
+      type: 'CREATED',
+      title: 'Agreement Draft Initialized',
+      actor: 'Obscura Rec LLC Portal',
+      role: 'Originating System',
+      status: 'Initialized'
+    });
+  }
+
+  // 2. If Category 2 terms are saved, ensure TERMS_CONFIGURED is present
+  if (state.termsSavedAt && !events.some(e => e.type === 'TERMS_CONFIGURED')) {
     events.push({
       id: `EVT-${refId}-02`,
       timestamp: state.termsSavedAt,
-      displayTime: formatAuditTimestamp(state.termsSavedAt),
       type: 'TERMS_CONFIGURED',
       title: 'Schedule & Royalty Terms Finalized',
       actor: state.label?.representative || 'Obscura Rec LLC',
@@ -175,13 +173,12 @@ export function getOrSynthesizeAuditTrail(state) {
     });
   }
 
-  // 3. Corporate Seal Applied (ONLY if applied)
-  if (state.label?.sealApplied && state.label?.sealFile) {
+  // 3. If corporate seal applied and not in auditTrail, ensure it is present
+  if (state.label?.sealApplied && state.label?.sealFile && !events.some(e => e.type === 'SEAL_APPLIED')) {
     const sealTime = state.label.sealAppliedAt || createdDate;
     events.push({
       id: `EVT-${refId}-03`,
       timestamp: sealTime,
-      displayTime: formatAuditTimestamp(sealTime),
       type: 'SEAL_APPLIED',
       title: 'Official Corporate Seal Placed',
       actor: state.label?.representative || 'Obscura Rec LLC',
@@ -193,13 +190,12 @@ export function getOrSynthesizeAuditTrail(state) {
   // 4. Artist Signatures (One by one)
   const artistsList = Array.isArray(state.artists) && state.artists.length > 0 ? state.artists : (state.artist ? [state.artist] : []);
   artistsList.forEach((artist, idx) => {
-    if (artist.signature) {
+    if (artist.signature && !events.some(e => e.type === 'ARTIST_SIGNED' && e.id === `EVT-${refId}-SIG-A${idx + 1}`)) {
       const sigTime = artist.signature.timestamp || artist.date || createdDate;
       const artName = artist.legalName || artist.stageName || `Artist #${idx + 1}`;
       events.push({
         id: `EVT-${refId}-SIG-A${idx + 1}`,
         timestamp: sigTime,
-        displayTime: formatAuditTimestamp(sigTime),
         type: 'ARTIST_SIGNED',
         title: 'Electronic Signature Placed',
         actor: `${artName}${artist.stageName && artist.stageName !== artName ? ` (${artist.stageName})` : ''}`,
@@ -210,13 +206,12 @@ export function getOrSynthesizeAuditTrail(state) {
   });
 
   // 5. Label Representative Signature
-  if (state.label?.signature) {
+  if (state.label?.signature && !events.some(e => e.type === 'LABEL_SIGNED')) {
     const labelSigTime = state.label.signature.timestamp || state.label.date || createdDate;
     const titleStr = state.label.representativeTitle || 'Director / Founder, Obscura Rec LLC';
     events.push({
       id: `EVT-${refId}-SIG-LABEL`,
       timestamp: labelSigTime,
-      displayTime: formatAuditTimestamp(labelSigTime),
       type: 'LABEL_SIGNED',
       title: 'Corporate Sign-off Executed',
       actor: `${state.label.representative || 'Rangana D Silva'}`,
@@ -226,12 +221,11 @@ export function getOrSynthesizeAuditTrail(state) {
   }
 
   // 6. Vault Finalization
-  if (state.isArchivedInVault || state.finalizedAt || state.savedToVaultAt) {
+  if ((state.isArchivedInVault || state.finalizedAt || state.savedToVaultAt) && !events.some(e => e.type === 'FINALIZED')) {
     const finTime = state.finalizedAt || state.savedToVaultAt || createdDate;
     events.push({
       id: `EVT-${refId}-VAULT`,
       timestamp: finTime,
-      displayTime: formatAuditTimestamp(finTime),
       type: 'FINALIZED',
       title: 'Agreement Archived & Vault Locked',
       actor: 'Obscura Rec LLC Cloud Vault',
@@ -240,7 +234,17 @@ export function getOrSynthesizeAuditTrail(state) {
     });
   }
 
-  return events;
+  // Chronologically sort all events by timestamp
+  events.sort((a, b) => {
+    const timeA = new Date(a.timestamp).getTime() || 0;
+    const timeB = new Date(b.timestamp).getTime() || 0;
+    return timeA - timeB;
+  });
+
+  return events.map(evt => ({
+    ...evt,
+    displayTime: formatAuditTimestamp(evt.timestamp || evt.displayTime)
+  }));
 }
 
 export function sanitizeStateForNewAgreement(data) {
@@ -1288,7 +1292,23 @@ class AgreementStore {
 
   saveCategoryTerms() {
     this.state.termsSavedAt = new Date().toISOString();
-    this.save({ syncInputs: false });
+    if (!Array.isArray(this.state.auditTrail)) this.state.auditTrail = [];
+    const existingIdx = this.state.auditTrail.findIndex(e => e.type === 'TERMS_CONFIGURED');
+    const evt = {
+      id: `EVT-${this.state.id || 'OBS-AGR'}-02`,
+      timestamp: this.state.termsSavedAt,
+      type: 'TERMS_CONFIGURED',
+      title: 'Schedule & Royalty Terms Finalized',
+      actor: this.state.label?.representative || 'Obscura Rec LLC',
+      role: 'Record Label',
+      status: 'Configured'
+    };
+    if (existingIdx >= 0) {
+      this.state.auditTrail[existingIdx] = evt;
+    } else {
+      this.state.auditTrail.push(evt);
+    }
+    this.save({ syncInputs: false, rebuildTracks: false });
     return this.state.termsSavedAt;
   }
 

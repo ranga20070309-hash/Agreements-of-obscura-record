@@ -585,7 +585,7 @@ export function renderDocument(state, container, onSignClick, mode = 'label') {
             </div>
             <div class="summary-item">
               <span class="s-label">Corporate Seal:</span>
-              <span class="s-val ${state.label?.sealApplied ? 'seal-status-sealed' : ''}">${state.label?.sealApplied ? `Sealed (${escapeHtml(state.label.sealFile || 'Official Seal')})` : 'Unsealed'}</span>
+              <span class="s-val ${state.label?.sealApplied ? 'seal-status-sealed' : ''}">${state.label?.sealApplied ? 'Sealed' : 'Unsealed'}</span>
             </div>
           </div>
         </div>
