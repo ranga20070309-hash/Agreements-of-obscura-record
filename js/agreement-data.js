@@ -110,10 +110,30 @@ export function getDefaultAgreementState() {
  * Generates or retrieves the complete chronological Digital Audit Trail
  * Synthesizes past timestamps gracefully if older agreement records lack explicit logs
  */
+export function formatAuditTimestamp(raw) {
+  if (!raw) return '-';
+  try {
+    const d = new Date(raw);
+    if (isNaN(d.getTime())) return String(raw).replace('T', ' ').substring(0, 19) + ' UTC';
+    const yr = d.getUTCFullYear();
+    const mo = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const da = String(d.getUTCDate()).padStart(2, '0');
+    const hr = String(d.getUTCHours()).padStart(2, '0');
+    const mi = String(d.getUTCMinutes()).padStart(2, '0');
+    const se = String(d.getUTCSeconds()).padStart(2, '0');
+    return `${yr}-${mo}-${da} ${hr}:${mi}:${se} UTC`;
+  } catch (e) {
+    return String(raw);
+  }
+}
+
 export function getOrSynthesizeAuditTrail(state) {
   if (!state) return [];
   if (Array.isArray(state.auditTrail) && state.auditTrail.length > 0) {
-    return state.auditTrail;
+    return state.auditTrail.map(evt => ({
+      ...evt,
+      displayTime: formatAuditTimestamp(evt.timestamp || evt.displayTime)
+    }));
   }
 
   const events = [];
@@ -124,13 +144,13 @@ export function getOrSynthesizeAuditTrail(state) {
   events.push({
     id: `EVT-${refId}-01`,
     timestamp: `${createdDate}T09:00:00Z`,
-    displayTime: `${createdDate} 09:00:00 UTC`,
+    displayTime: formatAuditTimestamp(`${createdDate}T09:00:00Z`),
     type: 'CREATED',
-    title: 'Agreement Created & Security Baseline Initialized',
-    actor: 'Obscura Rec LLC (Contract Creator Portal)',
-    role: 'System Administrator / Contract Originator',
-    details: `Reference ID ${refId} initialized. Legal terms, parties & schedule structure created.`,
-    status: 'Verified',
+    title: 'Agreement Initialized',
+    actor: 'Obscura Rec LLC Portal',
+    role: 'Originating System',
+    details: `Reference ${refId} initialized`,
+    status: 'Initialized',
     badgeClass: 'badge-blue'
   });
 
@@ -139,13 +159,13 @@ export function getOrSynthesizeAuditTrail(state) {
   events.push({
     id: `EVT-${refId}-02`,
     timestamp: `${createdDate}T09:15:00Z`,
-    displayTime: `${createdDate} 09:15:00 UTC`,
+    displayTime: formatAuditTimestamp(`${createdDate}T09:15:00Z`),
     type: 'TERMS_CONFIGURED',
-    title: 'Schedule of Objects & Royalties Configured',
+    title: 'Schedule & Royalties Configured',
     actor: state.label?.representative || 'Obscura Rec LLC',
-    role: 'Authorized Record Label Entity',
-    details: `Configured ${trackCount} object(s), royalty split terms and 10-year renewal covenant.`,
-    status: 'Verified',
+    role: 'Record Label',
+    details: `${trackCount} Master recording(s) specified`,
+    status: 'Configured',
     badgeClass: 'badge-blue'
   });
 
@@ -155,13 +175,14 @@ export function getOrSynthesizeAuditTrail(state) {
     events.push({
       id: `EVT-${refId}-03`,
       timestamp: sealTime,
-      displayTime: sealTime.includes('T') ? sealTime.replace('T', ' ').substring(0, 19) + ' UTC' : `${sealTime} UTC`,
+      displayTime: formatAuditTimestamp(sealTime),
       type: 'SEAL_APPLIED',
-      title: 'Official Corporate Seal Digitally Placed',
+      title: 'Corporate Seal Stamped',
       actor: state.label?.representative || 'Obscura Rec LLC',
       role: 'Corporate Seal Authenticator',
-      details: `Official Corporate Seal (${state.label.sealFile}) stamped on Execution Sheet (Opacity: ${state.label.sealOpacity || 100}%).`,
-      status: 'Tamper-Evident Stamped',
+      details: `${state.label.sealFile} (${state.label.sealOpacity || 100}% ink)`,
+      status: 'Stamped',
+      hash: state.label.sealFile,
       badgeClass: 'badge-gold'
     });
   }
@@ -171,18 +192,18 @@ export function getOrSynthesizeAuditTrail(state) {
   artistsList.forEach((artist, idx) => {
     if (artist.signature) {
       const sigTime = artist.signature.timestamp || artist.date || createdDate;
-      const sigHash = artist.signature.hash || 'SEC-SIG-VERIFIED-' + Math.random().toString(36).substring(2, 10).toUpperCase();
-      const artName = artist.legalName || artist.stageName || `Executing Artist #${idx + 1}`;
+      const sigHash = artist.signature.hash || 'SEC-SIG-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+      const artName = artist.legalName || artist.stageName || `Artist #${idx + 1}`;
       events.push({
         id: `EVT-${refId}-SIG-A${idx + 1}`,
         timestamp: sigTime,
-        displayTime: sigTime.includes('T') ? sigTime.replace('T', ' ').substring(0, 19) + ' UTC' : `${sigTime} UTC`,
+        displayTime: formatAuditTimestamp(sigTime),
         type: 'ARTIST_SIGNED',
-        title: `Electronic Signature Verified: ${artName}`,
-        actor: `${artName} (${artist.stageName ? `Alias: ${artist.stageName}` : 'Primary Artist'})`,
-        role: artist.role || 'Executing Recording Artist / Contributor',
-        details: `Electronic signature placed. SHA-256 Hash: ${sigHash.substring(0, 26)}... • Email: ${artist.email || 'Direct Device Verification'}`,
-        status: 'Cryptographically Verified',
+        title: `Artist Signature: ${artName}`,
+        actor: `${artName}${artist.stageName && artist.stageName !== artName ? ` (${artist.stageName})` : ''}`,
+        role: artist.role || 'Recording Artist',
+        details: artist.email ? `Email: ${artist.email}` : 'Direct Device Verification',
+        status: '✓ Signed',
         hash: sigHash,
         badgeClass: 'badge-emerald'
       });
@@ -192,17 +213,17 @@ export function getOrSynthesizeAuditTrail(state) {
   // 5. Label Representative Signature
   if (state.label?.signature) {
     const labelSigTime = state.label.signature.timestamp || state.label.date || createdDate;
-    const labelSigHash = state.label.signature.hash || 'OBS-LABEL-SEALED-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+    const labelSigHash = state.label.signature.hash || 'OBS-LABEL-' + Math.random().toString(36).substring(2, 10).toUpperCase();
     events.push({
       id: `EVT-${refId}-SIG-LABEL`,
       timestamp: labelSigTime,
-      displayTime: labelSigTime.includes('T') ? labelSigTime.replace('T', ' ').substring(0, 19) + ' UTC' : `${labelSigTime} UTC`,
+      displayTime: formatAuditTimestamp(labelSigTime),
       type: 'LABEL_SIGNED',
-      title: 'Authorized Corporate Sign-off Executed',
-      actor: `${state.label.representative || 'Rangana D Silva'} (${state.label.representativeTitle || 'Director / Founder'})`,
-      role: 'Authorized Representative • Obscura Rec LLC',
-      details: `Official executive signature placed. Verification Hash: ${labelSigHash.substring(0, 26)}...`,
-      status: 'Cryptographically Verified',
+      title: 'Corporate Sign-off Executed',
+      actor: `${state.label.representative || 'Rangana D Silva'} (${state.label.representativeTitle || 'Director'})`,
+      role: 'Authorized Signatory',
+      details: 'Executive counter-signature placed',
+      status: '✓ Signed',
       hash: labelSigHash,
       badgeClass: 'badge-emerald'
     });
@@ -214,13 +235,14 @@ export function getOrSynthesizeAuditTrail(state) {
     events.push({
       id: `EVT-${refId}-VAULT`,
       timestamp: finTime,
-      displayTime: finTime.includes('T') ? finTime.replace('T', ' ').substring(0, 19) + ' UTC' : `${finTime} UTC`,
+      displayTime: formatAuditTimestamp(finTime),
       type: 'FINALIZED',
-      title: 'Agreement Sealed & Archived to Permanent Digital Vault',
-      actor: 'Obscura Rec LLC Cloud Vault (Firebase RTDB)',
-      role: 'Immutable Security Custodian',
-      details: 'All execution requirements satisfied. Contract permanently indexed, encrypted, and locked against tampering.',
-      status: 'Vault Secured',
+      title: 'Vault Archive Locked',
+      actor: 'Obscura Rec LLC Cloud Vault',
+      role: 'Security Custodian',
+      details: 'Cryptographically sealed & archived',
+      status: 'Secured',
+      hash: `VAULT: ${refId}`,
       badgeClass: 'badge-purple'
     });
   }
