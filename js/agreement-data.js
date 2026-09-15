@@ -13,7 +13,9 @@ const STORAGE_KEY = 'obscura_rec_agreement_data';
 const TEMPLATES_KEY = 'obscura_rec_saved_templates';
 
 export function getDefaultAgreementState() {
-  const today = new Date().toISOString().split('T')[0];
+  const now = new Date();
+  const today = now.toISOString().split('T')[0];
+  const nowIso = now.toISOString();
 
   const primaryArtist = {
     id: 'art-1',
@@ -28,9 +30,11 @@ export function getDefaultAgreementState() {
 
   return {
     id: 'OBS-AGR-' + Math.random().toString(36).substring(2, 8).toUpperCase(),
-    createdAt: today,
+    createdAt: nowIso,
+    termsSavedAt: null,
     label: {
       companyName: 'Obscura Rec LLC',
+      cooperatingCount: 1, // 1, 2, or 3
       representative: '', // when empty, displays [Your Legal Name]
       representativeTitle: 'Director / Founder, Obscura Rec LLC',
       signature: null,
@@ -108,7 +112,7 @@ export function getDefaultAgreementState() {
 
 /**
  * Generates or retrieves the complete chronological Digital Audit Trail
- * Synthesizes past timestamps gracefully if older agreement records lack explicit logs
+ * Synthesizes real timestamps authentically without pre-filling future unperformed actions
  */
 export function formatAuditTimestamp(raw) {
   if (!raw) return '-';
@@ -129,61 +133,60 @@ export function formatAuditTimestamp(raw) {
 
 export function getOrSynthesizeAuditTrail(state) {
   if (!state) return [];
+
+  // Check if explicit auditTrail exists and does not contain legacy synthetic dummy timestamps
   if (Array.isArray(state.auditTrail) && state.auditTrail.length > 0) {
-    return state.auditTrail.map(evt => ({
-      ...evt,
-      displayTime: formatAuditTimestamp(evt.timestamp || evt.displayTime)
-    }));
+    const hasLegacyDummy = state.auditTrail.some(e => e.timestamp && (e.timestamp.endsWith('T09:00:00Z') || e.timestamp.endsWith('T09:15:00Z')));
+    if (!hasLegacyDummy) {
+      return state.auditTrail.map(evt => ({
+        ...evt,
+        displayTime: formatAuditTimestamp(evt.timestamp || evt.displayTime)
+      }));
+    }
   }
 
   const events = [];
   const refId = state.id || 'OBS-AGR';
-  const createdDate = state.createdAt || state.label?.date || new Date().toISOString().split('T')[0];
+  const createdDate = state.createdAt || state.label?.date || new Date().toISOString();
 
-  // 1. Initial Creation Event
+  // 1. Initial Creation Event (Always accurate opening / creation time)
   events.push({
     id: `EVT-${refId}-01`,
-    timestamp: `${createdDate}T09:00:00Z`,
-    displayTime: formatAuditTimestamp(`${createdDate}T09:00:00Z`),
+    timestamp: createdDate,
+    displayTime: formatAuditTimestamp(createdDate),
     type: 'CREATED',
-    title: 'Agreement Initialized',
+    title: 'Agreement Draft Initialized',
     actor: 'Obscura Rec LLC Portal',
     role: 'Originating System',
-    details: `Reference ${refId} initialized`,
-    status: 'Initialized',
-    badgeClass: 'badge-blue'
+    status: 'Initialized'
   });
 
-  // 2. Terms & Objects Configured
-  const trackCount = Array.isArray(state.tracks) ? state.tracks.length : 0;
-  events.push({
-    id: `EVT-${refId}-02`,
-    timestamp: `${createdDate}T09:15:00Z`,
-    displayTime: formatAuditTimestamp(`${createdDate}T09:15:00Z`),
-    type: 'TERMS_CONFIGURED',
-    title: 'Schedule & Royalties Configured',
-    actor: state.label?.representative || 'Obscura Rec LLC',
-    role: 'Record Label',
-    details: `${trackCount} Master recording(s) specified`,
-    status: 'Configured',
-    badgeClass: 'badge-blue'
-  });
+  // 2. Terms & Objects Configured (ONLY when explicitly saved via Category 2)
+  if (state.termsSavedAt) {
+    events.push({
+      id: `EVT-${refId}-02`,
+      timestamp: state.termsSavedAt,
+      displayTime: formatAuditTimestamp(state.termsSavedAt),
+      type: 'TERMS_CONFIGURED',
+      title: 'Schedule & Royalty Terms Finalized',
+      actor: state.label?.representative || 'Obscura Rec LLC',
+      role: 'Record Label',
+      status: 'Configured'
+    });
+  }
 
-  // 3. Corporate Seal Applied (if applied)
+  // 3. Corporate Seal Applied (ONLY if applied)
   if (state.label?.sealApplied && state.label?.sealFile) {
-    const sealTime = state.label.sealAppliedAt || `${createdDate}T09:30:00Z`;
+    const sealTime = state.label.sealAppliedAt || createdDate;
     events.push({
       id: `EVT-${refId}-03`,
       timestamp: sealTime,
       displayTime: formatAuditTimestamp(sealTime),
       type: 'SEAL_APPLIED',
-      title: 'Corporate Seal Stamped',
+      title: 'Official Corporate Seal Placed',
       actor: state.label?.representative || 'Obscura Rec LLC',
-      role: 'Corporate Seal Authenticator',
-      details: `${state.label.sealFile} (${state.label.sealOpacity || 100}% ink)`,
-      status: 'Stamped',
-      hash: state.label.sealFile,
-      badgeClass: 'badge-gold'
+      role: 'Corporate Authenticator',
+      status: 'Sealed'
     });
   }
 
@@ -192,20 +195,16 @@ export function getOrSynthesizeAuditTrail(state) {
   artistsList.forEach((artist, idx) => {
     if (artist.signature) {
       const sigTime = artist.signature.timestamp || artist.date || createdDate;
-      const sigHash = artist.signature.hash || 'SEC-SIG-' + Math.random().toString(36).substring(2, 10).toUpperCase();
       const artName = artist.legalName || artist.stageName || `Artist #${idx + 1}`;
       events.push({
         id: `EVT-${refId}-SIG-A${idx + 1}`,
         timestamp: sigTime,
         displayTime: formatAuditTimestamp(sigTime),
         type: 'ARTIST_SIGNED',
-        title: `Artist Signature: ${artName}`,
+        title: 'Electronic Signature Placed',
         actor: `${artName}${artist.stageName && artist.stageName !== artName ? ` (${artist.stageName})` : ''}`,
-        role: artist.role || 'Recording Artist',
-        details: artist.email ? `Email: ${artist.email}` : 'Direct Device Verification',
-        status: '✓ Signed',
-        hash: sigHash,
-        badgeClass: 'badge-emerald'
+        role: artist.role || 'Executing Recording Artist',
+        status: 'Signed'
       });
     }
   });
@@ -213,19 +212,16 @@ export function getOrSynthesizeAuditTrail(state) {
   // 5. Label Representative Signature
   if (state.label?.signature) {
     const labelSigTime = state.label.signature.timestamp || state.label.date || createdDate;
-    const labelSigHash = state.label.signature.hash || 'OBS-LABEL-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+    const titleStr = state.label.representativeTitle || 'Director / Founder, Obscura Rec LLC';
     events.push({
       id: `EVT-${refId}-SIG-LABEL`,
       timestamp: labelSigTime,
       displayTime: formatAuditTimestamp(labelSigTime),
       type: 'LABEL_SIGNED',
       title: 'Corporate Sign-off Executed',
-      actor: `${state.label.representative || 'Rangana D Silva'} (${state.label.representativeTitle || 'Director'})`,
-      role: 'Authorized Signatory',
-      details: 'Executive counter-signature placed',
-      status: '✓ Signed',
-      hash: labelSigHash,
-      badgeClass: 'badge-emerald'
+      actor: `${state.label.representative || 'Rangana D Silva'}`,
+      role: titleStr.includes('Obscura') ? titleStr : `${titleStr}, Obscura Rec LLC`,
+      status: 'Signed'
     });
   }
 
@@ -237,13 +233,10 @@ export function getOrSynthesizeAuditTrail(state) {
       timestamp: finTime,
       displayTime: formatAuditTimestamp(finTime),
       type: 'FINALIZED',
-      title: 'Vault Archive Locked',
+      title: 'Agreement Archived & Vault Locked',
       actor: 'Obscura Rec LLC Cloud Vault',
-      role: 'Security Custodian',
-      details: 'Cryptographically sealed & archived',
-      status: 'Secured',
-      hash: `VAULT: ${refId}`,
-      badgeClass: 'badge-purple'
+      role: 'Digital Custodian',
+      status: 'Secured'
     });
   }
 
@@ -716,6 +709,10 @@ class AgreementStore {
         date: targetState.artists[0].date || targetState.createdAt
       };
     }
+    // Ensure label and cooperating count are initialized
+    if (!targetState.label) targetState.label = {};
+    if (!targetState.label.cooperatingCount) targetState.label.cooperatingCount = 1;
+
     return targetState;
   }
 
@@ -913,15 +910,13 @@ class AgreementStore {
 
     if (signatureObj) {
       const artName = artist ? (artist.legalName || artist.stageName || 'Executing Artist') : 'Executing Artist';
-      const sigHash = signatureObj.hash || ('SEC-SIG-' + Math.random().toString(36).substring(2, 10).toUpperCase());
       this.logAuditEvent(
         'ARTIST_SIGNED',
-        `${artName} (${artist?.stageName ? `Alias: ${artist.stageName}` : 'Primary Artist'})`,
-        artist?.role || 'Executing Recording Artist / Contributor',
-        `Electronic Signature Placed: ${artName}`,
-        `Electronic signature placed. SHA-256 Hash: ${sigHash.substring(0, 26)}... • Verification Recorded`,
-        'badge-emerald',
-        sigHash
+        `${artName}${artist?.stageName && artist.stageName !== artName ? ` (${artist.stageName})` : ''}`,
+        artist?.role || 'Recording Artist',
+        'Electronic Signature Placed',
+        '',
+        'badge-emerald'
       );
     }
 
@@ -1184,15 +1179,14 @@ class AgreementStore {
 
     this.save({ syncInputs: false, rebuildTracks: false });
     if (path === 'label.signature' && value) {
-      const labelSigHash = value.hash || ('OBS-LABEL-' + Math.random().toString(36).substring(2, 10).toUpperCase());
+      const titleStr = this.state.label?.representativeTitle || 'Director / Founder, Obscura Rec LLC';
       this.logAuditEvent(
         'LABEL_SIGNED',
-        `${this.state.label?.representative || 'Rangana D Silva'} (${this.state.label?.representativeTitle || 'Director / Founder'})`,
-        'Authorized Representative • Obscura Rec LLC',
-        'Authorized Corporate Sign-off Executed',
-        `Official executive signature placed. Verification Hash: ${labelSigHash.substring(0, 26)}...`,
-        'badge-emerald',
-        labelSigHash
+        `${this.state.label?.representative || 'Rangana D Silva'}`,
+        titleStr.includes('Obscura') ? titleStr : `${titleStr}, Obscura Rec LLC`,
+        'Corporate Sign-off Executed',
+        '',
+        'badge-emerald'
       );
     }
     if (path.includes('signature')) {
@@ -1271,8 +1265,11 @@ class AgreementStore {
     this.save({ rebuildTracks: true, forceRebuildTracks: true });
   }
 
-  resetAll() {
+  makeNewAgreement() {
     this.state = getDefaultAgreementState();
+    this.state.createdAt = new Date().toISOString();
+    this.state.termsSavedAt = null;
+    this.state.auditTrail = [];
 
     // Clean any previous signing query parameters from the browser address bar
     if (typeof window !== 'undefined' && window.history && window.history.replaceState) {
@@ -1283,6 +1280,16 @@ class AgreementStore {
     this.restartAgreementListener();
 
     this.save({ syncInputs: true, rebuildTracks: true, forceRebuildTracks: true });
+  }
+
+  resetAll() {
+    this.makeNewAgreement();
+  }
+
+  saveCategoryTerms() {
+    this.state.termsSavedAt = new Date().toISOString();
+    this.save({ syncInputs: false });
+    return this.state.termsSavedAt;
   }
 
   getStatus() {

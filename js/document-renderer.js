@@ -541,87 +541,85 @@ export function renderDocument(state, container, onSignClick, mode = 'label') {
     <!-- ================= CERTIFICATE OF COMPLETION & DIGITAL AUDIT TRAIL PAGE ================= -->
     <section class="a4-page page-audit-certificate" id="doc-page-${auditPageNum}">
       <div class="audit-page-inner">
-        <!-- Top Brand & Certificate Header -->
-        <div class="audit-certificate-header">
-          <div class="audit-cert-brand">
-            <img src="./assets/ocr-logo.jpeg" alt="Obscura Rec LLC" class="audit-logo" />
-            <div class="audit-brand-text">
-              <div class="audit-brand-title">OBSCURA REC LLC</div>
-              <div class="audit-brand-sub">CERTIFICATE OF COMPLETION &amp; DIGITAL AUDIT TRAIL</div>
+        <!-- Top Classic Brand Header -->
+        <div class="classic-audit-header">
+          <div class="classic-audit-brand">
+            <img src="./assets/ocr-logo.jpeg" alt="Obscura Rec LLC" class="classic-audit-logo" />
+            <div class="classic-brand-text">
+              <h1 class="classic-audit-title">OBSCURA REC LLC</h1>
+              <div class="classic-audit-subtitle">CERTIFICATE OF COMPLETION &amp; AUDIT TRAIL</div>
             </div>
           </div>
-          <div class="audit-cert-badge-wrap">
-            <div class="audit-cert-shield-badge ${statusBadgeClass}">
-              <span class="shield-icon">${isFullySigned ? '✓' : '⏳'}</span>
-              <span class="shield-text">${statusLabel}</span>
+          <div class="classic-audit-meta">
+            <div class="classic-status-tag ${statusBadgeClass}">
+              <span class="status-dot"></span> ${statusLabel}
             </div>
-            <div class="audit-cert-ref">ENVELOPE REF: <strong class="font-mono">${escapeHtml(state.id)}</strong></div>
-          </div>
-        </div>
-
-        <!-- Document Envelope Metadata Summary Panel -->
-        <div class="audit-summary-panel">
-          <div class="audit-summary-row">
-            <div class="audit-summary-col">
-              <div class="meta-label">Envelope ID</div>
-              <div class="meta-val font-mono">${escapeHtml(state.id)}</div>
-            </div>
-            <div class="audit-summary-col">
-              <div class="meta-label">Legal Instrument</div>
-              <div class="meta-val">Act of Acceptance &amp; Transfer of Objects</div>
-            </div>
-            <div class="audit-summary-col">
-              <div class="meta-label">Repertoire / Recording</div>
-              <div class="meta-val">${escapeHtml(trackSummaryStr)}</div>
-            </div>
-          </div>
-          <div class="audit-summary-row">
-            <div class="audit-summary-col">
-              <div class="meta-label">Record Label</div>
-              <div class="meta-val">Obscura Rec LLC (Wyoming, USA)</div>
-            </div>
-            <div class="audit-summary-col">
-              <div class="meta-label">Authorized Signatory</div>
-              <div class="meta-val">${escapeHtml(labelRep)} (${escapeHtml(labelTitle)})</div>
-            </div>
-            <div class="audit-summary-col">
-              <div class="meta-label">Execution Status</div>
-              <div class="meta-val">${artistsList.length} Artist(s) • Corporate Seal ${state.label.sealApplied ? 'Applied' : 'Pending'}</div>
-            </div>
+            <div class="classic-envelope-id">Envelope ID: <span class="font-mono">${escapeHtml(state.id)}</span></div>
           </div>
         </div>
 
-        <!-- Clean, Compact Execution & Activity Table -->
-        <div class="audit-table-wrap">
-          <div class="audit-table-header">
-            <span>CHRONOLOGICAL ACTIVITY &amp; EXECUTION LOG</span>
-            <span class="audit-count-badge">${auditEvents.length} Verified Events</span>
+        <div class="classic-divider"></div>
+
+        <!-- Clean 2-Column Structured Metadata Summary -->
+        <div class="classic-summary-section">
+          <div class="classic-summary-grid">
+            <div class="summary-item">
+              <span class="s-label">Document Title:</span>
+              <span class="s-val">Act of Acceptance and Transfer of Objects</span>
+            </div>
+            <div class="summary-item">
+              <span class="s-label">Envelope Ref:</span>
+              <span class="s-val font-mono">${escapeHtml(state.id)}</span>
+            </div>
+            <div class="summary-item">
+              <span class="s-label">Repertoire / Work:</span>
+              <span class="s-val">${escapeHtml(trackSummaryStr)}</span>
+            </div>
+            <div class="summary-item">
+              <span class="s-label">Record Label:</span>
+              <span class="s-val">Obscura Rec LLC (Colombo, LK)</span>
+            </div>
+            <div class="summary-item">
+              <span class="s-label">Executing Parties:</span>
+              <span class="s-val">${artistsList.length} Artist(s) • ${parseInt(state.label?.cooperatingCount, 10) === 2 ? '2 Labels' : (parseInt(state.label?.cooperatingCount, 10) === 3 ? '3 Labels' : '1 Label')}</span>
+            </div>
+            <div class="summary-item">
+              <span class="s-label">Corporate Seal:</span>
+              <span class="s-val ${state.label?.sealApplied ? 'seal-status-sealed' : ''}">${state.label?.sealApplied ? `Sealed (${escapeHtml(state.label.sealFile || 'Official Seal')})` : 'Unsealed'}</span>
+            </div>
           </div>
-          <table class="audit-log-table">
+        </div>
+
+        <!-- Section Heading -->
+        <div class="classic-section-header">
+          <span class="classic-section-title">DOCUMENT EXECUTION AUDIT TRAIL</span>
+          <span class="classic-event-count">${auditEvents.length} Events Recorded</span>
+        </div>
+
+        <!-- Classic Legal Execution Table -->
+        <div class="classic-table-wrapper">
+          <table class="classic-audit-table">
             <thead>
               <tr>
-                <th class="th-num">#</th>
-                <th class="th-action">Event / Action</th>
-                <th class="th-actor">Signatory / Party</th>
-                <th class="th-time">Timestamp (UTC)</th>
-                <th class="th-status">Status</th>
+                <th style="width: 32px; text-align: center;">#</th>
+                <th style="width: 32%;">Event / Action</th>
+                <th style="width: 36%;">Signatory / Capacity</th>
+                <th style="width: 22%;">Timestamp (UTC)</th>
+                <th style="width: 10%; text-align: right;">Status</th>
               </tr>
             </thead>
             <tbody>
               ${auditEvents.map((evt, idx) => `
                 <tr>
                   <td class="col-num">${idx + 1}</td>
-                  <td class="col-action">
-                    <div class="audit-row-title">${escapeHtml(evt.title)}</div>
-                    ${evt.hash ? `<div class="audit-row-hash font-mono">Ref: ${escapeHtml(evt.hash.substring(0, 24))}${evt.hash.length > 24 ? '...' : ''}</div>` : ''}
-                  </td>
+                  <td class="col-event"><strong>${escapeHtml(evt.title)}</strong></td>
                   <td class="col-actor">
-                    <div class="audit-row-actor">${escapeHtml(evt.actor)}</div>
-                    <div class="audit-row-details">${escapeHtml(evt.details)}</div>
+                    ${escapeHtml(evt.actor)}
+                    <span class="col-role">— ${escapeHtml(evt.role)}</span>
                   </td>
                   <td class="col-time font-mono">${escapeHtml(evt.displayTime || evt.timestamp)}</td>
                   <td class="col-status">
-                    <span class="audit-status-chip ${evt.badgeClass || ''}">${escapeHtml(evt.status || 'Verified')}</span>
+                    <span class="col-status-text">✓ ${escapeHtml(evt.status || 'Recorded')}</span>
                   </td>
                 </tr>
               `).join('')}
@@ -629,18 +627,14 @@ export function renderDocument(state, container, onSignClick, mode = 'label') {
           </table>
         </div>
 
-        <!-- Legal Compliance & Non-Repudiation Footer Box -->
-        <div class="audit-legal-bar">
-          <div class="audit-legal-shield">⚖️</div>
-          <div class="audit-legal-text">
-            <strong>LEGAL COMPLIANCE &amp; ENFORCEABILITY:</strong>
-            This digital Certificate of Completion confirms that all parties authenticated and executed this agreement electronically in compliance with the U.S. Electronic Signatures in Global and National Commerce Act (ESIGN, 15 U.S.C. § 7001) and the Uniform Electronic Transactions Act (UETA). All electronic signatures, cryptographic audit digests, and corporate seals hold the identical legal validity, admissibility, and enforceability as handwritten ink signatures.
-          </div>
+        <!-- Legal Compliance Notice (Sri Lanka Electronic Transactions Act, No. 19 of 2006) -->
+        <div class="classic-legal-notice">
+          <strong>LEGAL NOTICE:</strong> Conclusive electronic execution record pursuant to the Electronic Transactions Act, No. 19 of 2006 (Sri Lanka). All electronic signatures and corporate seals applied herein carry full legal validity and admissibility.
         </div>
 
         <!-- Page Number Footer -->
         <div class="page-number-footer">
-          <span>Ref ID: ${escapeHtml(state.id)} • Obscura Rec LLC Cloud Vault Certificate</span>
+          <span>Ref ID: ${escapeHtml(state.id)} • Obscura Rec LLC</span>
           <span>Page ${auditPageNum} of ${totalPages}</span>
         </div>
       </div>

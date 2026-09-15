@@ -2,7 +2,7 @@
  * Main Application Orchestrator for Obscura Rec LLC Agreement Creator
  */
 
-import { agreementStore, getDefaultAgreementState, sanitizeStateForNewAgreement } from './agreement-data.js';
+import { agreementStore, getDefaultAgreementState, sanitizeStateForNewAgreement, formatAuditTimestamp } from './agreement-data.js';
 import { renderDocument } from './document-renderer.js';
 import { SignatureEngine } from './signature-pad.js';
 import { exportToPdf, triggerPrint } from './pdf-export.js';
@@ -408,6 +408,7 @@ class AgreementApp {
     bindField('input-label-rep', 'label.representative');
     bindField('input-label-title', 'label.representativeTitle');
     bindField('input-label-date', 'label.date');
+    bindField('select-label-coop-count', 'label.cooperatingCount');
 
     // Artist Info
     bindField('input-artist-legal', 'artist.legalName');
@@ -593,6 +594,7 @@ class AgreementApp {
     setVal('input-label-rep', state.label.representative);
     setVal('input-label-title', state.label.representativeTitle);
     setVal('input-label-date', state.label.date);
+    setVal('select-label-coop-count', state.label?.cooperatingCount || 1);
 
     setVal('input-artist-legal', state.artist.legalName);
     setVal('input-artist-stage', state.artist.stageName);
@@ -609,8 +611,23 @@ class AgreementApp {
     // Sync Corporate Seal Station Controls
     this.sealManager?.updateSidebarControls(state);
 
+    // Update Category 2 Terms saved indicator
+    this.updateCategoryTermsIndicator(state);
+
     // Update sidebar signature indicators
     this.updateSidebarSignatures(state);
+  }
+
+  updateCategoryTermsIndicator(state) {
+    const indicator = document.getElementById('terms-saved-indicator');
+    const timeSpan = document.getElementById('terms-saved-time');
+    if (!indicator || !timeSpan) return;
+    if (state?.termsSavedAt) {
+      indicator.style.display = 'block';
+      timeSpan.textContent = formatAuditTimestamp(state.termsSavedAt);
+    } else {
+      indicator.style.display = 'none';
+    }
   }
 
   // Real-Time Sidebar Signatures Station Updater (Section 4)
@@ -1275,10 +1292,21 @@ class AgreementApp {
       this.saveCurrentAgreementToVault();
     });
 
+    // Save Category 2 Schedule & Royalty Terms to Audit
+    document.getElementById('btn-save-category-terms')?.addEventListener('click', () => {
+      this.store.saveCategoryTerms();
+      const st = this.store.getState();
+      this.updateCategoryTermsIndicator(st);
+      this.render();
+      showToast('✓ Category 2 Schedule & Royalty Terms saved to Audit Trail with current timestamp!', 'success');
+    });
+
     document.getElementById('btn-reset-agreement')?.addEventListener('click', () => {
-      if (confirm('Create a brand new blank agreement? All form fields and signatures will be cleared, and a new unique Agreement Reference ID will be generated.')) {
-        this.store.resetAll();
-        showToast(`✓ Started fresh agreement #${this.store.state.id} with clean signatures!`, 'success');
+      if (confirm('Create a brand new blank agreement draft? All form fields and signatures will be cleared, and a new unique Agreement Reference ID will be generated with a fresh opening timestamp.')) {
+        this.store.makeNewAgreement();
+        this.updateCategoryTermsIndicator(this.store.getState());
+        this.render();
+        showToast(`✓ Started fresh agreement #${this.store.state.id}!`, 'success');
       }
     });
   }

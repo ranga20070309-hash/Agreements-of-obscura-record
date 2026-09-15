@@ -131,9 +131,9 @@
   </style>
 
   <link rel="icon" type="image/jpeg" href="./assets/ocr-logo.jpeg">
-  <link rel="stylesheet" href="./css/index.css?v=4.3">
-  <link rel="stylesheet" href="./css/document.css?v=4.3">
-  <link rel="stylesheet" href="./css/print.css?v=4.3" media="print">
+  <link rel="stylesheet" href="./css/index.css?v=4.4">
+  <link rel="stylesheet" href="./css/document.css?v=4.4">
+  <link rel="stylesheet" href="./css/print.css?v=4.4" media="print">
 
   <script src="./js/libs/html2canvas.min.js"></script>
   <script src="./js/libs/jspdf.umd.min.js"></script>
@@ -181,8 +181,8 @@
       <button class="btn btn-secondary" id="btn-open-templates" title="Manage Saved Templates & JSON">
         📁 Templates
       </button>
-      <button class="btn btn-secondary" id="btn-reset-agreement" title="Reset to Sample Agreement">
-        🔄 Reset
+      <button class="btn btn-secondary" id="btn-reset-agreement" title="Make a brand new agreement draft with new Reference ID">
+        ➕ Make New Agreement
       </button>
       <button class="btn btn-secondary" id="btn-print-doc" title="Print document to printer or PDF">
         🖨️ Print
@@ -351,9 +351,19 @@
                 <input type="text" id="input-label-title" class="form-control" value="Director / Founder, Obscura Rec LLC" placeholder="Director / Founder, Obscura Rec LLC" />
               </div>
             </div>
-            <div class="form-group">
-              <label class="form-label" for="input-label-date">Agreement Date</label>
-              <input type="date" id="input-label-date" class="form-control" />
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="input-label-date">Agreement Date</label>
+                <input type="date" id="input-label-date" class="form-control" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="select-label-coop-count">Executing Record Labels</label>
+                <select id="select-label-coop-count" class="form-control">
+                  <option value="1">1 Label (Obscura Rec LLC)</option>
+                  <option value="2">2 Labels (Cooperating / Joint)</option>
+                  <option value="3">3 Labels (Multi-Label Syndicate)</option>
+                </select>
+              </div>
             </div>
 
             <div style="display:flex; justify-content:space-between; align-items:center; margin-top: 10px; margin-bottom: 4px;">
@@ -424,6 +434,15 @@
             </div>
 
             <div class="tracks-container" id="tracks-container"></div>
+
+            <div style="margin-top: 14px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.08);">
+              <button type="button" class="btn btn-gold" id="btn-save-category-terms" style="width: 100%; font-size: 12px; font-weight: 700; padding: 9px 14px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                💾 Save Schedule &amp; Royalty Terms to Audit
+              </button>
+              <div id="terms-saved-indicator" style="font-size: 11px; color: #10b981; margin-top: 6px; text-align: center; display: none;">
+                ✓ Saved to Audit Log: <span id="terms-saved-time"></span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1043,6 +1062,6 @@
 
   <div class="toast-container" id="toast-container"></div>
 
-  <script type="module" src="./js/app.js?v=4.3"></script>
+  <script type="module" src="./js/app.js?v=4.4"></script>
 </body>
 </html>
