@@ -135,13 +135,21 @@ export function getOrSynthesizeAuditTrail(state) {
   if (!state) return [];
 
   const refId = state.id || 'OBS-AGR';
-  const createdDate = state.createdAt || state.label?.date || new Date().toISOString();
+  let createdDate = state.createdAt || state.label?.date || new Date().toISOString();
+  if (createdDate && !createdDate.includes('T')) {
+    createdDate = new Date().toISOString();
+    state.createdAt = createdDate;
+  }
 
   // Start with existing real events, ignoring any legacy hardcoded 09:00/09:15 presets
   let events = [];
   if (Array.isArray(state.auditTrail) && state.auditTrail.length > 0) {
     events = state.auditTrail.filter(e => {
       if (!e || !e.timestamp) return false;
+      // Never show SEAL_REMOVED
+      if (e.type === 'SEAL_REMOVED') return false;
+      // If corporate seal is not currently applied, do not include any SEAL_APPLIED event
+      if (!state.label?.sealApplied && e.type === 'SEAL_APPLIED') return false;
       const isLegacyDummy = e.timestamp.endsWith('T09:00:00Z') || e.timestamp.endsWith('T09:15:00Z');
       return !isLegacyDummy;
     }).map(e => ({ ...e }));
@@ -956,13 +964,20 @@ class AgreementStore {
     }
   }
 
-  logAuditEvent(type, actor, role, title, details, badgeClass = 'badge-blue', hash = null) {
+  logAuditEvent(type, actor, role, title, details, badgeClass = 'badge-blue', hash = null, status = null) {
     if (!Array.isArray(this.state.auditTrail)) {
       this.state.auditTrail = [];
     }
     const timestamp = new Date().toISOString();
-    const displayTime = timestamp.replace('T', ' ').substring(0, 19) + ' UTC';
+    const displayTime = formatAuditTimestamp(timestamp);
     const eventId = `EVT-${this.state.id || 'AGR'}-${Date.now().toString(36).toUpperCase()}`;
+    let defaultStatus = 'Recorded';
+    if (type === 'SEAL_APPLIED') defaultStatus = 'Sealed';
+    else if (type === 'ARTIST_SIGNED' || type === 'LABEL_SIGNED') defaultStatus = 'Signed';
+    else if (type === 'FINALIZED') defaultStatus = 'Secured';
+    else if (type === 'TERMS_CONFIGURED') defaultStatus = 'Configured';
+    else if (type === 'CREATED') defaultStatus = 'Initialized';
+
     const newEvent = {
       id: eventId,
       timestamp,
@@ -972,7 +987,7 @@ class AgreementStore {
       actor: actor || 'Authorized Signatory',
       role: role || 'System',
       details: details || '',
-      status: 'Cryptographically Recorded',
+      status: status || defaultStatus,
       badgeClass,
       hash
     };

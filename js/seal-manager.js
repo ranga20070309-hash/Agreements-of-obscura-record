@@ -301,14 +301,23 @@ export class SealManager {
     if (isFirstTime || current.sealX === undefined) this.store.state.label.sealX = 460; // approx px from left on A4 page
     if (isFirstTime || current.sealY === undefined) this.store.state.label.sealY = 290; // approx px from top on A4 page
 
+    // Ensure only 1 active SEAL_APPLIED event exists and status is 'Sealed'
+    if (Array.isArray(this.store.state.auditTrail)) {
+      this.store.state.auditTrail = this.store.state.auditTrail.filter(
+        e => e.type !== 'SEAL_APPLIED' && e.type !== 'SEAL_REMOVED'
+      );
+    }
+
     if (this.store.logAuditEvent) {
       this.store.logAuditEvent(
         'SEAL_APPLIED',
         this.store.state.label?.representative || 'Obscura Rec LLC',
         'Corporate Seal Authenticator',
-        'Official Corporate Seal Digitally Placed',
-        `Official Corporate Seal (${sealId}) stamped on Execution Sheet (Opacity: ${this.store.state.label.sealOpacity || 100}%).`,
-        'badge-gold'
+        'Official Corporate Seal Placed',
+        `Official Corporate Seal (${sealId}) stamped on Execution Sheet.`,
+        'badge-gold',
+        null,
+        'Sealed'
       );
     }
 
@@ -323,14 +332,10 @@ export class SealManager {
     this.store.state.label.sealApplied = false;
     delete this.store.state.label.sealAppliedAt;
 
-    if (this.store.logAuditEvent) {
-      this.store.logAuditEvent(
-        'SEAL_REMOVED',
-        this.store.state.label?.representative || 'Obscura Rec LLC',
-        'Corporate Seal Authenticator',
-        'Official Corporate Seal Removed',
-        'Corporate Seal was removed from the active execution sheet.',
-        'badge-blue'
+    // Completely remove any SEAL_APPLIED and SEAL_REMOVED events from auditTrail
+    if (Array.isArray(this.store.state.auditTrail)) {
+      this.store.state.auditTrail = this.store.state.auditTrail.filter(
+        e => e.type !== 'SEAL_APPLIED' && e.type !== 'SEAL_REMOVED'
       );
     }
 

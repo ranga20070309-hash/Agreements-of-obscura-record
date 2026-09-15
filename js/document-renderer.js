@@ -601,15 +601,18 @@ export function renderDocument(state, container, onSignClick, mode = 'label') {
           <table class="classic-audit-table">
             <thead>
               <tr>
-                <th style="width: 32px; text-align: center;">#</th>
+                <th style="width: 20px; text-align: center;">#</th>
                 <th style="width: 32%;">Event / Action</th>
-                <th style="width: 36%;">Signatory / Capacity</th>
-                <th style="width: 22%;">Timestamp (UTC)</th>
-                <th style="width: 10%; text-align: right;">Status</th>
+                <th style="width: 31%;">Signatory / Capacity</th>
+                <th style="width: 23%;">Timestamp (UTC)</th>
+                <th style="width: 14%; text-align: right; padding-right: 0;">Status</th>
               </tr>
             </thead>
             <tbody>
-              ${auditEvents.map((evt, idx) => `
+              ${auditEvents.map((evt, idx) => {
+                let st = evt.status || 'Recorded';
+                if (st === 'Cryptographically Recorded') st = 'Recorded';
+                return `
                 <tr>
                   <td class="col-num">${idx + 1}</td>
                   <td class="col-event"><strong>${escapeHtml(evt.title)}</strong></td>
@@ -619,10 +622,10 @@ export function renderDocument(state, container, onSignClick, mode = 'label') {
                   </td>
                   <td class="col-time font-mono">${escapeHtml(evt.displayTime || evt.timestamp)}</td>
                   <td class="col-status">
-                    <span class="col-status-text">✓ ${escapeHtml(evt.status || 'Recorded')}</span>
+                    <span class="col-status-text">✓ ${escapeHtml(st)}</span>
                   </td>
                 </tr>
-              `).join('')}
+              `;}).join('')}
             </tbody>
           </table>
         </div>
