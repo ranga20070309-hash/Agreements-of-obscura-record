@@ -43,12 +43,23 @@ export class SignatureEngine {
 
   resizeCanvas() {
     if (!this.canvas) return;
-    const rect = this.canvas.parentElement.getBoundingClientRect();
-    // High DPI scaling for crisp smooth lines
-    const dpr = window.devicePixelRatio || 1;
-    this.canvas.width = (rect.width || 520) * dpr;
-    this.canvas.height = 190 * dpr;
-    this.ctx.scale(dpr, dpr);
+    const parent = this.canvas.parentElement;
+    const rect = parent ? parent.getBoundingClientRect() : this.canvas.getBoundingClientRect();
+    // High DPI scaling for ultra-smooth, crisp lines (min 2x for crispness on Retina/mobile)
+    const dpr = Math.max(window.devicePixelRatio || 1, 2);
+    const cssWidth = Math.floor(rect.width || 520);
+    const cssHeight = window.innerWidth <= 600 ? 210 : 190;
+
+    this.canvas.style.width = '100%';
+    this.canvas.style.height = `${cssHeight}px`;
+    this.canvas.style.touchAction = 'none';
+    this.canvas.width = cssWidth * dpr;
+    this.canvas.height = cssHeight * dpr;
+
+    if (this.ctx) {
+      this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+      this.ctx.scale(dpr, dpr);
+    }
     this.redrawStrokes();
   }
 
@@ -185,21 +196,27 @@ export class SignatureEngine {
       this.renderFontChoices();
     });
 
-    // Canvas drawing events (Mouse & Touch)
+    // Canvas drawing events (Modern Pointer Events with Touch/Mouse Fallback)
     if (this.canvas) {
+      this.canvas.style.touchAction = 'none';
+
       const getPos = (e) => {
         const rect = this.canvas.getBoundingClientRect();
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        const clientX = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+        const clientY = e.clientY !== undefined ? e.clientY : (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
         return {
-          x: clientX - rect.left,
-          y: clientY - rect.top
+          x: Math.max(0, Math.min(rect.width, clientX - rect.left)),
+          y: Math.max(0, Math.min(rect.height, clientY - rect.top))
         };
       };
 
       const startDrawing = (e) => {
+        if (e.pointerType && e.button !== undefined && e.button !== 0) return;
         e.preventDefault();
         this.isDrawing = true;
+        if (e.pointerId !== undefined && typeof this.canvas.setPointerCapture === 'function') {
+          try { this.canvas.setPointerCapture(e.pointerId); } catch (_) {}
+        }
         const pos = getPos(e);
         this.currentStroke = [pos];
         this.ctx.beginPath();
@@ -217,39 +234,57 @@ export class SignatureEngine {
         this.ctx.lineCap = 'round';
         this.ctx.lineJoin = 'round';
 
-        // Smooth curve
+        // Smooth curve interpolation
         if (this.currentStroke.length > 2) {
-          const xc = (this.currentStroke[this.currentStroke.length - 2].x + pos.x) / 2;
-          const yc = (this.currentStroke[this.currentStroke.length - 2].y + pos.y) / 2;
-          this.ctx.quadraticCurveTo(
-            this.currentStroke[this.currentStroke.length - 2].x,
-            this.currentStroke[this.currentStroke.length - 2].y,
-            xc,
-            yc
-          );
-        } else {
+          const p1 = this.currentStroke[this.currentStroke.length - 2];
+          const xc = (p1.x + pos.x) / 2;
+          const yc = (p1.y + pos.y) / 2;
+          this.ctx.quadraticCurveTo(p1.x, p1.y, xc, yc);
+          this.ctx.stroke();
+        } else if (this.currentStroke.length === 2) {
+          this.ctx.beginPath();
+          this.ctx.moveTo(this.currentStroke[0].x, this.currentStroke[0].y);
           this.ctx.lineTo(pos.x, pos.y);
-        }
-        this.ctx.stroke();
-      };
-
-      const stopDrawing = () => {
-        if (this.isDrawing) {
-          this.isDrawing = false;
-          if (this.currentStroke.length > 0) {
-            this.strokes.push([...this.currentStroke]);
-            this.currentStroke = [];
-          }
+          this.ctx.stroke();
         }
       };
 
-      this.canvas.addEventListener('mousedown', startDrawing);
-      this.canvas.addEventListener('mousemove', draw);
-      window.addEventListener('mouseup', stopDrawing);
+      const stopDrawing = (e) => {
+        if (!this.isDrawing) return;
+        this.isDrawing = false;
+        if (e && e.pointerId !== undefined && typeof this.canvas.releasePointerCapture === 'function') {
+          try { this.canvas.releasePointerCapture(e.pointerId); } catch (_) {}
+        }
+        if (this.currentStroke.length === 1) {
+          // Render a clean dot for single tap
+          const p = this.currentStroke[0];
+          this.ctx.fillStyle = this.penColor;
+          this.ctx.beginPath();
+          this.ctx.arc(p.x, p.y, this.lineWidth / 1.5, 0, Math.PI * 2);
+          this.ctx.fill();
+          this.strokes.push([...this.currentStroke]);
+        } else if (this.currentStroke.length > 1) {
+          this.strokes.push([...this.currentStroke]);
+        }
+        this.currentStroke = [];
+      };
 
-      this.canvas.addEventListener('touchstart', startDrawing, { passive: false });
-      this.canvas.addEventListener('touchmove', draw, { passive: false });
-      window.addEventListener('touchend', stopDrawing);
+      // Pointer Events (Modern low-latency Standard for Touch, Stylus & Mouse)
+      if (window.PointerEvent) {
+        this.canvas.addEventListener('pointerdown', startDrawing);
+        this.canvas.addEventListener('pointermove', draw);
+        this.canvas.addEventListener('pointerup', stopDrawing);
+        this.canvas.addEventListener('pointercancel', stopDrawing);
+      } else {
+        // Fallback for legacy browsers
+        this.canvas.addEventListener('mousedown', startDrawing);
+        this.canvas.addEventListener('mousemove', draw);
+        window.addEventListener('mouseup', stopDrawing);
+
+        this.canvas.addEventListener('touchstart', startDrawing, { passive: false });
+        this.canvas.addEventListener('touchmove', draw, { passive: false });
+        window.addEventListener('touchend', stopDrawing);
+      }
     }
 
     // Clear & Undo
@@ -301,8 +336,10 @@ export class SignatureEngine {
 
   clearCanvas() {
     if (!this.ctx || !this.canvas) return;
-    const dpr = window.devicePixelRatio || 1;
-    this.ctx.clearRect(0, 0, this.canvas.width / dpr, this.canvas.height / dpr);
+    this.ctx.save();
+    this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.ctx.restore();
   }
 
   redrawStrokes() {
@@ -315,7 +352,14 @@ export class SignatureEngine {
     this.ctx.lineJoin = 'round';
 
     this.strokes.forEach(stroke => {
-      if (stroke.length < 2) return;
+      if (!stroke || stroke.length === 0) return;
+      if (stroke.length === 1) {
+        this.ctx.fillStyle = this.penColor;
+        this.ctx.beginPath();
+        this.ctx.arc(stroke[0].x, stroke[0].y, this.lineWidth / 1.5, 0, Math.PI * 2);
+        this.ctx.fill();
+        return;
+      }
       this.ctx.beginPath();
       this.ctx.moveTo(stroke[0].x, stroke[0].y);
       for (let i = 1; i < stroke.length; i++) {
@@ -421,7 +465,7 @@ function compressSignatureCanvas(srcCanvas, strokes) {
     }
 
     // High-resolution canvas dimensions
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = Math.max(window.devicePixelRatio || 1, 2);
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
 
     strokes.forEach(stroke => {

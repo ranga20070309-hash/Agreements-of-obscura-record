@@ -293,6 +293,36 @@ class AgreementApp {
       if (btnSubmitArtist) btnSubmitArtist.style.display = 'none';
       if (btnArtistSealed) btnArtistSealed.style.display = 'none';
     }
+
+    // Dynamic Mobile Floating Action Bar for Artist Sign Mode
+    const mobileBar = document.getElementById('mobile-artist-action-bar');
+    const mobileSignBtn = document.getElementById('btn-mobile-sign-prompt');
+    const mobileSubmitBtn = document.getElementById('btn-mobile-submit-agreement');
+    const mobileSealedPill = document.getElementById('mobile-artist-sealed-pill');
+
+    if (mobileBar) {
+      if (mode === 'artist-sign') {
+        mobileBar.style.display = 'flex';
+        if (isLocked) {
+          if (mobileSignBtn) mobileSignBtn.style.display = 'none';
+          if (mobileSubmitBtn) mobileSubmitBtn.style.display = 'none';
+          if (mobileSealedPill) mobileSealedPill.style.display = 'flex';
+        } else {
+          const currentId = this.store.getCurrentSignerId();
+          const hasSigned = this.store.isArtistSigned(currentId);
+          if (mobileSealedPill) mobileSealedPill.style.display = 'none';
+          if (hasSigned) {
+            if (mobileSignBtn) mobileSignBtn.style.display = 'none';
+            if (mobileSubmitBtn) mobileSubmitBtn.style.display = 'inline-flex';
+          } else {
+            if (mobileSignBtn) mobileSignBtn.style.display = 'inline-flex';
+            if (mobileSubmitBtn) mobileSubmitBtn.style.display = 'none';
+          }
+        }
+      } else {
+        mobileBar.style.display = 'none';
+      }
+    }
   }
 
   // Accordion UI Logic
@@ -1247,6 +1277,26 @@ class AgreementApp {
         return;
       }
       this.emailSender.openArtistSubmitModal();
+    });
+
+    // Mobile Artist Floating Action Buttons
+    document.getElementById('btn-mobile-sign-prompt')?.addEventListener('click', () => {
+      const currentSignerId = this.store.getCurrentSignerId();
+      const sigTarget = document.querySelector(`.doc-signature-box[data-party="artist"][data-artist-id="${currentSignerId}"]`) ||
+                        document.querySelector('.clickable-sign-prompt[data-party="artist"]') ||
+                        document.querySelector('.doc-signature-box[data-party="artist"]');
+      if (sigTarget) {
+        sigTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => {
+          this.sigEngine.open('artist', currentSignerId);
+        }, 250);
+      } else {
+        this.sigEngine.open('artist', currentSignerId);
+      }
+    });
+
+    document.getElementById('btn-mobile-submit-agreement')?.addEventListener('click', () => {
+      document.getElementById('btn-submit-artist-agreement')?.click();
     });
 
     // Counter-Sign: Finalize, archive to vault, and download

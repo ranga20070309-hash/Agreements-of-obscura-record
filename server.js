@@ -121,7 +121,7 @@ function getTransporter() {
   return nodemailer.createTransport({
     service: 'gmail',
     auth: {
-      user: cfg.smtpUser || process.env.SMTP_USER || 'mail.obscurarecords@gmail.com',
+      user: cfg.smtpUser || process.env.SMTP_USER || 'ocr.agreements@gmail.com',
       pass: cfg.appPassword.replace(/\s+/g, '') // remove spaces from Google app password
     }
   });
