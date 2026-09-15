@@ -1610,3 +1610,55 @@ body.artist-locked .doc-signature-box,
   font-weight: 700;
 }
 
+/* Audit End Marker */
+.audit-end-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 10px 0 10px 0;
+  width: 100%;
+}
+
+.audit-end-line {
+  flex: 1;
+  height: 1px;
+  background: #e2e8f0;
+}
+
+.audit-end-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 9999px;
+  padding: 3px 10px;
+  font-size: 8px;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+  color: #475569;
+}
+
+.audit-end-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+.audit-end-label {
+  color: #334155;
+}
+
+.audit-end-sep {
+  color: #94a3b8;
+}
+
+.audit-end-status {
+  color: #059669;
+  font-weight: 800;
+}
+
+
