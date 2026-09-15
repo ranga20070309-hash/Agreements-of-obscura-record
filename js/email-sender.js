@@ -1,6 +1,6 @@
 /**
  * Obscura Rec LLC - Automated In-Site Email Dispatcher
- * Directly sends emails from ocr.agreements@gmail.com without opening desktop mail apps.
+ * Directly sends emails from agreements@obscurarecord.com without opening desktop mail apps.
  */
 
 import { saveAgreementToFirebase, updateVaultIfArchived } from './firebase-config.js';
@@ -137,10 +137,10 @@ export class EmailSender {
     if (!configBox || !statusText) return;
 
     if (this.hasServerPassword) {
-      statusText.innerHTML = '<span style="color:#10b981;">🟢 Connected: ocr.agreements@gmail.com</span>';
+      statusText.innerHTML = '<span style="color:#10b981;">🟢 Connected: agreements@obscurarecord.com</span>';
       configBox.style.display = 'none';
     } else {
-      statusText.innerHTML = '<span style="color:#f59e0b;">🟡 Password Required for ocr.agreements@gmail.com</span>';
+      statusText.innerHTML = '<span style="color:#f59e0b;">🟡 Password Required for agreements@obscurarecord.com</span>';
       configBox.style.display = 'block';
     }
   }
@@ -148,7 +148,7 @@ export class EmailSender {
   async saveAppPassword() {
     const input = document.getElementById('input-gmail-app-password');
     if (!input || !input.value.trim()) {
-      alert('Please paste the 16-character Google App Password for ocr.agreements@gmail.com.');
+      alert('Please paste the 16-character Google App Password for agreements@obscurarecord.com.');
       return;
     }
 
@@ -390,7 +390,7 @@ export class EmailSender {
             sendAllBtn.innerHTML = `⏳ Wait ${cd}s (Cooldown)`;
             sendAllBtn.style.background = '#374151';
           } else {
-            sendAllBtn.innerHTML = `🚀 Send Agreement to Artist (via ocr.agreements@gmail.com)`;
+            sendAllBtn.innerHTML = `🚀 Send Agreement to Artist (via agreements@obscurarecord.com)`;
             sendAllBtn.disabled = false;
             sendAllBtn.style.background = '';
             sendAllBtn.onclick = () => this.sendArtistEmail(primaryArtist.id);
@@ -451,7 +451,7 @@ export class EmailSender {
             </div>
           </div>
           <span style="font-size:11px; color:#c9a050; background:#141824; padding:3px 10px; border-radius:12px; border:1px solid #c9a050; font-weight:700;">
-            ocr.agreements@gmail.com
+            agreements@obscurarecord.com
           </span>
         </div>
 
@@ -510,7 +510,7 @@ export class EmailSender {
         <!-- Email Footer -->
         <div style="background:#07090e; padding:12px 24px; border-top:1px solid #1f2434; font-size:11px; color:#6b7280; display:flex; justify-content:space-between; align-items:center;">
           <span>Ref ID: ${escapeHtml(state.id)}</span>
-          <span>From: ocr.agreements@gmail.com</span>
+          <span>From: agreements@obscurarecord.com</span>
         </div>
       </div>
     `;

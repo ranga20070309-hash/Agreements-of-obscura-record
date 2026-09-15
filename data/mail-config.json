@@ -1,4 +1,5 @@
 {
-  "email": "ocr.agreements@gmail.com",
-  "appPassword": "qecddzwqorglebdw"
+  "email": "agreements@obscurarecord.com",
+  "appPassword": "qecddzwqorglebdw",
+  "smtpUser": "mail.obscurarecords@gmail.com"
 }

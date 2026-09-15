@@ -1,6 +1,6 @@
 /**
  * Obscura Rec LLC - Express Backend & Direct Gmail Dispatcher
- * Official Label Mailbox: ocr.agreements@gmail.com
+ * Official Label Mailbox: agreements@obscurarecord.com
  */
 
 import express from 'express';
@@ -98,7 +98,7 @@ function getMailConfig() {
     console.error('Error reading mail config:', e);
   }
   return {
-    email: 'ocr.agreements@gmail.com',
+    email: 'agreements@obscurarecord.com',
     appPassword: process.env.GMAIL_APP_PASSWORD || ''
   };
 }
@@ -121,7 +121,7 @@ function getTransporter() {
   return nodemailer.createTransport({
     service: 'gmail',
     auth: {
-      user: 'ocr.agreements@gmail.com',
+      user: cfg.smtpUser || process.env.SMTP_USER || 'mail.obscurarecords@gmail.com',
       pass: cfg.appPassword.replace(/\s+/g, '') // remove spaces from Google app password
     }
   });
@@ -133,7 +133,7 @@ function getTransporter() {
 app.get('/api/mail-config', (req, res) => {
   const cfg = getMailConfig();
   res.json({
-    email: cfg.email || 'ocr.agreements@gmail.com',
+    email: cfg.email || 'agreements@obscurarecord.com',
     hasPassword: Boolean(cfg.appPassword && cfg.appPassword.trim().length >= 16)
   });
 });
@@ -145,7 +145,7 @@ app.post('/api/mail-config', (req, res) => {
   }
   const cleanPassword = appPassword.trim().replace(/\s+/g, '');
   saveMailConfig({
-    email: 'ocr.agreements@gmail.com',
+    email: 'agreements@obscurarecord.com',
     appPassword: cleanPassword
   });
   res.json({ success: true, message: 'Mail credentials saved successfully.' });
@@ -517,7 +517,7 @@ app.delete('/api/vault/:id', async (req, res) => {
 
 const emailRateLimits = new Map();
 
-// 3. Send Branded Email to Artist from ocr.agreements@gmail.com
+// 3. Send Branded Email to Artist from agreements@obscurarecord.com
 app.post('/api/send-artist-email', async (req, res) => {
   const { state, recipientEmail, signingUrl, artistName: clientArtistName, signerId } = req.body;
 
@@ -547,7 +547,7 @@ app.post('/api/send-artist-email', async (req, res) => {
   const transporter = getTransporter();
   if (!transporter) {
     return res.status(400).json({
-      error: 'Gmail App Password not configured. Please configure your 16-character Gmail App Password for ocr.agreements@gmail.com in the settings box.'
+      error: 'Gmail App Password not configured. Please configure your 16-character Gmail App Password for agreements@obscurarecord.com in the settings box.'
     });
   }
 
@@ -625,7 +625,7 @@ app.post('/api/send-artist-email', async (req, res) => {
                   </td>
                   <td align="right">
                     <span style="display: inline-block; background: #141824; color: #c9a050; border: 1px solid #c9a050; padding: 4px 10px; border-radius: 16px; font-size: 10.5px; font-weight: 700;">
-                      ocr.agreements@gmail.com
+                      agreements@obscurarecord.com
                     </span>
                   </td>
                 </tr>
@@ -728,9 +728,9 @@ app.post('/api/send-artist-email', async (req, res) => {
 
   try {
     const info = await transporter.sendMail({
-      from: '"Obscura Rec Agreements" <ocr.agreements@gmail.com>',
+      from: '"OBSCURA REC LLC" <agreements@obscurarecord.com>',
       to: recipientEmail,
-      replyTo: 'ocr.agreements@gmail.com',
+      replyTo: 'agreements@obscurarecord.com',
       subject: `[ACTION REQUIRED] Obscura Rec Agreements: Ready for Signature - "${songTitle}" (${recipientGreetingName}) [Ref: ${state.id}]`,
       html: htmlContent
     });
@@ -745,7 +745,7 @@ app.post('/api/send-artist-email', async (req, res) => {
   }
 });
 
-// 4. Artist Submits Signed Agreement -> Delivered directly to ocr.agreements@gmail.com
+// 4. Artist Submits Signed Agreement -> Delivered directly to agreements@obscurarecord.com
 app.post('/api/submit-signed-agreement', async (req, res) => {
   const { state, hostUrl, signerId } = req.body;
 
@@ -856,21 +856,21 @@ app.post('/api/submit-signed-agreement', async (req, res) => {
           <div style="color: #10b981; font-size: 12px; margin-top: 4px;">🔒 Status: Sealed & Link Expired for Artist</div>
         </div>
         <div style="font-size: 11px; color: #6b7280; margin-top: 14px;">
-          Agreement Reference ID: ${state.id} • Delivered to ocr.agreements@gmail.com
+          Agreement Reference ID: ${state.id} • Delivered to agreements@obscurarecord.com
         </div>
       </div>
     `;
 
     try {
       await transporter.sendMail({
-        from: '"Obscura Rec Agreements Portal" <ocr.agreements@gmail.com>',
-        to: 'ocr.agreements@gmail.com',
+        from: '"OBSCURA REC LLC Agreements Portal" <agreements@obscurarecord.com>',
+        to: 'agreements@obscurarecord.com',
         subject: `[SIGNED BY ARTIST] Obscura Rec LLC Agreement - "${songTitle}" (${artistName}) [Ref: ${state.id}]`,
         html: notifyHtml
       });
-      console.log(`Signed notification sent to ocr.agreements@gmail.com for agreement ${state.id}`);
+      console.log(`Signed notification sent to agreements@obscurarecord.com for agreement ${state.id}`);
     } catch (e) {
-      console.error('Failed to notify ocr.agreements@gmail.com:', e);
+      console.error('Failed to notify agreements@obscurarecord.com:', e);
     }
   }
 
@@ -891,7 +891,7 @@ if (!process.env.VERCEL) {
     console.log(`\n======================================================`);
     console.log(`  OBSCURA REC LLC - AGREEMENT CREATOR & SIGNING SERVER`);
     console.log(`  Running at: http://localhost:${PORT}`);
-    console.log(`  Official Label Email: ocr.agreements@gmail.com`);
+    console.log(`  Official Label Email: agreements@obscurarecord.com`);
     console.log(`======================================================\n`);
   });
 }
