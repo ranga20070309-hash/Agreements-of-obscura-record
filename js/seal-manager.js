@@ -294,11 +294,23 @@ export class SealManager {
 
     this.store.state.label.sealApplied = true;
     this.store.state.label.sealFile = sealId;
+    this.store.state.label.sealAppliedAt = new Date().toISOString();
     if (isFirstTime || !current.sealSize) this.store.state.label.sealSize = 135;
     if (isFirstTime || current.sealOpacity === undefined) this.store.state.label.sealOpacity = 100;
     if (isFirstTime || current.sealRotation === undefined) this.store.state.label.sealRotation = -2;
     if (isFirstTime || current.sealX === undefined) this.store.state.label.sealX = 460; // approx px from left on A4 page
     if (isFirstTime || current.sealY === undefined) this.store.state.label.sealY = 290; // approx px from top on A4 page
+
+    if (this.store.logAuditEvent) {
+      this.store.logAuditEvent(
+        'SEAL_APPLIED',
+        this.store.state.label?.representative || 'Obscura Rec LLC',
+        'Corporate Seal Authenticator',
+        'Official Corporate Seal Digitally Placed',
+        `Official Corporate Seal (${sealId}) stamped on Execution Sheet (Opacity: ${this.store.state.label.sealOpacity || 100}%).`,
+        'badge-gold'
+      );
+    }
 
     this.store.save({ syncInputs: true });
     this.syncSealToStorageAndVault();
@@ -309,6 +321,19 @@ export class SealManager {
   removeSeal() {
     if (!this.store.state.label) return;
     this.store.state.label.sealApplied = false;
+    delete this.store.state.label.sealAppliedAt;
+
+    if (this.store.logAuditEvent) {
+      this.store.logAuditEvent(
+        'SEAL_REMOVED',
+        this.store.state.label?.representative || 'Obscura Rec LLC',
+        'Corporate Seal Authenticator',
+        'Official Corporate Seal Removed',
+        'Corporate Seal was removed from the active execution sheet.',
+        'badge-blue'
+      );
+    }
+
     this.store.save({ syncInputs: true });
     this.syncSealToStorageAndVault();
     this.updateSidebarControls(this.store.state);

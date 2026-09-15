@@ -2,6 +2,7 @@
  * Live A4 Document Renderer with Optimized Multi-Page Pagination
  * Page 1 accommodates up to 4 tracks comfortably before creating a continuation page.
  */
+import { getOrSynthesizeAuditTrail } from './agreement-data.js';
 
 export function renderDocument(state, container, onSignClick, mode = 'label') {
   if (!container) return;
@@ -80,8 +81,9 @@ export function renderDocument(state, container, onSignClick, mode = 'label') {
     artistContinuationPages.push(overflowArtists.slice(i, i + CONT_SIGNATURE_CAPACITY));
   }
 
-  // Total pages = Page 1 + (any track continuation pages) + Main Terms & Signatures Page + (any artist continuation pages)
-  const totalPages = 1 + continuationPages.length + 1 + artistContinuationPages.length;
+  // Total pages = Page 1 + (any track continuation pages) + Main Terms & Signatures Page + (any artist continuation pages) + Certificate of Completion / Audit Trail Page
+  const totalPages = 1 + continuationPages.length + 1 + artistContinuationPages.length + 1;
+  const auditPageNum = totalPages;
 
   // Build Signatures HTML depending on viewer mode (label | artist-sign | counter-sign)
   let labelSigHtml = '';
@@ -512,6 +514,135 @@ export function renderDocument(state, container, onSignClick, mode = 'label') {
       </section>
     `;
   });
+
+  // Get synthesized or active audit trail events
+  const auditEvents = getOrSynthesizeAuditTrail(state);
+
+  const isFullySigned = Boolean(state.label?.signature) && (
+    Array.isArray(state.artists) 
+      ? state.artists.every(a => Boolean(a.signature))
+      : Boolean(state.artist?.signature)
+  );
+  const statusLabel = isFullySigned 
+    ? 'COMPLETED &amp; CRYPTOGRAPHICALLY EXECUTED' 
+    : (state.label?.signature || (state.artists && state.artists.some(a => a.signature)) ? 'IN PROGRESS (PARTIALLY EXECUTED)' : 'ACTIVE DRAFT (EXECUTION PENDING)');
+  const statusBadgeClass = isFullySigned ? 'status-completed' : 'status-in-progress';
+
+  const trackSummaryStr = allTracks.length > 0 
+    ? allTracks.map(t => (t.title && t.title.trim()) || 'Track').slice(0, 3).join(', ') + (allTracks.length > 3 ? ` + ${allTracks.length - 3} more` : '')
+    : 'No Tracks Listed';
+
+  // Render Certificate of Completion & Digital Audit Trail Page
+  pagesHtml += `
+    <!-- ================= CERTIFICATE OF COMPLETION & DIGITAL AUDIT TRAIL PAGE ================= -->
+    <section class="a4-page page-audit-certificate" id="doc-page-${auditPageNum}">
+      <div class="audit-page-inner">
+        <div class="audit-certificate-header">
+          <div class="audit-cert-brand">
+            <img src="./assets/ocr-logo.jpeg" alt="Obscura Rec LLC" class="audit-logo" />
+            <div class="audit-brand-text">
+              <div class="audit-brand-title">OBSCURA REC LLC</div>
+              <div class="audit-brand-sub">GLOBAL ASSET MANAGEMENT &amp; REPERTOIRE SECURITY</div>
+            </div>
+          </div>
+          <div class="audit-cert-badge-wrap">
+            <div class="audit-cert-shield-badge ${statusBadgeClass}">
+              <span class="shield-icon">${isFullySigned ? '🛡️' : '⏳'}</span>
+              <span class="shield-text">${statusLabel}</span>
+            </div>
+            <div class="audit-cert-ref">ENVELOPE REF: <strong>${escapeHtml(state.id)}</strong></div>
+          </div>
+        </div>
+
+        <div class="audit-hero-title-bar">
+          <h2 class="audit-main-title">CERTIFICATE OF COMPLETION &amp; DIGITAL AUDIT TRAIL</h2>
+          <p class="audit-subtitle">
+            Tamper-Evident Chronological Record of Document Execution • Legally Enforceable pursuant to the U.S. Electronic Signatures in Global and National Commerce Act (ESIGN, 15 U.S.C. § 7001) &amp; Uniform Electronic Transactions Act (UETA)
+          </p>
+        </div>
+
+        <div class="audit-summary-grid">
+          <div class="audit-summary-cell">
+            <div class="audit-summary-label">Envelope ID</div>
+            <div class="audit-summary-val font-mono">${escapeHtml(state.id)}</div>
+          </div>
+          <div class="audit-summary-cell">
+            <div class="audit-summary-label">Legal Instrument</div>
+            <div class="audit-summary-val">Act of Acceptance &amp; Transfer of Objects</div>
+          </div>
+          <div class="audit-summary-cell">
+            <div class="audit-summary-label">Repertoire / Recording(s)</div>
+            <div class="audit-summary-val">${escapeHtml(trackSummaryStr)}</div>
+          </div>
+          <div class="audit-summary-cell">
+            <div class="audit-summary-label">Authorized Record Label</div>
+            <div class="audit-summary-val">Obscura Rec LLC (Wyoming, USA)</div>
+          </div>
+          <div class="audit-summary-cell">
+            <div class="audit-summary-label">Corporate Signatory</div>
+            <div class="audit-summary-val">${escapeHtml(labelRep)} (${escapeHtml(labelTitle)})</div>
+          </div>
+          <div class="audit-summary-cell">
+            <div class="audit-summary-label">Executing Parties</div>
+            <div class="audit-summary-val">${artistsList.length} Artist(s) / Signatories</div>
+          </div>
+          <div class="audit-summary-cell">
+            <div class="audit-summary-label">Corporate Seal Status</div>
+            <div class="audit-summary-val">${state.label.sealApplied ? `✓ Applied (${escapeHtml(state.label.sealFile || 'Official Seal')})` : 'Not Applied'}</div>
+          </div>
+          <div class="audit-summary-cell">
+            <div class="audit-summary-label">Security Protocol</div>
+            <div class="audit-summary-val">SHA-256 Digest Chain • Cloud Vault Verified</div>
+          </div>
+        </div>
+
+        <div class="audit-timeline-container">
+          <div class="audit-timeline-header">
+            <span>CHRONOLOGICAL ACTIVITY &amp; EXECUTION LOG</span>
+            <span class="audit-count-badge">${auditEvents.length} Verified Events</span>
+          </div>
+
+          <div class="audit-timeline-stream">
+            ${auditEvents.map((evt, idx) => `
+              <div class="audit-event-node ${evt.badgeClass || ''}">
+                <div class="audit-node-point">
+                  <span class="audit-node-num">${idx + 1}</span>
+                </div>
+                <div class="audit-event-body">
+                  <div class="audit-event-top">
+                    <div class="audit-event-heading">
+                      <strong class="audit-event-title">${escapeHtml(evt.title)}</strong>
+                      <span class="audit-pill ${evt.badgeClass || ''}">${escapeHtml(evt.status || 'Recorded')}</span>
+                    </div>
+                    <div class="audit-event-timestamp font-mono">${escapeHtml(evt.displayTime || evt.timestamp)}</div>
+                  </div>
+                  <div class="audit-event-meta">
+                    <span class="audit-actor">${escapeHtml(evt.actor)}</span>
+                    <span class="audit-role">• ${escapeHtml(evt.role)}</span>
+                  </div>
+                  <div class="audit-event-details">${escapeHtml(evt.details)}</div>
+                  ${evt.hash ? `<div class="audit-event-hash font-mono">DIGEST: ${escapeHtml(evt.hash)}</div>` : ''}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <div class="audit-legal-disclaimer">
+          <div class="audit-legal-shield">⚖️</div>
+          <div class="audit-legal-text">
+            <strong>COMPLIANCE &amp; LEGAL VALIDITY STATEMENT:</strong>
+            This digital Certificate of Completion constitutes conclusive legal proof of agreement delivery, signature authentication, and mutual assent. All signatories explicitly agreed to conduct this transaction electronically. The embedded electronic signatures, cryptographic audit hashes, and corporate seals hold the identical legal validity, admissibility, and enforceability as handwritten signatures under the U.S. Federal ESIGN Act and state UETA statutes.
+          </div>
+        </div>
+
+        <div class="page-number-footer">
+          <span>Ref ID: ${escapeHtml(state.id)} • Obscura Rec LLC Cloud Vault Certificate</span>
+          <span>Page ${auditPageNum} of ${totalPages}</span>
+        </div>
+      </div>
+    </section>
+  `;
 
   container.innerHTML = `
     <div class="document-pages-wrapper" id="printable-document">
