@@ -311,7 +311,7 @@ export class SealManager {
     if (this.store.logAuditEvent) {
       this.store.logAuditEvent(
         'SEAL_APPLIED',
-        this.store.state.label?.representative || 'Obscura Rec LLC',
+        'Obscura Rec LLC',
         'Corporate Seal Authenticator',
         'Official Corporate Seal Placed',
         `Official Corporate Seal (${sealId}) stamped on Execution Sheet.`,

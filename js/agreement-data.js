@@ -152,7 +152,14 @@ export function getOrSynthesizeAuditTrail(state) {
       if (!state.label?.sealApplied && e.type === 'SEAL_APPLIED') return false;
       const isLegacyDummy = e.timestamp.endsWith('T09:00:00Z') || e.timestamp.endsWith('T09:15:00Z');
       return !isLegacyDummy;
-    }).map(e => ({ ...e }));
+    }).map(e => {
+      const copy = { ...e };
+      if (copy.type === 'CREATED') copy.actor = 'Obscura Rec LLC Portal';
+      if (copy.type === 'TERMS_CONFIGURED') copy.actor = 'Obscura Rec LLC';
+      if (copy.type === 'SEAL_APPLIED') copy.actor = 'Obscura Rec LLC';
+      if (copy.type === 'FINALIZED') copy.actor = 'Obscura Rec LLC Cloud Vault';
+      return copy;
+    });
   }
 
   // 1. Ensure Initial Creation Event is always present
@@ -175,7 +182,7 @@ export function getOrSynthesizeAuditTrail(state) {
       timestamp: state.termsSavedAt,
       type: 'TERMS_CONFIGURED',
       title: 'Schedule & Royalty Terms Finalized',
-      actor: state.label?.representative || 'Obscura Rec LLC',
+      actor: 'Obscura Rec LLC',
       role: 'Record Label',
       status: 'Configured'
     });
@@ -189,7 +196,7 @@ export function getOrSynthesizeAuditTrail(state) {
       timestamp: sealTime,
       type: 'SEAL_APPLIED',
       title: 'Official Corporate Seal Placed',
-      actor: state.label?.representative || 'Obscura Rec LLC',
+      actor: 'Obscura Rec LLC',
       role: 'Corporate Authenticator',
       status: 'Sealed'
     });
@@ -217,12 +224,13 @@ export function getOrSynthesizeAuditTrail(state) {
   if (state.label?.signature && !events.some(e => e.type === 'LABEL_SIGNED')) {
     const labelSigTime = state.label.signature.timestamp || state.label.date || createdDate;
     const titleStr = state.label.representativeTitle || 'Director / Founder, Obscura Rec LLC';
+    const repName = (state.label?.representative && state.label.representative.trim()) || 'Authorized Representative';
     events.push({
       id: `EVT-${refId}-SIG-LABEL`,
       timestamp: labelSigTime,
       type: 'LABEL_SIGNED',
       title: 'Corporate Sign-off Executed',
-      actor: `${state.label.representative || 'Rangana D Silva'}`,
+      actor: repName,
       role: titleStr.includes('Obscura') ? titleStr : `${titleStr}, Obscura Rec LLC`,
       status: 'Signed'
     });
@@ -1199,9 +1207,10 @@ class AgreementStore {
     this.save({ syncInputs: false, rebuildTracks: false });
     if (path === 'label.signature' && value) {
       const titleStr = this.state.label?.representativeTitle || 'Director / Founder, Obscura Rec LLC';
+      const repName = (this.state.label?.representative && this.state.label.representative.trim()) || 'Authorized Representative';
       this.logAuditEvent(
         'LABEL_SIGNED',
-        `${this.state.label?.representative || 'Rangana D Silva'}`,
+        repName,
         titleStr.includes('Obscura') ? titleStr : `${titleStr}, Obscura Rec LLC`,
         'Corporate Sign-off Executed',
         '',
@@ -1314,7 +1323,7 @@ class AgreementStore {
       timestamp: this.state.termsSavedAt,
       type: 'TERMS_CONFIGURED',
       title: 'Schedule & Royalty Terms Finalized',
-      actor: this.state.label?.representative || 'Obscura Rec LLC',
+      actor: 'Obscura Rec LLC',
       role: 'Record Label',
       status: 'Configured'
     };
